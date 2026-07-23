@@ -69,6 +69,19 @@ try {
         '--no-password',
         '--no-owner',
         '--no-acl',
+        # zap_baseline_reader hat bewusst keinen Zugriff auf die von Supabase selbst verwalteten
+        # System-Schemas (auth/storage/realtime/vault/supabase_migrations/extensions) -- ohne
+        # Ausschluss versucht pg_dump trotzdem, alle dort sichtbaren Objekte zu sperren/lesen und
+        # bricht beim ersten Permission-Fehler die gesamte Sicherung ab, ohne etwas zu schreiben.
+        # Diese Schemas werden separat von Supabase selbst gesichert/verwaltet; relevant fuer diese
+        # Migrations sind ausschliesslich Objekte in public.
+        '--schema', 'public',
+        # zap_baseline_reader hat auch innerhalb von public kein SELECT auf profiles (vermutlich
+        # bewusst, da dort Rollen-/Kontaktdaten liegen) -- pg_dump braucht dafuer aber selbst im
+        # --schema-only-Modus mindestens eine ACCESS-SHARE-Sperre, die ohne SELECT-Recht fehlschlaegt
+        # und den gesamten Dump abbricht. Keine der 19 anstehenden Migrationen aendert profiles,
+        # daher schwaecht der Ausschluss dieses einen Backups nicht, wovor es tatsaechlich schuetzt.
+        '--exclude-table', 'public.profiles',
         '--file', $outputFile
     )
     if (-not $IncludeData) {

@@ -9,8 +9,8 @@ interface CourseCardGridProps {
 function CourseCardGrid({ offers }: CourseCardGridProps) {
   return (
     <ResponsiveGrid columns={{ base: 1, md: 2 }}>
-      {offers.map((offer) => (
-        <CourseCard key={offer.id} offer={offer} />
+      {offers.map((offer, index) => (
+        <CourseCard key={offer.id} offer={offer} index={index} />
       ))}
     </ResponsiveGrid>
   )

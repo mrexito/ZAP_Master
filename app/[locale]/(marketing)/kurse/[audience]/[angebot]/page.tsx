@@ -8,9 +8,12 @@ import { audiences } from '@/app/data/marketing-site'
 import type { CourseOffer, ExamSimulationOffer, SelfStudyOffer, SessionDefinition } from '@/types/marketing'
 import { buildPageMetadata } from '@/lib/seo'
 import { Section } from '@/app/components/layout/section'
+import { Breadcrumb } from '@/app/components/marketing/breadcrumb'
 import { CourseHero } from '@/app/components/kurse/course-hero'
 import { CourseFlow } from '@/app/components/kurse/course-flow'
 import { CourseContent } from '@/app/components/kurse/course-content'
+import { OverviewPriceBox } from '@/app/components/kurse/overview-price-box'
+import { SectionNumberLabel } from '@/app/components/kurse/section-number-label'
 import { WhyUsGrid } from '@/app/components/kurse/why-us-grid'
 import { Testimonials } from '@/app/components/kurse/testimonials'
 import { ExamSimTimeline } from '@/app/components/kurse/exam-sim-timeline'
@@ -112,7 +115,7 @@ async function BookingSectionLoader({
   return <BookingSectionWithModal offer={offer} sessions={rows} />
 }
 
-function SelfStudyOfferPage({ offer }: { offer: SelfStudyOffer }) {
+function SelfStudyOfferPage({ offer, audienceLabel, audienceHref }: { offer: SelfStudyOffer; audienceLabel: string; audienceHref: string }) {
   const extras = getSelfStudyPageExtras(offer.id)
   // Sollte laut Katalog-Wiring immer gesetzt sein (jeder SelfStudyOffer im Katalog hat einen
   // Eintrag in SELF_STUDY_PAGE_EXTRAS) -- Fallback auf offer.lede nur zur Robustheit.
@@ -121,6 +124,10 @@ function SelfStudyOfferPage({ offer }: { offer: SelfStudyOffer }) {
 
   return (
     <>
+      <Breadcrumb
+        items={[{ label: 'Startseite', href: '/' }, { label: audienceLabel, href: audienceHref }, { label: offer.displayName }]}
+      />
+
       <Section spacing="lg">
         <AudienceHero content={hero} />
       </Section>
@@ -146,23 +153,34 @@ export default async function CourseOfferDetailPage({
   const { locale, audience: audienceSlug, angebot } = await params
   setRequestLocale(locale)
 
+  // Beide resolve*-Funktionen validieren audienceSlug bereits intern (audiences.find) -- ein
+  // aufgelöstes Offer garantiert also ein vorhandenes audience-Objekt hier.
+  const audience = audiences.find((a) => a.slug === audienceSlug)
+
   const selfStudyOffer = await resolveSelfStudyOffer(audienceSlug, angebot, locale)
-  if (selfStudyOffer) return <SelfStudyOfferPage offer={selfStudyOffer} />
+  if (selfStudyOffer && audience) {
+    return <SelfStudyOfferPage offer={selfStudyOffer} audienceLabel={audience.displayLabel} audienceHref={audience.href} />
+  }
 
   const offer = await resolveBookableOffer(audienceSlug, angebot, locale)
-  if (!offer) notFound()
+  if (!offer || !audience) notFound()
 
   const sessions = await getSessionsForOffer(offer.id, locale)
   const isExamSimulation = offer.kurstyp === 'pruefungssimulation'
 
   return (
     <>
+      <Breadcrumb
+        items={[{ label: 'Startseite', href: '/' }, { label: audience.displayLabel, href: audience.href }, { label: offer.displayName }]}
+      />
+
       <Section spacing="lg">
-        <CourseHero offer={offer} />
+        <CourseHero offer={offer} audience={audience} />
       </Section>
 
       {offer.flowSteps.length > 0 ? (
         <Section variant="muted">
+          {!isExamSimulation ? <SectionNumberLabel number={1} label="Kursaufbau" /> : null}
           <CourseFlow steps={offer.flowSteps} />
         </Section>
       ) : null}
@@ -181,27 +199,36 @@ export default async function CourseOfferDetailPage({
 
       {!isExamSimulation && offer.contentSections.length > 0 ? (
         <Section>
+          <SectionNumberLabel number={2} label="Kursinhalt" />
           <CourseContent sections={offer.contentSections} />
         </Section>
       ) : null}
 
+      {offer.kurstyp !== 'pruefungssimulation' ? (
+        <Section>
+          <SectionNumberLabel number={3} label="Überblick & Preis" />
+          <OverviewPriceBox offer={offer} />
+        </Section>
+      ) : null}
+
+      <Section variant="muted">
+        {!isExamSimulation ? <SectionNumberLabel number={4} label={offer.booking.title} /> : null}
+        <Suspense fallback={<SessionTableSkeleton />}>
+          <BookingSectionLoader offer={offer} sessions={sessions} />
+        </Suspense>
+      </Section>
+
       {offer.whyUs.length > 0 ? (
-        <Section variant="muted">
+        <Section>
           <WhyUsGrid features={offer.whyUs} />
         </Section>
       ) : null}
 
       {offer.testimonials && offer.testimonials.length > 0 ? (
-        <Section>
+        <Section variant="muted">
           <Testimonials testimonials={offer.testimonials} />
         </Section>
       ) : null}
-
-      <Section variant="muted">
-        <Suspense fallback={<SessionTableSkeleton />}>
-          <BookingSectionLoader offer={offer} sessions={sessions} />
-        </Suspense>
-      </Section>
     </>
   )
 }

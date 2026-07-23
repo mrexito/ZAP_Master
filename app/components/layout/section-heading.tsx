@@ -33,6 +33,8 @@ interface SectionHeadingProps
     VariantProps<typeof sectionHeadingTitleVariants> {
   title: string
   description?: string
+  /** Small uppercase label above the title, e.g. "Was uns auszeichnet". */
+  eyebrow?: string
   /** Heading level, for consistent H2/H3 hierarchy within a page. Defaults to h2. */
   level?: 2 | 3
 }
@@ -41,6 +43,7 @@ function SectionHeading({
   className,
   title,
   description,
+  eyebrow,
   align,
   size,
   level = 2,
@@ -54,6 +57,9 @@ function SectionHeading({
       className={cn(sectionHeadingVariants({ align }), className)}
       {...props}
     >
+      {eyebrow ? (
+        <span className="font-mono text-xs tracking-wide text-secondary uppercase">{eyebrow}</span>
+      ) : null}
       <Heading className={cn(sectionHeadingTitleVariants({ size }))}>{title}</Heading>
       {description ? (
         <p className="max-w-2xl text-muted-foreground">{description}</p>

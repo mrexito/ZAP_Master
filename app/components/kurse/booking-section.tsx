@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import type { CourseOffer, ExamSimulationOffer, SessionColumn, SessionRow } from '@/types/marketing'
-import { SectionHeading } from '@/app/components/layout/section-heading'
 import { SessionTable } from '@/app/components/kurse/session-table'
 import { WeekFilter, ALL_WEEKS_ID } from '@/app/components/kurse/week-filter'
 import { SHOW_PRICE_PREVIEW_BADGE, PREVIEW_BOOKING_NOTE } from '@/lib/kurse/pricing-status'
@@ -65,12 +64,14 @@ function BookingSection({ offer, sessions, onBook }: BookingSectionProps) {
 
   return (
     <div id={offer.booking.anchorId} className="flex flex-col gap-6">
-      <SectionHeading title={offer.booking.title} description={offer.booking.description} level={3} />
       {offer.weekOptions ? (
         <WeekFilter weeks={offer.weekOptions} activeWeekId={activeWeekId} onChange={setActiveWeekId} />
       ) : null}
       {visibleSessions.length > 0 ? (
-        <SessionTable columns={columns} rows={visibleSessions} onBook={onBook} />
+        // offer.booking.title ("Termine und Buchung") ist bereits die SectionNumberLabel-Eyebrow
+        // in [angebot]/page.tsx -- hier nur noch als aria-label statt als zweite sichtbare
+        // Überschrift, um die Dopplung zu vermeiden.
+        <SessionTable columns={columns} rows={visibleSessions} onBook={onBook} ariaLabel={offer.booking.title} />
       ) : (
         <p className="text-sm text-muted-foreground">{offer.booking.emptyState}</p>
       )}

@@ -1,42 +1,70 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { CourseOffer } from '@/types/marketing'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/app/components/ui/card'
+import { cn } from '@/lib/utils'
+import { Card, CardContent, CardFooter } from '@/app/components/ui/card'
+import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
-import { StatusBadge } from '@/app/components/kurse/status-badge'
 import { CategoryBadge } from '@/app/components/kurse/category-badge'
-import { formatOfferPrice } from '@/lib/pricing'
-import { SHOW_PRICE_PREVIEW_BADGE } from '@/lib/kurse/pricing-status'
+import { formatChfRappen, formatOfferPrice } from '@/lib/pricing'
 
 interface CourseCardProps {
   offer: CourseOffer
+  /** Position innerhalb der CourseCardGrid -- steuert die Kopf-Akzentfarbe (Abschnitt design-
+   *  reference: .card-head.a/.b wechseln pro Karte, nicht pro Fach). */
+  index?: number
 }
 
-async function CourseCard({ offer }: CourseCardProps) {
+// Farbfolge sekundär/akzent wie im design-reference-Markup (.card-head.a/.b bzw. .fit-tag/.cc-list
+// li::before) -- feste Tailwind-Klassennamen, da die Klasse zur Build-Zeit im Quelltext stehen muss.
+const CARD_HEAD_ACCENTS = ['from-secondary to-subject-de', 'from-accent/85 to-accent']
+const CARD_TAG_ACCENTS = ['bg-subject-de-pale text-secondary', 'bg-subject-ma-pale text-subject-ma-foreground']
+const CARD_DASH_ACCENTS = ['text-secondary', 'text-subject-ma-foreground']
+
+async function CourseCard({ offer, index = 0 }: CourseCardProps) {
   const t = await getTranslations('kurse.courseCard')
   const price = formatOfferPrice(offer)
+  // Streichpreis (.price-strike im design-reference-Markup) für Halbjahreskurs-Angebote --
+  // dieselbe Frühbucher-Bedingung wie formatOfferPrice(), damit kein zweiter, unabhängiger
+  // Rabatt-Zustand entstehen kann (Abschnitt 2.3).
+  const showStrikePrice =
+    offer.kurstyp === 'halbjahreskurs' && offer.earlyBirdPriceRappen != null && offer.earlyBirdDeadline
+  // "regulär CHF X" ist redundant, sobald der Streichpreis selbst sichtbar ist -- formatOfferPrice()
+  // hängt diesen Teil per " · " an, siehe lib/pricing.ts.
+  const priceNote = showStrikePrice ? price.note?.split(' · ')[0] : price.note
 
   return (
-    <Card className="flex h-full flex-col">
-      <CardHeader>
-        <div className="flex flex-wrap items-center gap-2">
-          {offer.recommended ? <StatusBadge status="empfohlen" /> : null}
-          {SHOW_PRICE_PREVIEW_BADGE ? <StatusBadge status="vorschau" /> : null}
-          {offer.categoryLabel ? (
+    <Card className="flex h-full flex-col gap-0 overflow-hidden p-0">
+      <div
+        className={cn(
+          'relative overflow-hidden bg-gradient-to-br px-6 py-7',
+          CARD_HEAD_ACCENTS[index % CARD_HEAD_ACCENTS.length]
+        )}
+      >
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(115deg, rgba(255,255,255,.08) 0 2px, transparent 2px 26px)',
+          }}
+        />
+        <h3 className="relative font-serif text-2xl font-semibold text-white">{offer.displayName}</h3>
+      </div>
+      <CardContent className="flex flex-1 flex-col gap-4 pt-6">
+        {offer.tagline ? (
+          <Badge
+            variant="outline"
+            className={cn('self-start border-transparent', CARD_TAG_ACCENTS[index % CARD_TAG_ACCENTS.length])}
+          >
+            {offer.tagline}
+          </Badge>
+        ) : null}
+        {offer.categoryLabel ? (
+          <div className="flex flex-wrap items-center gap-2">
             <CategoryBadge label={offer.categoryLabel} subject={offer.subject} />
-          ) : null}
-        </div>
-        <CardTitle className="font-serif text-xl">{offer.displayName}</CardTitle>
-        <CardDescription>{offer.tagline}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-4">
+          </div>
+        ) : null}
         {offer.dateSummary.length > 0 ? (
           <p className="text-sm font-medium text-foreground">{offer.dateSummary.join(' · ')}</p>
         ) : null}
@@ -48,7 +76,7 @@ async function CourseCard({ offer }: CourseCardProps) {
                 key={feature}
                 className="flex gap-2 border-t border-border pt-1.5 text-sm text-foreground first:border-t-0 first:pt-0"
               >
-                <span aria-hidden="true" className="text-secondary-foreground">
+                <span aria-hidden="true" className={CARD_DASH_ACCENTS[index % CARD_DASH_ACCENTS.length]}>
                   —
                 </span>
                 {feature}
@@ -57,10 +85,17 @@ async function CourseCard({ offer }: CourseCardProps) {
           </ul>
         ) : null}
       </CardContent>
-      <CardFooter className="flex items-end justify-between gap-3 border-t pt-6">
+      <CardFooter className="flex items-end justify-between gap-3 border-t pt-6 pb-6">
         <div>
-          <p className="font-serif text-xl font-semibold text-foreground">{price.value}</p>
-          {price.note ? <p className="text-xs text-muted-foreground">{price.note}</p> : null}
+          <p className="flex items-baseline gap-1.5">
+            {showStrikePrice ? (
+              <span className="text-sm font-medium text-muted-foreground line-through">
+                {formatChfRappen(offer.regularPriceRappen)}
+              </span>
+            ) : null}
+            <span className="font-serif text-xl font-semibold text-foreground">{price.value}</span>
+          </p>
+          {priceNote ? <p className="text-xs text-muted-foreground">{priceNote}</p> : null}
         </div>
         <Button asChild>
           <Link href={offer.href}>{t('termineAnsehen')}</Link>

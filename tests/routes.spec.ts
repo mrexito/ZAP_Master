@@ -372,8 +372,11 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     await expect(row.getByRole('button', { name: 'Anmelden' })).toBeDisabled()
   })
 
-  test('Admin-Preisänderung ist nach dem Speichern sofort auf der Zielgruppen-Hauptseite sichtbar', async ({ page }) => {
-    await page.goto('/de/kurse/6-klasse')
+  test('Admin-Preisänderung an einem Bestandskurs ist nach dem Speichern sofort auf /kurse sichtbar', async ({ page }) => {
+    // Die Zielgruppen-Hauptseite zeigt seit der Entfernung von ExistingCourseBooking keine
+    // Bestandskurse (intensivwoche_kurse) mehr -- die einzige verbleibende öffentliche Anzeige
+    // dieser Preise ist die unlokalisierte Bestandsroute /kurse (app/(public)/kurse).
+    await page.goto('/kurse')
     await expect(page.getByText('E2E Preistest-Kurs')).toBeVisible()
     await expect(page.getByText(/CHF\s*888/)).toBeVisible()
 
@@ -398,7 +401,7 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     // Frische Navigation, kein Reload/Wartezeit -- prüft, dass updateTag('courses') in
     // app/(dashboard)/dashboard/kurse/actions.ts den 'use cache'-Katalogeintrag sofort invalidiert
     // (Abschnitt 7, Punkt 3), statt bis cacheLife('hours') abzulaufen.
-    await page.goto('/de/kurse/6-klasse')
+    await page.goto('/kurse')
     await expect(page.getByText(/CHF\s*780/)).toBeVisible()
     await expect(page.getByText(/CHF\s*888/)).toHaveCount(0)
   })

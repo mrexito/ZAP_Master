@@ -111,6 +111,104 @@ export const sechsKlasseIntensivkursSessions = [
   },
 ] satisfies SessionDefinition[]
 
+export const sechsKlasseHalbjahreskursSessions = [
+  {
+    id: 9201,
+    offerId: 'offer-6klasse-halbjahreskurs',
+    capacity: 10,
+    source: { kind: 'intensivwoche_kurse', kursId: 9201 },
+    kurs: 'Kurs A',
+    dateLabel: 'Samstag, 09:00–10:30',
+    timeLabel: '09:00–10:30',
+    standort: 'Zürich HB',
+    deliveryModes: ['onsite'],
+    ablauf: {
+      kind: 'simple',
+      items: [
+        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
+        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
+        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
+      ],
+    },
+  },
+  {
+    id: 9202,
+    offerId: 'offer-6klasse-halbjahreskurs',
+    capacity: 10,
+    source: { kind: 'intensivwoche_kurse', kursId: 9202 },
+    kurs: 'Kurs C',
+    dateLabel: 'Samstag, 11:00–12:30',
+    timeLabel: '11:00–12:30',
+    standort: 'Winterthur',
+    deliveryModes: ['onsite'],
+    ablauf: {
+      kind: 'simple',
+      items: [
+        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
+        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
+        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
+      ],
+    },
+  },
+  {
+    id: 9203,
+    offerId: 'offer-6klasse-halbjahreskurs',
+    capacity: 10,
+    source: { kind: 'intensivwoche_kurse', kursId: 9203 },
+    kurs: 'Kurs E',
+    dateLabel: 'Mittwoch, 14:00–15:30',
+    timeLabel: '14:00–15:30',
+    standort: 'Zürich HB',
+    deliveryModes: ['onsite'],
+    ablauf: {
+      kind: 'simple',
+      items: [
+        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
+        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
+        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
+      ],
+    },
+  },
+  {
+    id: 9204,
+    offerId: 'offer-6klasse-halbjahreskurs',
+    capacity: 10,
+    source: { kind: 'intensivwoche_kurse', kursId: 9204 },
+    kurs: 'Kurs G',
+    dateLabel: 'Mittwoch, 16:00–17:30',
+    timeLabel: '16:00–17:30',
+    standort: 'Winterthur',
+    deliveryModes: ['onsite'],
+    ablauf: {
+      kind: 'simple',
+      items: [
+        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
+        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
+        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
+      ],
+    },
+  },
+  {
+    id: 9205,
+    offerId: 'offer-6klasse-halbjahreskurs',
+    capacity: 10,
+    source: { kind: 'intensivwoche_kurse', kursId: 9205 },
+    kurs: 'Kurs I',
+    dateLabel: 'Mittwoch, 18:00–19:30',
+    timeLabel: '18:00–19:30',
+    standort: 'Winterthur',
+    deliveryModes: ['onsite'],
+    ablauf: {
+      kind: 'simple',
+      items: [
+        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
+        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
+        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
+      ],
+    },
+  },
+] satisfies SessionDefinition[]
+
 export const sechsKlasseIntensivkurs = {
   id: 'offer-6klasse-intensivkurs-sportferien',
   audienceId: '6',
@@ -211,6 +309,7 @@ export const sechsKlasseHalbjahreskurs = {
   href: '/kurse/6-klasse/halbjahreskurs',
   displayName: 'Halbjahreskurs',
   tagline: 'Breite Vorbereitung über das ganze Semester',
+  categoryLabel: 'Deutsch & Mathematik',
   lede: 'Umfassende und optimale Vorbereitung auf die Aufnahmeprüfung ins Langzeitgymnasium — gezielte, individuelle Förderung in Deutsch und Mathematik.',
   description:
     'Umfassende und optimale Vorbereitung auf die Aufnahmeprüfung ins Langzeitgymnasium — gezielte, individuelle Förderung in Deutsch und Mathematik.',
@@ -232,10 +331,128 @@ export const sechsKlasseHalbjahreskurs = {
     'Samstag oder Mittwochnachmittag',
     'Standortbestimmung, Lerncoaching & Prüfungssimulation inbegriffen',
   ],
-  whyUs: [],
+  whyUs: [
+    {
+      id: 'standortbestimmung-kursbeginn',
+      title: 'Standortbestimmung zu Kursbeginn',
+      description: 'Wir stellen fest, wo Lücken bestehen, bevor wir mit dem Training starten — nicht danach.',
+    },
+    {
+      id: 'echte-pruefungssimulation',
+      title: 'Eine echte Prüfungssimulation',
+      description: 'Reale Prüfungsbedingungen, korrigiert und Schritt für Schritt besprochen — einmal reicht, wenn sie gut gemacht ist.',
+    },
+    {
+      id: 'praktische-lern-pruefungsstrategien',
+      title: 'Praktische Lern- und Prüfungsstrategien',
+      description: 'Von der richtigen Lernumgebung über den Umgang mit Prüfungsangst und Blackouts bis zu Konzentrationsübungen und der Herangehensweise an typische Prüfungsaufgaben.',
+    },
+    {
+      id: 'betreuung-ausserhalb-kurszeit',
+      title: 'Betreuung auch ausserhalb der Kurszeit',
+      description: 'Eine gute Begleitung endet für uns nicht mit dem Kursende. Unsere Lehrpersonen stehen bei Fragen auch ausserhalb der Kurszeiten jederzeit per Chat zur Verfügung.',
+    },
+  ],
   kurstyp: 'halbjahreskurs',
-  flowSteps: [],
-  contentSections: [],
+  flowSteps: [
+    {
+      id: 'standortbestimmung',
+      title: 'Standortbestimmung',
+      body: 'Vor dem ersten Kurstag stellen wir fest, wo Ihr Kind aktuell steht, um die Kurszeit von Beginn an gezielt zu nutzen.',
+    },
+    {
+      id: 'semestertraining',
+      title: 'Semestertraining',
+      body: 'Von September bis März wird wöchentlich an Deutsch, Mathematik und den mentalen Prüfungskompetenzen gearbeitet.',
+    },
+    {
+      id: 'pruefungssimulation-feedback',
+      title: 'Prüfungssimulation & Feedback',
+      body: 'Eine echte Prüfungssimulation zeigt den aktuellen Stand — inklusive individueller Besprechung und Empfehlungen für die letzten Wochen vor der Prüfung.',
+    },
+  ],
+  contentSections: [
+    {
+      id: 'mathematik',
+      title: 'Mathematik',
+      lede: 'Aufbau, Übung und schrittweise Anleitung zum Lösen der verschiedenen Aufgabentypen der Prüfung.',
+      groups: [
+        {
+          id: 'zahl-variable',
+          subhead: 'Zahl und Variable',
+          items: [
+            'Fachbegriffe und Symbole sicher anwenden',
+            'Schriftliche Rechenverfahren — Addition, Subtraktion, Multiplikation, Division',
+            'Bruchrechnen',
+            'Dezimalzahlen',
+          ],
+        },
+        {
+          id: 'form-raum',
+          subhead: 'Form und Raum',
+          items: [
+            'Geometrische Grundbegriffe, Symbole, Figuren und Körper',
+            'Umfang und Flächeninhalt von Rechtecken berechnen',
+            'Volumen von Würfeln und Quadern berechnen',
+            'Raumvorstellung trainieren',
+            'Konstruktionsaufgaben',
+            'Arbeiten mit Koordinatensystem und Raster',
+          ],
+        },
+        {
+          id: 'groessen-funktionen-daten',
+          subhead: 'Grössen, Funktionen und Daten',
+          items: ['Masseinheiten', 'Textaufgaben mit Dreisatz und Proportionalität', 'Kombinatorik- und Knobelaufgaben'],
+        },
+      ],
+    },
+    {
+      id: 'deutsch',
+      title: 'Deutsch',
+      groups: [
+        {
+          id: 'aufsatz',
+          subhead: 'Aufsatz',
+          items: [
+            'Prüfungsrelevante Textsorten — Erzählung, Beschreibung, Bericht, Brief',
+            'Schreibprozess: Ideen finden, planen, formulieren, überarbeiten',
+            'Passender Einsatz von Redewendungen und Vergleichen',
+            'Sichere Anwendung der Rechtschreiberegeln',
+          ],
+        },
+        {
+          id: 'textverstaendnis',
+          subhead: 'Textverständnis',
+          items: [
+            'Komplexe Texte verstehen, Fragen zu Inhalt & sprachlicher Form beantworten',
+            'Strategien für unterschiedliche Textarten',
+            'Wortschatz und Ausdruck in eigenen Worten wiedergeben',
+            'Informationen "zwischen den Zeilen" erschliessen',
+          ],
+        },
+        {
+          id: 'sprachbetrachtung-grammatik',
+          subhead: 'Sprachbetrachtung & Grammatik',
+          items: [
+            'Wortstamm, Wortfelder, Wortfamilien und Wortarten',
+            'Zeitformen — Präsens, Präteritum, Perfekt',
+            'Direkte Rede inkl. Satzzeichen',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'mentale-vorbereitung',
+      title: 'Mentale Vorbereitung',
+      lede: 'Neben dem Fachwissen fördern wir gezielt die Lernkompetenzen Ihres Kindes — integriert im Kursprogramm, ergänzt durch ein freiwilliges Online-Zusatzangebot, das bereits in den Kurskosten inbegriffen ist. Die genauen Kursinhalte können sich noch anpassen — die Schwerpunkte richten sich nach dem Stand der jeweiligen Kursgruppe.',
+      groups: [
+        {
+          id: 'lernkompetenzen',
+          items: ['Selbstorganisation', 'Lernmethoden und Lernroutine', 'Konzentration', 'Motivation', 'Umgang mit Stress und Druck', 'Weitere mentale Tipps für die Prüfung'],
+        },
+      ],
+    },
+  ],
   booking: {
     anchorId: 'buchung',
     title: 'Termine und Buchung',
@@ -1092,6 +1309,7 @@ export const vierKlasseHalbjahreskurs = {
   slug: 'halbjahreskurs',
   href: '/kurse/4-klasse/halbjahreskurs',
   displayName: 'Halbjahreskurs',
+  categoryLabel: 'Deutsch, Mathematik & Lerncoaching',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Lücken in Deutsch und Mathematik frühzeitig erkennen und schliessen, dazu erste Lernstrategien fürs Lerncoaching mitgeben — alles in einem wöchentlichen Termin, damit ein stabiles Fundament für die weiteren Schuljahre entsteht.',
   description:
@@ -1565,6 +1783,7 @@ export const fuenfKlasseHalbjahreskurs = {
   slug: 'halbjahreskurs',
   href: '/kurse/5-klasse/halbjahreskurs',
   displayName: 'Halbjahreskurs',
+  categoryLabel: 'Deutsch, Mathematik & Lerncoaching',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Bereits in der 5. Klasse starten und einen Vorsprung für die 6. Klasse erarbeiten: Grundlagen in Deutsch und Mathematik festigen, dazu gezieltes Lerncoaching für Selbstorganisation und Lernstrategien — alles in einem wöchentlichen Termin.',
   description:
@@ -1989,6 +2208,7 @@ export const einsSekVorkurs = {
   slug: 'vorkurs',
   href: '/kurse/1-sek/vorkurs',
   displayName: 'Vorkurs',
+  categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Beste Voraussetzungen für die Gymivorbereitung auf die Kurzzeit-Prüfung 2028 schaffen: Grundlagen in Deutsch und Mathematik festigen, dazu eine umfassende Standortbestimmung zum Einstieg und Lerncoaching für die Selbstorganisation.',
   description:
@@ -2370,6 +2590,7 @@ export const zweiDreiSekHalbjahreskurs = {
   slug: 'halbjahreskurs',
   href: '/kurse/2-3-sek/halbjahreskurs',
   displayName: 'Halbjahreskurs',
+  categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Umfassende Vorbereitung auf die Aufnahmeprüfung ins Kurzzeitgymnasium: fachliches Training in Deutsch und Mathematik, dazu gezielte Unterstützung beim Umgang mit Prüfungsdruck — begleitet über das ganze Semester.',
   description:
@@ -2670,6 +2891,7 @@ export const zweiDreiSekIntensivkurs = {
   slug: 'intensivkurs-sportferien',
   href: '/kurse/2-3-sek/intensivkurs-sportferien',
   displayName: 'Intensivkurs-Sportferien',
+  categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Intensives Training in den Sportferien',
   lede: 'Möchte sich Ihr Kind explizit auf die Prüfungsaufgaben und Prüfungssituation an der Gymiprüfung vorbereiten? Im Kurs werden typische Aufgaben erklärt und Prüfungen simuliert.',
   description:
@@ -2807,6 +3029,7 @@ export const bmsHalbjahreskurs = {
   slug: 'halbjahreskurs',
   href: '/kurse/bms/halbjahreskurs',
   displayName: 'Halbjahreskurs',
+  categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Umfassende Vorbereitung auf die BM1- oder BM2-Aufnahmeprüfung: fachliches Training in Deutsch und Mathematik, dazu gezielte Unterstützung beim Umgang mit Prüfungsdruck — begleitet über das ganze Semester.',
   description:
@@ -3076,6 +3299,7 @@ export const bmsIntensivkurs = {
   slug: 'intensivkurs',
   href: '/kurse/bms/intensivkurs',
   displayName: 'Intensivkurs-Sportferien',
+  categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Kompaktes Training in den Schulferien',
   lede: 'Möchten Sie sich explizit auf die BMS-Aufnahmeprüfung vorbereiten? Im Kurs werden typische Aufgaben in Deutsch (inkl. Aufsatz) und Mathematik erklärt und Prüfungen simuliert — geeignet für BM1 und BM2 gleichermassen.',
   description:
@@ -3344,6 +3568,7 @@ export const maturaHalbjahreskurs = {
   slug: 'halbjahreskurs',
   href: '/kurse/matura/halbjahreskurs',
   displayName: 'Halbjahreskurs',
+  categoryLabel: 'Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Kontinuierliche Vorbereitung auf die Mathematik-Matura: fachliches Training in den prüfungsrelevanten Themengebieten, begleitet über das ganze letzte Gymnasialjahr mit einem festen Wochentermin.',
   description:
@@ -3533,6 +3758,7 @@ export const maturaIntensivwoche = {
   slug: 'intensivwoche',
   href: '/kurse/matura/intensivwoche',
   displayName: 'Intensivwoche',
+  categoryLabel: 'Mathematik',
   tagline: 'Intensives Training in den Frühlingsferien',
   lede: 'Möchten Sie sich in der letzten Ferienwoche vor der Prüfung nochmals gezielt auf die Mathematik-Matura vorbereiten? Im Kurs werden die prüfungsrelevanten Themen Analysis, Vektorgeometrie und Wahrscheinlichkeitsrechnung trainiert und eine Prüfung simuliert.',
   description:

@@ -32,6 +32,7 @@ import {
   sechsKlasseHalbjahreskurs,
   sechsKlasseIntensivkurs,
   sechsKlasseIntensivkursSessions,
+  sechsKlasseHalbjahreskursSessions,
   sechsKlassePruefungssimulation,
   sechsKlasseSelbststudium,
   sechsKlasseSelbststudiumPageModel,
@@ -144,6 +145,7 @@ const OFFER_SESSIONS: Record<string, SessionDefinition[]> = {
   [maturaHalbjahreskurs.id]: maturaHalbjahreskursSessions,
   [maturaIntensivwoche.id]: maturaIntensivwocheSessions,
   [sechsKlasseIntensivkurs.id]: sechsKlasseIntensivkursSessions,
+  [sechsKlasseHalbjahreskurs.id]: sechsKlasseHalbjahreskursSessions,
 }
 
 export function getOfferCatalogEntry(audienceId: AudienceId): OfferCatalogEntry {

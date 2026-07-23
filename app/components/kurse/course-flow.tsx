@@ -5,12 +5,22 @@ interface CourseFlowProps {
   steps: FlowStep[]
 }
 
+// Farbfolge sekundär/primär/akzent wie im design-reference-Markup (.phase:nth-child(1/2/3)) --
+// feste Tailwind-Klassennamen, da die Klasse zur Build-Zeit im Quelltext stehen muss.
+const FLOW_STEP_ACCENTS = ['border-t-secondary', 'border-t-primary', 'border-t-accent']
+
 // Pfeile zwischen den Schritten sind rein visuell, keine Navigation (Abschnitt 3).
 function CourseFlow({ steps }: CourseFlowProps) {
   return (
     <ol className="grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-3">
       {steps.map((step, index) => (
-        <li key={step.id} className="relative flex flex-col gap-2 bg-card p-6">
+        <li
+          key={step.id}
+          className={cn(
+            'relative flex flex-col gap-2 border-t-4 bg-card p-6',
+            FLOW_STEP_ACCENTS[index % FLOW_STEP_ACCENTS.length]
+          )}
+        >
           <span className="font-mono text-xs font-semibold tracking-wide text-secondary-foreground uppercase">
             Schritt {index + 1}
           </span>

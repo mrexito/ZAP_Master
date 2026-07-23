@@ -26,13 +26,20 @@ function SiteNav({ model }: SiteNavProps) {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-40 bg-primary">
       <nav
         aria-label="Hauptnavigation"
         className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4"
       >
-        <Link href={model.home.href} className="font-serif text-xl font-semibold text-foreground">
-          {model.home.label === 'Startseite' ? 'Lernecke' : model.home.label}
+        <Link href={model.home.href} className="font-serif text-xl font-semibold">
+          {model.home.label === 'Startseite' ? (
+            <>
+              <span className="text-brand-on-dark">Lern</span>
+              <em className="text-accent">ecke</em>
+            </>
+          ) : (
+            model.home.label
+          )}
         </Link>
 
         <ul className="hidden items-center gap-6 md:flex">
@@ -40,7 +47,7 @@ function SiteNav({ model }: SiteNavProps) {
             <li key={audience.id}>
               <Link
                 href={audience.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="text-sm font-medium text-primary-foreground/85 transition-colors hover:text-primary-foreground"
               >
                 {audience.navLabel}
               </Link>
@@ -50,7 +57,7 @@ function SiteNav({ model }: SiteNavProps) {
             <li key={item.id}>
               <Link
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="text-sm font-medium text-primary-foreground/85 transition-colors hover:text-primary-foreground"
               >
                 {item.label}
               </Link>
@@ -59,14 +66,23 @@ function SiteNav({ model }: SiteNavProps) {
         </ul>
 
         <div className="hidden md:block">
-          <Button asChild size="sm" className="min-h-[44px] rounded-full px-6">
+          <Button
+            asChild
+            size="sm"
+            className="min-h-[44px] rounded-full bg-accent px-6 text-accent-foreground hover:bg-accent/90"
+          >
             <NextLink href={model.login.href}>{model.login.label}</NextLink>
           </Button>
         </div>
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" aria-label="Menü öffnen" className="min-h-[44px] min-w-[44px]">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Menü öffnen"
+              className="min-h-[44px] min-w-[44px] text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            >
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>

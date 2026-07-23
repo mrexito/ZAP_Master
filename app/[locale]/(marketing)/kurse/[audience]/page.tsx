@@ -9,12 +9,10 @@ import { Section } from '@/app/components/layout/section'
 import { AudienceHero } from '@/app/components/kurse/audience-hero'
 import { CourseCardGrid } from '@/app/components/kurse/course-card-grid'
 import { AddOnCourses } from '@/app/components/kurse/add-on-courses'
-import { ExistingCourseBooking } from '@/app/components/kurse/existing-course-booking'
-import {
-  getAudienceHero,
-  getExistingCoursesForAudience,
-  getOfferCatalogForAudience,
-} from '@/lib/kurse/catalog'
+import { SubjectRhythm } from '@/app/components/kurse/subject-rhythm'
+import { Breadcrumb } from '@/app/components/marketing/breadcrumb'
+import { getAudienceHero, getOfferCatalogForAudience } from '@/lib/kurse/catalog'
+import { coversDeutschUndMathematik } from '@/lib/kurse/subject-rhythm'
 
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
@@ -75,16 +73,22 @@ export default async function AudienceOverviewPage({
     description: audience.zielPruefung,
   }
 
-  const [hero, { offers, addOnOffers }, existingCourses] = await Promise.all([
+  const [hero, { offers, addOnOffers }] = await Promise.all([
     getAudienceHero(audience.id, fallbackHero, locale),
     getOfferCatalogForAudience(audience.id, locale),
-    getExistingCoursesForAudience(audience.id),
   ])
 
   return (
     <>
+      <Breadcrumb items={[{ label: 'Startseite', href: '/' }, { label: audience.displayLabel }]} />
+
       <Section spacing="lg">
         <AudienceHero content={hero} />
+        {offers.some(coversDeutschUndMathematik) ? (
+          <div className="mt-9">
+            <SubjectRhythm />
+          </div>
+        ) : null}
       </Section>
 
       {offers.length > 0 || addOnOffers.length > 0 ? (
@@ -93,12 +97,6 @@ export default async function AudienceOverviewPage({
             {offers.length > 0 ? <CourseCardGrid offers={offers} /> : null}
             <AddOnCourses offers={addOnOffers} />
           </div>
-        </Section>
-      ) : null}
-
-      {existingCourses.length > 0 ? (
-        <Section>
-          <ExistingCourseBooking courses={existingCourses} />
         </Section>
       ) : null}
     </>
