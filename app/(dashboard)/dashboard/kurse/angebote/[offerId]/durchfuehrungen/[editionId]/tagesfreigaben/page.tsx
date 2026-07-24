@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { requireAdmin } from '@/lib/auth/guards'
+import { requireContentManager } from '@/lib/auth/guards'
 import { getAdminOfferList, getEditionDetail } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
 import { getSessionsForEdition } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/tagesfreigaben-actions'
 import { DailyReleaseManager } from '@/app/components/kurse-admin/daily-release-manager'
@@ -10,9 +10,7 @@ export default async function TagesfreigabenPage({
 }: {
   params: Promise<{ offerId: string; editionId: string }>
 }) {
-  // Schritt 10b: Tagesfreigaben sind wie die uebrige Kursangebot-Verwaltung admin-only
-  // (Abschnitt 2.13, is_admin()-gated RLS auf course_days/daily_releases/daily_release_items).
-  await requireAdmin()
+  await requireContentManager()
 
   const { offerId: offerIdParam, editionId } = await params
   const offerId = Number(offerIdParam)

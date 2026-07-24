@@ -19,12 +19,24 @@ export function ReleaseMaterialSelector({
   onToggle: (item: ReleaseContentItem) => void
 }) {
   const [search, setSearch] = useState('')
+  const [subject, setSubject] = useState('all')
+
+  const availableSubjects = useMemo(() => {
+    const set = new Set<string>()
+    for (const item of items) {
+      if (item.subject) set.add(item.subject)
+    }
+    return Array.from(set).sort()
+  }, [items])
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
-    if (!term) return items
-    return items.filter((item) => item.title.toLowerCase().includes(term) || item.subject.toLowerCase().includes(term))
-  }, [items, search])
+    return items.filter((item) => {
+      const matchesSearch = !term || item.title.toLowerCase().includes(term) || item.subject.toLowerCase().includes(term)
+      const matchesSubject = subject === 'all' || item.subject === subject
+      return matchesSearch && matchesSubject
+    })
+  }, [items, search, subject])
 
   return (
     <section className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -37,15 +49,28 @@ export function ReleaseMaterialSelector({
           {selectedKeys.size} ausgewählt
         </span>
       </div>
-      <div className="px-5 py-3 border-b border-border">
+      <div className="px-5 py-3 border-b border-border flex flex-col sm:flex-row gap-2">
         <input
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Material suchen …"
           aria-label="Material suchen"
-          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+          className="flex-1 h-10 px-3 rounded-lg border border-border bg-background text-sm"
         />
+        <select
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          aria-label="Fach filtern"
+          className="h-10 px-3 rounded-lg border border-border bg-background text-sm min-w-[130px]"
+        >
+          <option value="all">Alle Fächer</option>
+          {availableSubjects.map((sub) => (
+            <option key={sub} value={sub}>
+              {sub}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="max-h-[420px] overflow-y-auto divide-y divide-border">
         {filtered.length === 0 && <p className="p-5 text-sm text-muted-foreground">Keine Treffer.</p>}

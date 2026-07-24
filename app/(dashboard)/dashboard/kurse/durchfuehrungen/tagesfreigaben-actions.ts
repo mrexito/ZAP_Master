@@ -33,8 +33,8 @@ async function requireAdminAuth(): Promise<
   if (!session?.user || !session.supabaseAccessToken) {
     return { authorized: false, error: { success: false, error: 'Du musst angemeldet sein, um diese Aktion auszuführen.' } }
   }
-  if (session.user.role !== 'admin') {
-    return { authorized: false, error: { success: false, error: 'Nur Administratorinnen und Administratoren dürfen Tagesfreigaben verwalten.' } }
+  if (session.user.role !== 'admin' && session.user.role !== 'lehrperson') {
+    return { authorized: false, error: { success: false, error: 'Nur Lehrpersonen sowie Administratorinnen und Administratoren dürfen Tagesfreigaben verwalten.' } }
   }
   return { authorized: true, userId: session.user.id, supabaseAccessToken: session.supabaseAccessToken }
 }

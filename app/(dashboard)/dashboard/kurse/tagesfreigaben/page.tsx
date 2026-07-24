@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, CalendarCheck2 } from 'lucide-react'
-import { requireAdmin } from '@/lib/auth/guards'
+import { requireContentManager } from '@/lib/auth/guards'
 import { Badge } from '@/app/components/ui/badge'
 import {
   getAdminEditionSummaries,
@@ -15,7 +15,7 @@ const STATUS_LABELS = {
 } as const
 
 export default async function TagesfreigabenIndexPage() {
-  await requireAdmin()
+  await requireContentManager()
 
   const [offerListResult, summariesResult] = await Promise.all([
     getAdminOfferList(),
