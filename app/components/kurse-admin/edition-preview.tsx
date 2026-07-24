@@ -26,10 +26,10 @@ export function EditionPreview({
   const earlyBirdDeadline = liveValues?.earlyBirdDeadline
 
   return (
-    <section className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-      <div className="p-5 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+    <section className="overflow-hidden rounded-xl border border-border bg-card shadow-[0_14px_36px_rgba(22,35,63,.08)]">
+      <div className="bg-gradient-to-br from-[#16233F] to-[#26395E] p-5 text-white">
         <small className="font-mono text-[10px] uppercase tracking-wide opacity-80">Live-Vorschau Kachel</small>
-        <h3 className="font-serif text-xl mt-1.5">{title}</h3>
+        <h3 className="mt-1.5 font-serif-marketing text-[25px]">{title}</h3>
         {tagline && <p className="text-xs opacity-85 mt-2">{tagline}</p>}
       </div>
       <div className="p-4 space-y-2 text-sm">
@@ -47,7 +47,7 @@ export function EditionPreview({
         </div>
         <div className="flex justify-between border-b border-border pb-2">
           <span className="text-muted-foreground">Preis</span>
-          <strong className="font-serif text-lg text-secondary-foreground">{formatChf(regularPrice)}</strong>
+          <strong className="font-serif-marketing text-2xl font-semibold text-secondary">{formatChf(regularPrice)}</strong>
         </div>
         {earlyBirdEnabled && (
           <div className="flex justify-between">

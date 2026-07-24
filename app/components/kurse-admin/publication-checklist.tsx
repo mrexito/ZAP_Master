@@ -39,8 +39,8 @@ export function PublicationChecklist({
   const sessionOk = !needsSession || activeSessionCount > 0
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-5">
-      <h3 className="text-base font-semibold text-foreground mb-1">Bereit zur Veröffentlichung</h3>
+    <section className="rounded-xl border border-border bg-card p-5 shadow-[0_14px_36px_rgba(22,35,63,.08)]">
+      <h3 className="mb-1 font-serif-marketing text-lg font-semibold text-foreground">Bereit zur Veröffentlichung</h3>
       <ChecklistItem ok={requiredFieldsOk}>Pflichtfelder vollständig</ChecklistItem>
       <ChecklistItem ok={priceOk}>Preis und Währung gesetzt</ChecklistItem>
       {needsSession && <ChecklistItem ok={sessionOk}>Mindestens ein buchbarer Termin</ChecklistItem>}

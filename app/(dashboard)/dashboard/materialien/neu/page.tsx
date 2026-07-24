@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -20,13 +20,14 @@ import {
 import { Button } from '@/app/components/ui/button'
 import { createAuthenticatedBrowserClient } from '@/lib/supabase/client'
 import { createMaterial, getSubjects } from '../actions'
-import { useEffect } from 'react'
+import { useClassFilter } from '@/context/ClassFilterContext'
+import { CLASS_LEVELS } from '@/lib/class-levels'
 
-const classLevelOptions = ['5. Klasse', '6. Klasse']
 const materialTypes = [
   { value: 'document', label: 'Dokument (PDF, Word)' },
   { value: 'worksheet', label: 'Arbeitsblatt' },
   { value: 'exercise', label: 'Übung' },
+  { value: 'test', label: 'Test / Prüfung' },
   { value: 'solution', label: 'Lösung' },
   { value: 'summary', label: 'Zusammenfassung' },
   { value: 'video', label: 'Video' },
@@ -148,6 +149,7 @@ function LinkPreview({ url, onRemove }: { url: string; onRemove: () => void }) {
 export default function NeuMaterialPage() {
   const router = useRouter()
   const { supabaseAccessToken } = useAuthStore()
+  const { selectedClass } = useClassFilter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const supabase = useMemo(
@@ -163,7 +165,7 @@ export default function NeuMaterialPage() {
   const [description, setDescription] = useState('')
   const [subjectId, setSubjectId] = useState<string>('')
   const [type, setType] = useState('document')
-  const [selectedClassLevels, setSelectedClassLevels] = useState<string[]>(['5. Klasse', '6. Klasse'])
+  const [selectedClassLevels, setSelectedClassLevels] = useState<string[]>([])
   
   const [file, setFile] = useState<File | null>(null)
   const [fileUrl, setFileUrl] = useState<string | null>(null)
@@ -177,6 +179,12 @@ export default function NeuMaterialPage() {
   useEffect(() => {
     loadSubjects()
   }, [])
+
+  useEffect(() => {
+    if (selectedClass) {
+      setSelectedClassLevels([selectedClass])
+    }
+  }, [selectedClass])
 
   async function loadSubjects() {
     const result = await getSubjects()
@@ -574,11 +582,12 @@ export default function NeuMaterialPage() {
                 Klassenstufen
               </label>
               <div className="flex flex-wrap gap-2">
-                {classLevelOptions.map(level => (
+                {CLASS_LEVELS.map(level => (
                   <button
                     key={level}
                     type="button"
                     onClick={() => toggleClassLevel(level)}
+                    aria-pressed={selectedClassLevels.includes(level)}
                     className={`px-4 py-2 rounded-lg border transition-colors ${
                       selectedClassLevels.includes(level)
                         ? 'border-primary bg-primary/10 text-primary'
@@ -600,7 +609,7 @@ export default function NeuMaterialPage() {
         <div className="flex items-center gap-3 pt-4 border-t border-border">
           <Button
             type="submit"
-            disabled={loading || uploading || !name || !subjectId || (uploadMode === 'link' && !linkUrlValid && !file)}
+            disabled={loading || uploading || !name || !subjectId || selectedClassLevels.length === 0 || (uploadMode === 'link' && !linkUrlValid && !file)}
             className="rounded-xl"
           >
             {loading ? (

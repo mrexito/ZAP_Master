@@ -3,10 +3,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { createAuthenticatedBrowserClient } from '@/lib/supabase/client'
+import {
+  CLASS_LEVELS,
+  normalizeClassLevel,
+  type ClassLevel,
+} from '@/lib/class-levels'
 
-// Verfügbare Klassenstufen
-export const CLASS_LEVELS = ['4. Klasse', '5. Klasse', '6. Klasse'] as const
-export type ClassLevel = typeof CLASS_LEVELS[number]
+export { CLASS_LEVELS }
+export type { ClassLevel }
 
 interface ClassFilterContextType {
   selectedClass: ClassLevel | null
@@ -49,8 +53,9 @@ export function ClassFilterProvider({ children }: { children: React.ReactNode })
 
         if (error) {
           console.warn('Could not load user class level:', error.message)
-        } else if (data?.class_level && CLASS_LEVELS.includes(data.class_level as ClassLevel)) {
-          const userClass = data.class_level as ClassLevel
+        } else {
+          const userClass = normalizeClassLevel(data?.class_level)
+          if (!userClass) return
           setUserDefaultClass(userClass)
           // Setze die Klasse aus dem Profil (überschreibt localStorage)
           setSelectedClassState(userClass)
@@ -83,8 +88,9 @@ export function ClassFilterProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (hasLoadedFromProfile && !selectedClass) {
       const saved = localStorage.getItem('zap-selected-class')
-      if (saved && CLASS_LEVELS.includes(saved as ClassLevel)) {
-        setSelectedClassState(saved as ClassLevel)
+      const savedClass = normalizeClassLevel(saved)
+      if (savedClass) {
+        setSelectedClassState(savedClass)
       }
     }
   }, [hasLoadedFromProfile, selectedClass])

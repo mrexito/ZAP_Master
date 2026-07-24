@@ -21,6 +21,7 @@ import {
   FileText,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
+import { CLASS_LEVELS } from '@/lib/class-levels'
 import {
   updateProfile,
   updateThemePreference,
@@ -61,14 +62,9 @@ const GENDER_OPTIONS = [
   { value: 'other', label: 'Divers' },
 ]
 
-const CLASS_LEVELS = [
+const PROFILE_CLASS_LEVEL_OPTIONS = [
   { value: '', label: 'Nicht angegeben' },
-  { value: '5', label: '5. Klasse' },
-  { value: '6', label: '6. Klasse' },
-  { value: '7', label: '7. Klasse (Sek)' },
-  { value: '8', label: '8. Klasse (Sek)' },
-  { value: '9', label: '9. Klasse (Sek)' },
-  { value: 'gym', label: 'Gymnasium' },
+  ...CLASS_LEVELS.map((level) => ({ value: level, label: level })),
   { value: 'other', label: 'Andere' },
 ]
 
@@ -425,7 +421,7 @@ export function ProfilClient({ profile, stats }: ProfilClientProps) {
                   onChange={(e) => setClassLevel(e.target.value)}
                   className="w-full h-11 px-4 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
                 >
-                  {CLASS_LEVELS.map((option) => (
+                  {PROFILE_CLASS_LEVEL_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>

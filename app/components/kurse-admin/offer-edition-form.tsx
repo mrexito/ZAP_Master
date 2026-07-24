@@ -62,11 +62,15 @@ function defaultValuesFor(edition: OfferEditionDB | null): OfferEditionFormInput
 export function OfferEditionForm({
   offerId,
   edition,
+  audienceLabel,
+  offerTypeLabel,
   onValuesChange,
   onSaved,
 }: {
   offerId: number
   edition: OfferEditionDB | null
+  audienceLabel: string
+  offerTypeLabel: string
   onValuesChange?: (values: OfferEditionFormInput) => void
   onSaved: (edition: OfferEditionDB) => void
 }) {
@@ -172,14 +176,30 @@ export function OfferEditionForm({
       )}
 
       {/* 1 · Grundlagen */}
-      <div className="rounded-2xl border border-border bg-card p-6 space-y-5">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">1 · Grundlagen</h2>
+      <section id="grundlagen" className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-[22px] pb-[15px] pt-5">
+          <div>
+          <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">1 · Grundlagen</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Stabile Zuordnung und öffentliche Texte dieser Jahresdurchführung.
           </p>
+          </div>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-subject-de-pale font-mono-marketing text-[11px] font-semibold text-subject-de-foreground">01</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 p-[22px] md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 rounded-[10px] border border-border bg-[#F7F8F3] p-[14px] md:col-span-2 md:grid-cols-2">
+            <div className="px-1 py-0.5">
+              <span className="mb-1 block font-mono-marketing text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Zielgruppe</span>
+              <strong className="text-[13px]">{audienceLabel}</strong>
+            </div>
+            <div className="px-1 py-0.5">
+              <span className="mb-1 block font-mono-marketing text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Angebotstyp</span>
+              <strong className="text-[13px]">{offerTypeLabel}</strong>
+            </div>
+            <p className="border-t border-border pt-2.5 text-[11px] text-muted-foreground md:col-span-2">
+              Diese Stammdaten werden aus dem oben gewählten Kursangebot abgeleitet und hier nicht doppelt bearbeitet.
+            </p>
+          </div>
           <div>
             <label className={labelClass}>Schul-/Prüfungsjahr *</label>
             <input type="text" {...register('schoolYear')} placeholder="z.B. 2026/27" className={inputClass} />
@@ -204,16 +224,20 @@ export function OfferEditionForm({
             {errors.description && <p className={errorClass}>{errors.description.message}</p>}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 2 · Preise */}
-      <div className="rounded-2xl border border-border bg-card p-6 space-y-5">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">2 · Preise</h2>
+      <section id="preise" className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-[22px] pb-[15px] pt-5">
+          <div>
+          <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">2 · Preise</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Preisänderungen gelten nur für neue Buchungen dieser Durchführung.
           </p>
+          </div>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-subject-de-pale font-mono-marketing text-[11px] font-semibold text-subject-de-foreground">02</span>
         </div>
+        <div className="space-y-5 p-[22px]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Regulärer Preis (CHF) *</label>
@@ -255,17 +279,22 @@ export function OfferEditionForm({
           <strong>Historie geschützt:</strong> Bestehende Anmeldungen behalten ihren gebuchten Preis.
           Änderungen aktualisieren keine früheren Buchungen.
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* 4 · Veröffentlichung (Panel-Nummer folgt der Referenz; Termine/SessionEditor sitzt als
           eigene Komponente dazwischen, siehe Workspace) */}
-      <div className="rounded-2xl border border-border bg-card p-6 space-y-5">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">4 · Veröffentlichung</h2>
+      <section id="publikation" className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-[22px] pb-[15px] pt-5">
+          <div>
+          <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">4 · Veröffentlichung</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Entwurf prüfen und kontrolliert auf allen verbundenen Seiten publizieren.
           </p>
+          </div>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-subject-de-pale font-mono-marketing text-[11px] font-semibold text-subject-de-foreground">04</span>
         </div>
+        <div className="space-y-5 p-[22px]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Anmeldung öffnet</label>
@@ -277,11 +306,11 @@ export function OfferEditionForm({
           </div>
         </div>
         <div className="flex flex-wrap gap-3 pt-2">
-          <Button type="submit" variant="outline" disabled={submitState === 'saving' || submitState === 'publishing'}>
+          <Button type="submit" variant="outline" className="rounded-[9px]" disabled={submitState === 'saving' || submitState === 'publishing'}>
             {submitState === 'saving' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Entwurf speichern
           </Button>
-          <Button type="button" onClick={onPublish} disabled={submitState === 'saving' || submitState === 'publishing'}>
+          <Button type="button" className="rounded-[9px] bg-[#16233F] text-white hover:bg-[#26395E]" onClick={onPublish} disabled={submitState === 'saving' || submitState === 'publishing'}>
             {submitState === 'publishing' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Veröffentlichen
           </Button>
@@ -291,7 +320,8 @@ export function OfferEditionForm({
             </Button>
           )}
         </div>
-      </div>
+        </div>
+      </section>
     </form>
   )
 }

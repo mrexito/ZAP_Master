@@ -23,6 +23,7 @@ import {
 import { Button } from '@/app/components/ui/button'
 import { DropdownMenu, DropdownMenuItem } from '@/app/components/ui/dropdown-menu'
 import { deleteMaterial } from './actions'
+import { useClassFilter } from '@/context/ClassFilterContext'
 
 interface Subject {
   id: number
@@ -92,6 +93,7 @@ interface Props {
 }
 
 export function MaterialienTabelle({ materials, subjects }: Props) {
+  const { selectedClass } = useClassFilter()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSubject, setSelectedSubject] = useState<number | null>(null)
   const [deleteModal, setDeleteModal] = useState<{
@@ -107,8 +109,9 @@ export function MaterialienTabelle({ materials, subjects }: Props) {
       material.description?.toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesSubject = !selectedSubject || material.subject_id === selectedSubject
+    const matchesClass = !selectedClass || material.class_levels?.includes(selectedClass)
     
-    return matchesSearch && matchesSubject
+    return matchesSearch && matchesSubject && matchesClass
   })
 
   function openDeleteModal(material: Material) {
@@ -188,7 +191,13 @@ export function MaterialienTabelle({ materials, subjects }: Props) {
               </tr>
             </thead>
             <tbody>
-              {filteredMaterials.map((material) => (
+              {filteredMaterials.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                    Keine Materialien für {selectedClass ?? 'diese Auswahl'} vorhanden.
+                  </td>
+                </tr>
+              ) : filteredMaterials.map((material) => (
                 <tr key={material.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">

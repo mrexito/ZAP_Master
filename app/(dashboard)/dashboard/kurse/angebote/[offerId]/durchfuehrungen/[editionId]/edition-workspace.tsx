@@ -9,7 +9,6 @@
 import { useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
 import { OfferEditionForm } from '@/app/components/kurse-admin/offer-edition-form'
 import { SessionEditor } from '@/app/components/kurse-admin/session-editor'
@@ -73,35 +72,57 @@ export function EditionWorkspace({
     edition?.status === 'published' ? 'Veröffentlicht · öffentlich' : edition?.status === 'archived' ? 'Archiviert' : 'Entwurf · nicht öffentlich'
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="brand-marketing admin-course-editor min-h-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-[1440px]">
+      <div className="mb-6 flex items-start justify-between gap-5">
         <div>
-          <Link href="/dashboard/kurse/angebote" className="text-sm text-muted-foreground hover:text-foreground">
-            ← Kursangebote
-          </Link>
-          <h1 className="text-2xl font-bold text-foreground mt-1">Kursangebot verwalten</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <div className="mb-2 font-mono-marketing text-[11px] font-medium uppercase tracking-[.08em] text-secondary">
+            Zentrale Angebotsverwaltung
+          </div>
+          <h1 className="font-serif-marketing text-[34px] font-semibold leading-[1.15] text-foreground">
+            Kursangebot verwalten
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Alle Kursangebote, Preise, Termine und Veröffentlichungen an einem Ort bearbeiten.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {edition && catalogEntry.kurstyp !== 'selbststudium' && (
             <Link href={`/dashboard/kurse/angebote/${offerId}/durchfuehrungen/${edition.id}/tagesfreigaben`}>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="border-border bg-card">
                 Tagesfreigaben
               </Button>
             </Link>
           )}
-          <Badge variant={edition?.status === 'published' ? 'default' : 'secondary'}>{statusLabel}</Badge>
+          <span
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-2 font-mono-marketing text-[11px] font-medium ${
+              edition?.status === 'published'
+                ? 'bg-subject-de-pale text-subject-de-foreground'
+                : 'bg-subject-ma-pale text-subject-ma-foreground'
+            }`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                edition?.status === 'published' ? 'bg-subject-de' : 'bg-subject-ma'
+              }`}
+            />
+            {statusLabel}
+          </span>
         </div>
       </div>
 
       {/* Bearbeitungskontext */}
-      <section className="rounded-2xl border border-border bg-card p-5 grid grid-cols-1 md:grid-cols-[1.3fr_1fr_auto] gap-4 items-end">
+      <section className="mb-[18px] grid grid-cols-1 items-end gap-3 rounded-xl border border-border bg-card p-[15px] shadow-[0_14px_36px_rgba(22,35,63,.08)] md:grid-cols-[1.3fr_.7fr_auto]">
+        <div className="flex flex-col gap-1 border-b border-border pb-2 md:col-span-3 md:flex-row md:items-baseline md:justify-between">
+          <strong className="font-serif-marketing text-[17px] font-semibold">Bearbeitungskontext</strong>
+          <span className="text-[11.5px] text-muted-foreground">
+            Bestimmt, welches stabile Angebot und welche Jahresdurchführung bearbeitet werden.
+          </span>
+        </div>
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1.5">Kursangebot</label>
+          <label className="mb-1.5 block text-xs font-semibold text-foreground">Kursangebot</label>
           <select
-            className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm"
+            className="h-[42px] w-full rounded-[9px] border border-border bg-white px-3 text-sm outline-none focus:border-secondary focus:ring-3 focus:ring-secondary/15"
             value={offerId}
             onChange={(event) => router.push(`/dashboard/kurse/angebote/${event.target.value}/durchfuehrungen/neu`)}
           >
@@ -113,9 +134,9 @@ export function EditionWorkspace({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1.5">Durchführung</label>
+          <label className="mb-1.5 block text-xs font-semibold text-foreground">Durchführung</label>
           <select
-            className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm"
+            className="h-[42px] w-full rounded-[9px] border border-border bg-white px-3 text-sm outline-none focus:border-secondary focus:ring-3 focus:ring-secondary/15"
             value={editionIdParam}
             onChange={(event) => router.push(`/dashboard/kurse/angebote/${offerId}/durchfuehrungen/${event.target.value}`)}
           >
@@ -127,7 +148,7 @@ export function EditionWorkspace({
             <option value="neu">Neue Durchführung …</option>
           </select>
         </div>
-        <Button type="button" variant="outline" disabled={!edition} onClick={() => setShowDuplicate((v) => !v)}>
+        <Button type="button" variant="outline" className="h-[42px] rounded-[9px] bg-card" disabled={!edition} onClick={() => setShowDuplicate((v) => !v)}>
           Vorjahr duplizieren
         </Button>
         {showDuplicate && (
@@ -150,25 +171,37 @@ export function EditionWorkspace({
         )}
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_330px] gap-5 items-start">
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="identity-card grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border border-border rounded-xl bg-muted/30">
-              <div>
-                <span className="block font-mono text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Zielgruppe</span>
-                <strong className="text-sm">{getAudienceDisplayLabel(catalogEntry.audienceId)}</strong>
-              </div>
-              <div>
-                <span className="block font-mono text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Angebotstyp</span>
-                <strong className="text-sm">{KURSTYP_LABELS[catalogEntry.kurstyp]}</strong>
-              </div>
-              <p className="md:col-span-2 pt-2 border-t border-border text-xs text-muted-foreground">
-                Diese Stammdaten werden aus dem oben gewählten Kursangebot abgeleitet und hier nicht doppelt bearbeitet.
-              </p>
-            </div>
-          </div>
+      <nav className="mb-[18px] flex gap-1 overflow-x-auto rounded-[10px] bg-[#E9EBE4] p-[5px]" aria-label="Formularabschnitte">
+        {[
+          ['grundlagen', '1 · Grundlagen'],
+          ['preise', '2 · Preise'],
+          ['termine', '3 · Termine'],
+          ['publikation', '4 · Veröffentlichung'],
+        ].map(([target, label], index) => (
+          <a
+            key={target}
+            href={`#${target}`}
+            className={`whitespace-nowrap rounded-[7px] px-[13px] py-[9px] text-sm font-semibold ${
+              index === 0
+                ? 'bg-card text-foreground shadow-[0_2px_8px_rgba(22,35,63,.07)]'
+                : 'text-muted-foreground hover:bg-card hover:text-foreground'
+            }`}
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
 
-          <OfferEditionForm offerId={offerId} edition={edition} onValuesChange={handleValuesChange} onSaved={handleEditionSaved} />
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_330px]">
+        <div className="space-y-6">
+          <OfferEditionForm
+            offerId={offerId}
+            edition={edition}
+            audienceLabel={getAudienceDisplayLabel(catalogEntry.audienceId)}
+            offerTypeLabel={KURSTYP_LABELS[catalogEntry.kurstyp]}
+            onValuesChange={handleValuesChange}
+            onSaved={handleEditionSaved}
+          />
 
           {catalogEntry.kurstyp !== 'selbststudium' && (
             <SessionEditor offerId={offerId} edition={edition} sessions={sessions} />
@@ -183,8 +216,8 @@ export function EditionWorkspace({
             activeSessionCount={activeSessionCount}
             isPublished={edition?.status === 'published'}
           />
-          <section className="rounded-2xl bg-primary text-primary-foreground p-5">
-            <h3 className="text-base font-semibold">Änderungen erscheinen auf</h3>
+          <section className="rounded-xl bg-[#16233F] p-5 text-white">
+            <h3 className="font-serif-marketing text-lg font-semibold">Änderungen erscheinen auf</h3>
             <p className="text-xs opacity-80 mt-1">Eine zentrale Durchführung aktualisiert alle Verbraucher des gewählten Angebots.</p>
             <ul className="text-xs opacity-90 mt-3 space-y-1 list-disc list-inside">
               <li>Zugehörige Zielgruppen-Hauptseite</li>
@@ -194,6 +227,7 @@ export function EditionWorkspace({
             </ul>
           </section>
         </aside>
+      </div>
       </div>
     </div>
   )

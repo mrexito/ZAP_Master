@@ -24,6 +24,8 @@ import {
   PanelLeft,
   PanelLeftClose,
   Mail,
+  BarChart3,
+  CalendarCheck2,
 } from 'lucide-react'
 
 // Haupt-Navigation (immer sichtbar)
@@ -63,6 +65,9 @@ const lehrpersonNavigation = [
 
 // Navigation nur für System-Admins
 const adminNavigation = [
+  { name: 'Kursangebote', href: '/dashboard/kurse/angebote', icon: BookOpen },
+  { name: 'Tagesfreigaben', href: '/dashboard/kurse/tagesfreigaben', icon: CalendarCheck2 },
+  { name: 'Finanz-Cockpit', href: '/dashboard/finanzen', icon: BarChart3 },
   { name: 'Benutzer', href: '/dashboard/admin/benutzer', icon: Users },
   { name: 'Mail-Warteschlange', href: '/dashboard/mail-outbox', icon: Mail },
   { name: 'Einstellungen', href: '/dashboard/admin/einstellungen', icon: Settings },

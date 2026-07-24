@@ -4,6 +4,14 @@ import { createAuthenticatedSupabaseClient, createAdminSupabaseClient, createSer
 import { auth } from '@/lib/auth/config'
 import { revalidatePath } from 'next/cache'
 import { createMaterialSchema } from '@/types/material'
+import { CLASS_LEVELS } from '@/lib/class-levels'
+
+function validateClassLevels(classLevels: string[]) {
+  return (
+    classLevels.length > 0 &&
+    classLevels.every((level) => CLASS_LEVELS.includes(level as (typeof CLASS_LEVELS)[number]))
+  )
+}
 
 // Öffentliche Funktion - braucht kein Auth
 export async function getSubjects() {
@@ -71,6 +79,10 @@ export async function createMaterial(formData: FormData) {
   const fileType = formData.get('file_type') as string
   const isLink = formData.get('is_link') === 'true'
 
+  if (!validateClassLevels(classLevels)) {
+    return { success: false, error: 'Bitte wähle mindestens eine gültige Klassenstufe aus.' }
+  }
+
   const parsed = createMaterialSchema.safeParse({
     name: rawName,
     description: rawDescription || undefined,
@@ -99,7 +111,7 @@ export async function createMaterial(formData: FormData) {
       description: parsed.data.description ?? null,
       subject_id: parsed.data.subject_id,
       type: materialCategory || 'document',
-      class_levels: classLevels.length > 0 ? classLevels : ['5. Klasse', '6. Klasse'],
+      class_levels: classLevels,
       file_url: parsed.data.url ?? parsed.data.file_path ?? null,
       file_size: parsed.data.file_size ?? null,
       file_type: fileType || null,
@@ -155,6 +167,10 @@ export async function updateMaterial(id: number, formData: FormData) {
   const fileType = formData.get('file_type') as string
   const isLink = formData.get('is_link') === 'true'
 
+  if (!validateClassLevels(classLevels)) {
+    return { success: false, error: 'Bitte wähle mindestens eine gültige Klassenstufe aus.' }
+  }
+
   const parsed = createMaterialSchema.safeParse({
     name: rawName,
     description: rawDescription || undefined,
@@ -178,7 +194,7 @@ export async function updateMaterial(id: number, formData: FormData) {
     description: parsed.data.description ?? null,
     subject_id: parsed.data.subject_id,
     type: materialCategory || 'document',
-    class_levels: classLevels.length > 0 ? classLevels : ['5. Klasse', '6. Klasse'],
+    class_levels: classLevels,
     is_public: isPublic,
   }
 

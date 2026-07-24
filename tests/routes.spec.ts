@@ -184,6 +184,7 @@ const protectedRoutesForAnonymousRedirect = [
   '/materialien/langzeitgymi',
   '/arbeitszeiten',
   '/dashboard/finanzen',
+  '/dashboard/kurse/tagesfreigaben',
   '/dashboard/arbeitszeiten',
 ]
 
@@ -238,6 +239,15 @@ test.describe('authentifiziert als E2E-Nutzer (Rolle "user")', () => {
     await expect(page.getByText('Bruttogewinn')).toHaveCount(0)
   })
 
+  test('Nicht-Admin wird von /dashboard/kurse/tagesfreigaben weggeleitet', async ({ page }) => {
+    await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD)
+    await page.goto('/dashboard/kurse/tagesfreigaben')
+    await waitForRedirectAway(page, '/dashboard/kurse/tagesfreigaben')
+    const url = new URL(page.url())
+    expect(url.pathname).toBe('/dashboard')
+    expect(url.searchParams.get('error')).toBe('unauthorized')
+  })
+
   test('Nicht-Admin wird von /dashboard/arbeitszeiten weggeleitet', async ({ page }) => {
     await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD)
     await page.goto('/dashboard/arbeitszeiten')
@@ -276,11 +286,30 @@ test.describe('authentifiziert als E2E-Nutzer (Rolle "user")', () => {
 })
 
 test.describe('authentifiziert als E2E-Admin', () => {
+  test('Klassennavigation öffnet den passenden Materialbereich und übernimmt die Klasse beim Upload', async ({ page }) => {
+    await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD)
+    await page.getByRole('button', { name: '4.Kl', exact: true }).click()
+    await page.waitForURL((url) => url.pathname === '/dashboard/materialien')
+
+    await page.getByRole('link', { name: /Neues Material/ }).first().click()
+    await expect(page.getByRole('button', { name: '4. Klasse', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+  })
+
   test('Admin erreicht /dashboard/finanzen', async ({ page }) => {
     await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD)
     const response = await page.goto('/dashboard/finanzen')
     expect(response?.status()).toBe(200)
     expect(new URL(page.url()).pathname).toBe('/dashboard/finanzen')
+  })
+
+  test('Admin erreicht /dashboard/kurse/tagesfreigaben', async ({ page }) => {
+    await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD)
+    const response = await page.goto('/dashboard/kurse/tagesfreigaben')
+    expect(response?.status()).toBe(200)
+    expect(new URL(page.url()).pathname).toBe('/dashboard/kurse/tagesfreigaben')
   })
 
   test('Admin erreicht /dashboard/arbeitszeiten', async ({ page }) => {

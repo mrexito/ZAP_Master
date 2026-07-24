@@ -1,21 +1,36 @@
 import Link from 'next/link'
 import {
-  Calendar,
   Users,
   Settings,
   ArrowRight,
   BarChart3,
   Shield,
+  BookOpen,
+  CalendarCheck2,
 } from 'lucide-react'
 import { requireAdmin } from '@/lib/auth/guards'
 
 const adminModules = [
   {
-    name: 'Kursverwaltung',
-    description: 'Intensivwoche-Kurse erstellen und verwalten',
-    href: '/dashboard/kurse',
-    icon: Calendar,
+    name: 'Kursangebote',
+    description: 'Angebote, Preise, Termine und Veröffentlichungen verwalten',
+    href: '/dashboard/kurse/angebote',
+    icon: BookOpen,
     color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  },
+  {
+    name: 'Tagesfreigaben',
+    description: 'Übungen und Prüfungen pro Kursdurchführung freischalten',
+    href: '/dashboard/kurse/tagesfreigaben',
+    icon: CalendarCheck2,
+    color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  },
+  {
+    name: 'Finanz-Cockpit',
+    description: 'Teilnehmer, Umsatz und Kosten über alle Angebote auswerten',
+    href: '/dashboard/finanzen',
+    icon: BarChart3,
+    color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
   },
   {
     name: 'Benutzerverwaltung',
@@ -55,7 +70,7 @@ export default async function AdminPage() {
           <h1 className="text-3xl font-bold text-foreground">Administration</h1>
         </div>
         <p className="text-muted-foreground mt-1">
-          Verwalte Kurse, Benutzer und Systemeinstellungen
+          Verwalte Kursangebote, Tagesfreigaben, Finanzen und das System
         </p>
       </div>
 

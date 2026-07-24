@@ -221,8 +221,8 @@ export function SessionEditor({
 
   if (!edition) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-lg font-semibold text-foreground">3 · Termine &amp; Kapazität</h2>
+      <div id="termine" className="scroll-mt-24 rounded-xl border border-border bg-card p-6">
+        <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">3 · Termine &amp; Kapazität</h2>
         <p className="text-sm text-muted-foreground mt-2">
           Speichere zuerst einen Entwurf in „1 · Grundlagen“, um Termine hinzuzufügen.
         </p>
@@ -233,14 +233,18 @@ export function SessionEditor({
   const activeSessions = sessions.filter((s) => s.registration_status !== 'cancelled')
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-foreground">3 · Termine &amp; Kapazität</h2>
+    <section id="termine" className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
+      <div className="flex items-start justify-between gap-4 border-b border-border px-[22px] pb-[15px] pt-5">
+        <div>
+        <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">3 · Termine &amp; Kapazität</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Eine Durchführung kann mehrere buchbare Termine und Standorte besitzen.
         </p>
+        </div>
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-subject-de-pale font-mono-marketing text-[11px] font-semibold text-subject-de-foreground">03</span>
       </div>
 
+      <div className="space-y-4 p-[22px]">
       <div className="space-y-3">
         {sessions.map((session, index) => (
           <SessionRow key={session.kurs.id} index={index} offerId={offerId} edition={edition} session={session} />
@@ -268,6 +272,7 @@ export function SessionEditor({
       >
         ＋ Weiteren Termin hinzufügen
       </button>
-    </div>
+      </div>
+    </section>
   )
 }

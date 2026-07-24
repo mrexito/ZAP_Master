@@ -917,7 +917,7 @@ export type Database = {
       learning_materials: {
         Row: {
           area_id: number | null
-          class_levels: string[] | null
+          class_levels: string[]
           created_at: string
           created_by: string | null
           description: string | null
@@ -935,7 +935,7 @@ export type Database = {
         }
         Insert: {
           area_id?: number | null
-          class_levels?: string[] | null
+          class_levels: string[]
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -953,7 +953,7 @@ export type Database = {
         }
         Update: {
           area_id?: number | null
-          class_levels?: string[] | null
+          class_levels?: string[]
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -2504,4 +2504,3 @@ export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"]
 
 export type UserRole = "user" | "lehrperson" | "admin"
 export type Gender = "male" | "female" | "other" | "prefer_not_to_say"
-
