@@ -27,7 +27,7 @@ function SessionDetails({ ablauf, label = 'Details' }: SessionDetailsProps) {
                 key={item.id}
                 className={cn(
                   'flex justify-between gap-3.5 py-1 text-[12.5px] whitespace-nowrap text-foreground',
-                  item.highlight && 'font-semibold text-secondary-foreground'
+                  item.highlight && 'rounded-sm bg-secondary/15 px-1.5 font-semibold text-foreground'
                 )}
               >
                 <span>{item.label}</span>
@@ -51,7 +51,8 @@ function SessionDetails({ ablauf, label = 'Details' }: SessionDetailsProps) {
                       key={date.id}
                       className={cn(
                         'text-[12px] whitespace-nowrap text-foreground',
-                        date.highlight && 'font-semibold text-secondary-foreground'
+                        date.highlight &&
+                          'rounded-sm bg-secondary/15 px-1.5 font-semibold text-foreground'
                       )}
                     >
                       {date.date}

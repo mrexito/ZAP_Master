@@ -5,7 +5,10 @@ import { after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { type KursDBMitAnmeldungen } from '@/types/kurs-form'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import {
+  createAdminSupabaseClient,
+  createServerSupabaseClient,
+} from '@/lib/supabase/server'
 import {
   intensivwocheAnmeldungSchema,
   type IntensivwocheAnmeldungInput,
@@ -16,6 +19,7 @@ import {
   logBookingUnexpectedError,
 } from '@/lib/observability/logger'
 import { dispatchOutboxForAnmeldung } from '@/lib/mail/dispatch-outbox'
+import { ensureMarketingSessionIsBookable } from '@/lib/kurse/ensure-bookable-session'
 
 export const getPublicKurse = unstable_cache(
   async (): Promise<KursDBMitAnmeldungen[]> => {
@@ -78,6 +82,50 @@ export async function submitIntensivwocheAnmeldung(
     }
   }
 
+  // Auf den Marketing-Unterseiten ist der konkrete Termin bereits gewählt. Redaktionelle
+  // Sessions werden bei ihrer ersten Anmeldung anhand der ausschließlich serverseitigen
+  // Katalogdaten idempotent in der Buchungstabelle materialisiert; Preis und Termin können nicht
+  // vom Client manipuliert werden.
+  try {
+    await ensureMarketingSessionIsBookable(kursId)
+  } catch (error) {
+    logBookingUnexpectedError({
+      kursId,
+      message: error instanceof Error ? error.message : 'Session-Materialisierung fehlgeschlagen',
+    })
+    return {
+      success: false,
+      error: 'Der ausgewählte Kurs konnte nicht für die Anmeldung vorbereitet werden. Bitte versuche es später erneut.',
+    }
+  }
+
+  // Die Klassenstufe ist bereits durch den gewählten Kurs festgelegt. Sie wird deshalb nicht
+  // erneut im Formular abgefragt, sondern aus den vertrauenswürdigen Kursdaten übernommen.
+  // Der Service-Role-Client bleibt vollständig auf dem Server. Er ist hier nötig, weil regulär
+  // authentifizierte Nutzer aufgrund der RLS-Regeln die Legacy-Kurstabelle nicht direkt lesen
+  // dürfen, die Buchungs-RPC aber dennoch verwenden können.
+  const { data: selectedKurs, error: selectedKursError } = await createAdminSupabaseClient()
+    .from('intensivwoche_kurse')
+    .select('klassenstufen')
+    .eq('id', kursId)
+    .maybeSingle()
+
+  const childClassLevel = selectedKurs?.klassenstufen?.[0]?.trim()
+
+  if (selectedKursError || !childClassLevel) {
+    logBookingUnexpectedError({
+      kursId,
+      code: selectedKursError?.code,
+      message: selectedKursError?.message ?? 'Keine Klassenstufe für den Kurs hinterlegt',
+      details: selectedKursError?.details,
+      hint: selectedKursError?.hint,
+    })
+    return {
+      success: false,
+      error: 'Die Klassenstufe des ausgewählten Kurses konnte nicht ermittelt werden. Bitte versuche es später erneut.',
+    }
+  }
+
   // Schreibt ausschliesslich über die atomare Datenbankfunktion
   // (supabase/migrations/20260719190025_booking_hardening_phase_a.sql): sperrt den Kurs,
   // prüft Aktivität/Kapazität/familienfähige Doppelanmeldung atomar, unterstützt idempotente
@@ -88,7 +136,7 @@ export async function submitIntensivwocheAnmeldung(
     p_kurs_id: kursId,
     p_child_firstname: parsed.data.child_firstname.trim(),
     p_child_lastname: parsed.data.child_lastname.trim(),
-    p_child_class_level: parsed.data.child_class_level.trim(),
+    p_child_class_level: childClassLevel,
     p_child_gender: parsed.data.child_gender,
     p_parent_email: parsed.data.parent_email.trim().toLowerCase(),
     p_parent_phone: parsed.data.parent_phone.trim(),

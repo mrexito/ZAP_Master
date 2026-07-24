@@ -1,6 +1,7 @@
 import { createAdminSupabaseClient } from "@/lib/supabase/server"
 import { getResendClient, getMailFromAddress } from "@/lib/mail/resend-client"
 import { renderBookingConfirmation } from "@/lib/mail/templates/booking-confirmation"
+import { renderAdminBookingNotification } from "@/lib/mail/templates/admin-booking-notification"
 import type { Fach } from "@/types/kurs"
 
 // Abschnitt 10.4 (E-Mail-Outbox): "Bestätigungsmails laufen idempotent über Outbox/Retry ... und
@@ -69,19 +70,34 @@ export async function dispatchDueOutboxMails(limit = 25): Promise<DispatchResult
 export async function dispatchOutboxForAnmeldung(anmeldungId: string): Promise<void> {
   const supabase = createAdminSupabaseClient()
 
-  const { data: row, error } = await supabase
+  // Die bestehende DB-Triggerfunktion legt die Eltern-Bestaetigung an. Die Admin-Benachrichtigung
+  // wird hier idempotent ergaenzt; der Unique-Key (anmeldung_id, template_key) verhindert
+  // Duplikate bei Netzwerk-Retries oder einem wiederholten Aufruf mit derselben Anmeldung.
+  await supabase.from("mail_outbox").upsert(
+    {
+      anmeldung_id: anmeldungId,
+      template_key: "admin_booking_notification",
+    },
+    {
+      onConflict: "anmeldung_id,template_key",
+      ignoreDuplicates: true,
+    }
+  )
+
+  const { data: rows, error } = await supabase
     .from("mail_outbox")
     .select("id, anmeldung_id, template_key, attempts, max_attempts")
     .eq("anmeldung_id", anmeldungId)
-    .eq("template_key", "booking_confirmation")
+    .in("template_key", ["booking_confirmation", "admin_booking_notification"])
     .eq("status", "pending")
-    .maybeSingle()
 
-  // Kein Fehler nach aussen werfen: der Trigger hat die Zeile bereits angelegt (Quelle der
-  // Wahrheit), ein fehlgeschlagener Best-Effort-Versuch hier wird spaeter per Retry nachgeholt.
-  if (error || !row) return
+  // Kein Fehler nach aussen werfen: die Outbox-Zeilen sind die Quelle der Wahrheit; ein
+  // fehlgeschlagener Best-Effort-Versuch wird spaeter per Retry nachgeholt.
+  if (error || !rows) return
 
-  await dispatchSingleRow(supabase, row)
+  for (const row of rows as OutboxRowWithContext[]) {
+    await dispatchSingleRow(supabase, row)
+  }
 }
 
 async function dispatchSingleRow(
@@ -105,7 +121,26 @@ async function dispatchSingleRow(
   }
 
   try {
-    const mail = renderBookingConfirmation(context)
+    const mail =
+      row.template_key === "booking_confirmation"
+        ? renderBookingConfirmation(context)
+        : row.template_key === "admin_booking_notification"
+          ? renderAdminBookingNotification({
+              ...context,
+              adminEmails: await getAdminNotificationEmails(supabase),
+            })
+          : null
+
+    if (!mail) {
+      throw new Error(`Unbekannte Mailvorlage: ${row.template_key}`)
+    }
+
+    if (Array.isArray(mail.to) && mail.to.length === 0) {
+      throw new Error(
+        "Keine Administrator-E-Mail gefunden. ADMIN_NOTIFICATION_EMAILS oder Admin-Profil konfigurieren."
+      )
+    }
+
     const resend = getResendClient()
     const { data, error } = await resend.emails.send({
       from: getMailFromAddress(),
@@ -154,7 +189,9 @@ async function loadAnmeldungContext(
 ) {
   const { data: anmeldung, error: anmeldungError } = await supabase
     .from("intensivwoche_anmeldungen")
-    .select("child_firstname, child_lastname, parent_email, kurs_id, booked_price_rappen, currency")
+    .select(
+      "child_firstname, child_lastname, child_class_level, child_gender, parent_email, parent_phone, notes, created_at, kurs_id, booked_price_rappen, currency"
+    )
     .eq("id", anmeldungId)
     .single()
 
@@ -170,8 +207,13 @@ async function loadAnmeldungContext(
 
   return {
     parentEmail: anmeldung.parent_email,
+    parentPhone: anmeldung.parent_phone,
     childFirstname: anmeldung.child_firstname,
     childLastname: anmeldung.child_lastname,
+    childClassLevel: anmeldung.child_class_level,
+    childGender: anmeldung.child_gender,
+    notes: anmeldung.notes,
+    createdAt: anmeldung.created_at,
     kursName: kurs.name,
     fach: kurs.fach as Fach,
     startDatum: kurs.start_datum,
@@ -181,4 +223,25 @@ async function loadAnmeldungContext(
     bookedPriceRappen: anmeldung.booked_price_rappen,
     currency: anmeldung.currency,
   }
+}
+
+async function getAdminNotificationEmails(
+  supabase: ReturnType<typeof createAdminSupabaseClient>
+): Promise<string[]> {
+  const configuredEmails = (process.env.ADMIN_NOTIFICATION_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
+
+  const { data: admins } = await supabase
+    .from("profiles")
+    .select("email")
+    .eq("role", "admin")
+    .not("email", "is", null)
+
+  const profileEmails = (admins ?? [])
+    .map((admin) => admin.email?.trim().toLowerCase())
+    .filter((email): email is string => Boolean(email))
+
+  return [...new Set([...configuredEmails, ...profileEmails])]
 }

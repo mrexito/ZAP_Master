@@ -77,7 +77,6 @@ export function AnmeldungModalDashboard({ kurs, userProfile, onClose }: Anmeldun
       // Vorausfüllung aus Profil
       child_firstname: userProfile.first_name || '',
       child_lastname: userProfile.last_name || '',
-      child_class_level: userProfile.class_level || '',
       parent_email: userProfile.email || '',
       parent_phone: userProfile.phone || '',
       notes: '',
@@ -274,33 +273,6 @@ export function AnmeldungModalDashboard({ kurs, userProfile, onClose }: Anmeldun
                 </div>
                 {errors.child_lastname && (
                   <p id="child_lastname-error" className="mt-1.5 text-sm text-destructive">{errors.child_lastname.message}</p>
-                )}
-              </div>
-
-              {/* Klassenstufe */}
-              <div>
-                <label htmlFor="child_class_level" className="block text-sm font-medium text-foreground mb-2">
-                  Klassenstufe *
-                </label>
-                <div className="relative">
-                  <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <select
-                    id="child_class_level"
-                    {...register('child_class_level')}
-                    aria-invalid={!!errors.child_class_level}
-                    aria-describedby={errors.child_class_level ? 'child_class_level-error' : undefined}
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors appearance-none cursor-pointer"
-                  >
-                    <option value="">— Bitte wählen —</option>
-                    {kurs.klassenstufen.map((stufe) => (
-                      <option key={stufe} value={stufe}>
-                        {stufe}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {errors.child_class_level && (
-                  <p id="child_class_level-error" className="mt-1.5 text-sm text-destructive">{errors.child_class_level.message}</p>
                 )}
               </div>
 

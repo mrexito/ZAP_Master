@@ -321,6 +321,70 @@ test('SiteNav erscheint nicht auf /login', async ({ page }) => {
 // ---------------------------------------------------------------------------
 
 test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
+  for (const examPage of [
+    {
+      route: '/de/kurse/6-klasse/pruefungssimulation',
+      audience: '6. Klasse · Langgymnasium',
+      duration: '60 Minuten',
+      expectedRows: 4,
+    },
+    {
+      route: '/de/kurse/2-3-sek/pruefungssimulation',
+      audience: 'Sekundarschule · Kurzgymnasium',
+      duration: '90 Minuten',
+      expectedRows: 4,
+    },
+  ]) {
+    test(`Prüfungssimulation ${examPage.route} entspricht der Detailvorlage`, async ({ page }) => {
+      await page.goto(examPage.route)
+
+      await expect(
+        page.getByRole('heading', {
+          level: 1,
+          name: 'Prüfungssimulation unter realistischen Bedingungen',
+        })
+      ).toBeVisible()
+      await expect(page.getByText(examPage.audience, { exact: true })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Ablauf der Prüfungssimulation' })).toBeVisible()
+      await expect(page.getByText(examPage.duration, { exact: true }).first()).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Auswertung und Aufsatzkorrektur' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Aufsatzkorrektur im persönlichen Portal' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Termine und Buchung' })).toBeVisible()
+      await expect(page.locator('table tbody tr')).toHaveCount(examPage.expectedRows)
+      await expect(page.getByRole('heading', { name: 'Häufige Fragen' })).toBeVisible()
+    })
+  }
+
+  test('Lerncamp der 1. Sek lässt sich nach Kurswoche filtern', async ({ page }) => {
+    await page.goto('/de/kurse/1-sek/lerncamp-sportferien')
+
+    await expect(page.getByRole('radio', { name: 'Alle Kurswochen' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: '8.–12. Februar' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: '15.–19. Februar' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: '22.–26. Februar' })).toBeVisible()
+
+    await page.getByRole('radio', { name: '15.–19. Februar' }).click()
+    await expect(page.locator('table tbody tr')).toHaveCount(1)
+    await expect(page.locator('table tbody tr')).toContainText('15.–19. Feb.')
+    await expect(page.locator('table tbody tr')).not.toContainText('08.–12. Feb.')
+  })
+
+  test('konkret gewählte Session öffnet ohne Umweg ihr Anmeldeformular', async ({ page }) => {
+    await page.goto('/de/kurse/4-klasse/halbjahreskurs')
+
+    const selectedRow = page.locator('table tbody tr', { hasText: 'Kurs A' })
+    await expect(selectedRow.getByText('freie Plätze')).toBeVisible()
+    await selectedRow.getByRole('button', { name: 'Anmelden' }).click()
+
+    await expect(page).toHaveURL(/\/de\/kurse\/4-klasse\/halbjahreskurs$/)
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Anmeldung: Kurs A' })).toBeVisible()
+    await expect(page.locator('input[name="kurs_id"]')).toHaveValue('8001')
+    await expect(page.locator('[name="child_class_level"]')).toHaveCount(0)
+    await expect(page.getByText('Klassenstufe *', { exact: true })).toHaveCount(0)
+    await expect(page.getByText('Samstag, 13:15–15:00')).toBeVisible()
+  })
+
   test('Buchung reduziert die sichtbare Verfügbarkeit sofort, ohne Wartezeit oder manuellen Reload', async ({ page }) => {
     await page.goto('/de/kurse/6-klasse/intensivkurs-sportferien')
 
@@ -338,7 +402,6 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
 
     await page.locator('input[name="child_firstname"]').fill('Test')
     await page.locator('input[name="child_lastname"]').fill('Kind')
-    await page.locator('select[name="child_class_level"]').selectOption('6. Klasse')
     await page.locator('input[name="child_gender"][value="d"]').check()
     await page.locator('input[name="parent_email"]').fill(`e2e-booking-${Date.now()}@example.test`)
     await page.locator('input[name="parent_phone"]').fill('+41 79 123 45 67')

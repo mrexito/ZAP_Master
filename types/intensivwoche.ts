@@ -11,10 +11,6 @@ export const intensivwocheAnmeldungSchema = z.object({
     .string()
     .min(2, 'Nachname muss mindestens 2 Zeichen haben')
     .max(50, 'Nachname darf maximal 50 Zeichen haben'),
-  child_class_level: z
-    .string()
-    .min(1, 'Bitte gib die Klassenstufe an')
-    .max(20, 'Klassenstufe darf maximal 20 Zeichen haben'),
   child_gender: z.enum(['m', 'w', 'd'], {
     message: 'Bitte wähle ein Geschlecht',
   }),
@@ -37,6 +33,7 @@ export type IntensivwocheAnmeldungInput = z.infer<typeof intensivwocheAnmeldungS
 // Database Row Type (nach INSERT)
 export interface IntensivwocheAnmeldung extends IntensivwocheAnmeldungInput {
   id: string
+  child_class_level: string
   status: 'eingegangen' | 'bestaetigt' | 'bezahlt' | 'storniert'
   created_at: string
   paid_at: string | null

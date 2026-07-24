@@ -143,7 +143,7 @@ export type SessionAvailability = {
 
 export type BookingAction =
   | { kind: 'modal'; label: string }
-  | { kind: 'link'; label: string; href: string }
+  | { kind: 'link'; label: string; href: string; localized?: boolean }
   | { kind: 'disabled'; label: string; disabledReason: string }
 
 export type SessionSource = { kind: 'intensivwoche_kurse'; kursId: number }

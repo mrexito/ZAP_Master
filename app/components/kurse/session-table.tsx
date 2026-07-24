@@ -81,9 +81,6 @@ function SessionTable({ columns, rows, ariaLabel = 'Kursübersicht und Buchung',
 function renderCell(row: SessionRow, column: SessionColumn) {
   switch (column.key) {
     case 'status':
-      // Bewusst datengetrieben (row.availability.status), nicht an das globale Vorschau-Badge
-      // gekoppelt -- sobald echte Session-Daten existieren (Admin-Maske/E2E-Fixtures), muss der
-      // reale Status weiterhin sichtbar bleiben. Siehe lib/kurse/session-row.ts.
       return <StatusBadge status={row.availability.status} />
     case 'details':
       return <SessionDetails ablauf={row.ablauf} label={column.label} />

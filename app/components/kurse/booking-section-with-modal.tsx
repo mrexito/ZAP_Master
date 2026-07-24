@@ -38,6 +38,7 @@ function BookingSectionWithModal({ offer, sessions }: BookingSectionWithModalPro
               offer.subject && offer.subject !== 'mixed' ? SUBJECT_TO_FACH[offer.subject] : 'deutsch',
             startDatum: selectedSession.startAt ?? '',
             endDatum: selectedSession.endAt ?? '',
+            dateLabel: selectedSession.dateLabel,
             uhrzeit: selectedSession.timeLabel,
             ort: selectedSession.standort,
             preis: offer.regularPriceRappen / 100,

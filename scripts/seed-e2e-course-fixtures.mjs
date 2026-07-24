@@ -19,9 +19,10 @@ const admin = createClient(status.API_URL, status.SERVICE_ROLE_KEY, {
 })
 
 // Matcht die editoriale Session-Fixture kursId=9001 ("Kurs B" in sechsKlasseIntensivkursSessions,
-// types/marketing.fixtures.ts) -- ohne eine echte intensivwoche_kurse-Zeile mit dieser ID bleibt
-// die Session dort permanent "voll" (Fallback in lib/kurse/session-row.ts). capacity=1, damit ein
-// einzelner Test-Booking-Versuch sie sofort auf "ausgebucht" kippt (tests/routes.spec.ts).
+// types/marketing.fixtures.ts). Alle Sessions öffnen direkt das Buchungsmodal; diese Live-Zeile
+// liefert zusätzlich eine kontrollierte Verfügbarkeit für den Cache-/Buchungsregressionstest.
+// capacity=1, damit ein einzelner Test-Booking-Versuch sie sofort auf "ausgebucht" kippt
+// (tests/routes.spec.ts).
 const AVAILABILITY_KURS_ID = 9001
 
 // Eigenständiger Testkurs für den Preis-/Cache-Invalidierungstest (updateTag('courses') nach

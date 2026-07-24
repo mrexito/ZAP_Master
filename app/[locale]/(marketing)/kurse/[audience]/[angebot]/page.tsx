@@ -21,6 +21,7 @@ import { FaqAccordion } from '@/app/components/marketing/faq-accordion'
 import { AudienceHero } from '@/app/components/kurse/audience-hero'
 import { SelfStudyAccess } from '@/app/components/kurse/self-study-access'
 import { BookingSectionWithModal } from '@/app/components/kurse/booking-section-with-modal'
+import { ExamSimulationDetail } from '@/app/components/kurse/exam-simulation-detail'
 import { getOfferBySlug, getSessionsForOffer } from '@/lib/kurse/catalog'
 import { getSessionAvailability } from '@/lib/kurse/availability'
 import { buildSessionRows } from '@/lib/kurse/session-row'
@@ -167,6 +168,31 @@ export default async function CourseOfferDetailPage({
 
   const sessions = await getSessionsForOffer(offer.id, locale)
   const isExamSimulation = offer.kurstyp === 'pruefungssimulation'
+  const usesReferenceExamLayout =
+    isExamSimulation &&
+    (offer.id === 'offer-6klasse-pruefungssimulation' ||
+      offer.id === 'offer-2-3sek-pruefungssimulation')
+
+  if (usesReferenceExamLayout) {
+    return (
+      <>
+        <Breadcrumb
+          items={[{ label: 'Startseite', href: '/' }, { label: audience.displayLabel, href: audience.href }, { label: offer.displayName }]}
+        />
+        <Section spacing="sm">
+          <ExamSimulationDetail
+            offer={offer}
+            audience={audience}
+            booking={
+              <Suspense fallback={<SessionTableSkeleton />}>
+                <BookingSectionLoader offer={offer} sessions={sessions} />
+              </Suspense>
+            }
+          />
+        </Section>
+      </>
+    )
+  }
 
   return (
     <>

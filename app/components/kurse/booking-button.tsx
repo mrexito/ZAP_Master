@@ -1,4 +1,5 @@
 import type { MouseEvent } from 'react'
+import NextLink from 'next/link'
 import { Link } from '@/i18n/navigation'
 import type { BookingAction } from '@/types/marketing'
 import { Button } from '@/app/components/ui/button'
@@ -41,7 +42,11 @@ function BookingButton({ action, onBook, block = false }: BookingButtonProps) {
   if (action.kind === 'link') {
     return (
       <Button asChild className={className}>
-        <Link href={action.href}>{action.label}</Link>
+        {action.localized === false ? (
+          <NextLink href={action.href}>{action.label}</NextLink>
+        ) : (
+          <Link href={action.href}>{action.label}</Link>
+        )}
       </Button>
     )
   }

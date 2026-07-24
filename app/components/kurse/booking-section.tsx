@@ -34,7 +34,6 @@ function columnsForKurstyp(
   // Fixture-Sessions haben ohnehin ein leeres ablauf-Feld.
   if (kurstyp === 'pruefungssimulation') {
     return [
-      { key: 'kurs', label: t('kurs') },
       { key: 'date', label: t('datum') },
       { key: 'time', label: t('zeit') },
       { key: 'location', label: t('standort') },

@@ -34,6 +34,7 @@ import {
   sechsKlasseIntensivkursSessions,
   sechsKlasseHalbjahreskursSessions,
   sechsKlassePruefungssimulation,
+  sechsKlassePruefungssimulationSessions,
   sechsKlasseSelbststudium,
   sechsKlasseSelbststudiumPageModel,
   vierKlasseAudiencePageModel,
@@ -146,6 +147,7 @@ const OFFER_SESSIONS: Record<string, SessionDefinition[]> = {
   [maturaIntensivwoche.id]: maturaIntensivwocheSessions,
   [sechsKlasseIntensivkurs.id]: sechsKlasseIntensivkursSessions,
   [sechsKlasseHalbjahreskurs.id]: sechsKlasseHalbjahreskursSessions,
+  [sechsKlassePruefungssimulation.id]: sechsKlassePruefungssimulationSessions,
 }
 
 export function getOfferCatalogEntry(audienceId: AudienceId): OfferCatalogEntry {
@@ -170,6 +172,25 @@ export function findOfferBySlug(
 
 export function getSessionsForOfferId(offerId: string): SessionDefinition[] {
   return OFFER_SESSIONS[offerId] ?? []
+}
+
+export function findOfferById(
+  offerId: string
+): CourseOffer | ExamSimulationOffer | SelfStudyOffer | null {
+  for (const entry of Object.values(OFFER_CATALOG)) {
+    if (!entry) continue
+    const offer = [...entry.offers, ...entry.addOnOffers].find((candidate) => candidate.id === offerId)
+    if (offer) return offer
+  }
+  return null
+}
+
+export function findSessionByKursId(kursId: number): SessionDefinition | null {
+  for (const sessions of Object.values(OFFER_SESSIONS)) {
+    const session = sessions.find((candidate) => candidate.source.kursId === kursId)
+    if (session) return session
+  }
+  return null
 }
 
 export function getSelfStudyPageExtras(

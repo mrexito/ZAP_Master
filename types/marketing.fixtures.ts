@@ -66,50 +66,120 @@ const matura: Audience = audiences[6]
 // Layout_6_Klasse_Intensivkurs_Unterseite.html
 // ---------------------------------------------------------------------------------------------
 
+const sechsKlasseIntensivkursWeekOptions = [
+  { id: '0812', label: '8.–12. Februar' },
+  { id: '1519', label: '15.–19. Februar' },
+  { id: '2226', label: '22.–26. Februar' },
+  { id: '0105', label: '01.–05. März' },
+] satisfies { id: string; label: string }[]
+
+const sechsKlasseIntensivkursWeekDates: Record<string, { startAt: string; endAt: string }> = {
+  '0812': { startAt: '2027-02-08', endAt: '2027-02-12' },
+  '1519': { startAt: '2027-02-15', endAt: '2027-02-19' },
+  '2226': { startAt: '2027-02-22', endAt: '2027-02-26' },
+  '0105': { startAt: '2027-03-01', endAt: '2027-03-05' },
+}
+
+function sechsKlasseIntensivkursTagesplan(
+  monat: string,
+  startTag: number,
+  timeLabel: string,
+  pruefungTimeLabel: string
+) {
+  const tage = ['Mo', 'Di', 'Mi', 'Do', 'Fr']
+
+  return {
+    kind: 'simple' as const,
+    items: tage.map((tag, index) => ({
+      id: tag.toLowerCase(),
+      label: `${tag}, ${String(startTag + index).padStart(2, '0')}. ${monat}.`,
+      value: tag === 'Mi' ? pruefungTimeLabel : timeLabel,
+      highlight: tag === 'Mi',
+    })),
+  }
+}
+
 export const sechsKlasseIntensivkursSessions = [
   {
     id: 9001,
-    offerId: 'offer-6klasse-intensivkurs-sportferien',
-    capacity: 10,
-    source: { kind: 'intensivwoche_kurse', kursId: 9001 },
     kurs: 'Kurs B',
+    weekId: '1519',
     dateLabel: '15.–19. Feb.',
     timeLabel: '09.00–12.15',
-    standort: 'Zürich HB',
-    deliveryModes: ['onsite'],
-    ablauf: {
-      kind: 'simple',
-      items: [
-        { id: 'mo', label: 'Mo, 15. Feb.', value: '09.00–12.15' },
-        { id: 'di', label: 'Di, 16. Feb.', value: '09.00–12.15' },
-        { id: 'mi', label: 'Mi, 17. Feb.', value: '08.30–12.30', highlight: true },
-        { id: 'do', label: 'Do, 18. Feb.', value: '09.00–12.15' },
-        { id: 'fr', label: 'Fr, 19. Feb.', value: '09.00–12.15' },
-      ],
-    },
+    standort: 'Zürich HB' as const,
+    ablauf: sechsKlasseIntensivkursTagesplan('Feb', 15, '09.00–12.15', '08.30–12.30'),
+  },
+  {
+    id: 9003,
+    kurs: 'Kurs C',
+    weekId: '1519',
+    dateLabel: '15.–19. Feb.',
+    timeLabel: '13.15–16.30',
+    standort: 'Zürich HB' as const,
+    ablauf: sechsKlasseIntensivkursTagesplan('Feb', 15, '13.15–16.30', '13.15–17.15'),
+  },
+  {
+    id: 9004,
+    kurs: 'Kurs D',
+    weekId: '1519',
+    dateLabel: '15.–19. Feb.',
+    timeLabel: '09.00–12.15',
+    standort: 'Winterthur' as const,
+    ablauf: sechsKlasseIntensivkursTagesplan('Feb', 15, '09.00–12.15', '08.30–12.30'),
+  },
+  {
+    id: 9005,
+    kurs: 'Kurs E',
+    weekId: '2226',
+    dateLabel: '22.–26. Feb.',
+    timeLabel: '09.00–12.15',
+    standort: 'Winterthur' as const,
+    ablauf: sechsKlasseIntensivkursTagesplan('Feb', 22, '09.00–12.15', '08.30–12.30'),
+  },
+  {
+    id: 9006,
+    kurs: 'Kurs F',
+    weekId: '2226',
+    dateLabel: '22.–26. Feb.',
+    timeLabel: '13.15–16.30',
+    standort: 'Winterthur' as const,
+    ablauf: sechsKlasseIntensivkursTagesplan('Feb', 22, '13.15–16.30', '13.15–17.15'),
+  },
+  {
+    id: 9007,
+    kurs: 'Kurs G',
+    weekId: '0105',
+    dateLabel: '01.–05. März',
+    timeLabel: '09.00–12.15',
+    standort: 'Zürich HB' as const,
+    ablauf: sechsKlasseIntensivkursTagesplan('März', 1, '09.00–12.15', '08.30–12.30'),
   },
   {
     id: 9002,
-    offerId: 'offer-6klasse-intensivkurs-sportferien',
-    capacity: 10,
-    source: { kind: 'intensivwoche_kurse', kursId: 9002 },
     kurs: 'Kurs A',
+    weekId: '0812',
     dateLabel: '08.–12. Feb.',
     timeLabel: '09.00–12.15',
-    standort: 'Winterthur',
-    deliveryModes: ['onsite'],
-    ablauf: {
-      kind: 'simple',
-      items: [
-        { id: 'mo', label: 'Mo, 08. Feb.', value: '09.00–12.15' },
-        { id: 'di', label: 'Di, 09. Feb.', value: '09.00–12.15' },
-        { id: 'mi', label: 'Mi, 10. Feb.', value: '08.30–12.30', highlight: true },
-        { id: 'do', label: 'Do, 11. Feb.', value: '09.00–12.15' },
-        { id: 'fr', label: 'Fr, 12. Feb.', value: '09.00–12.15' },
-      ],
-    },
+    standort: 'Winterthur' as const,
+    ablauf: sechsKlasseIntensivkursTagesplan('Feb', 8, '09.00–12.15', '08.30–12.30'),
   },
-] satisfies SessionDefinition[]
+  {
+    id: 9008,
+    kurs: 'Kurs H',
+    weekId: '0105',
+    dateLabel: '01.–05. März',
+    timeLabel: '13.15–16.30',
+    standort: 'Zürich HB' as const,
+    ablauf: sechsKlasseIntensivkursTagesplan('März', 1, '13.15–16.30', '13.15–17.15'),
+  },
+].map((row) => ({
+  ...row,
+  ...sechsKlasseIntensivkursWeekDates[row.weekId],
+  offerId: 'offer-6klasse-intensivkurs-sportferien',
+  capacity: 10,
+  source: { kind: 'intensivwoche_kurse' as const, kursId: row.id },
+  deliveryModes: ['onsite' as const],
+})) satisfies SessionDefinition[]
 
 export const sechsKlasseHalbjahreskursSessions = [
   {
@@ -277,6 +347,7 @@ export const sechsKlasseIntensivkurs = {
     },
   ],
   kurstyp: 'intensivkurs',
+  weekOptions: sechsKlasseIntensivkursWeekOptions,
   flowSteps: [
     {
       id: 'schritt-1',
@@ -481,9 +552,8 @@ export const sechsKlasseIntensivkursDetailPageModel = {
 // ---------------------------------------------------------------------------------------------
 // 2.2/2.8 ExamSimulationOffer -- Layout_6_Klasse_Pruefungssimulation.html (reicheres Timeline-/
 // FAQ-Inhalt als die Kurzfassung auf der Hauptseite; derselbe Preis CHF 145 wird dort UND auf der
-// BMS-Prüfungssimulationsseite genannt, diese Detailseite zeigt abweichend CHF 125 -- ein
-// Preis-Bug analog Abschnitt 2.3, hier bewusst nicht übernommen, CHF 145 als Mehrheitswert
-// verwendet).
+// BMS-Prüfungssimulationsseite genannt. Diese Detailseite folgt bewusst ihrer eigenen Vorlage
+// und verwendet deshalb CHF 125.
 // ---------------------------------------------------------------------------------------------
 
 export const sechsKlassePruefungssimulation = {
@@ -503,7 +573,7 @@ export const sechsKlassePruefungssimulation = {
     'Durchführung unter Prüfungsbedingungen',
     'Schriftliche Bewertung des Aufsatzes',
   ],
-  regularPriceRappen: 14500,
+  regularPriceRappen: 12500,
   currency: 'CHF',
   priceUnit: 'pro Teilnahme',
   overviewBullets: [
@@ -558,6 +628,23 @@ export const sechsKlassePruefungssimulation = {
         'Der Aufsatz wird persönlich durch eine Lehrperson korrigiert und mit schriftlichem Feedback ins Portal geladen. Für Mathematik und Deutsch Sprache stehen detaillierte Lösungen zur Selbstkorrektur bereit.',
     },
     {
+      id: 'faq-scan-portal',
+      question: 'Wann erscheint der gescannte Aufsatz im Portal?',
+      answer:
+        'Nach der fachlichen Korrektur wird der Scan dem persönlichen Teilnehmerkonto zugeordnet. Sobald er freigegeben ist, erhält der Teilnehmer eine Benachrichtigung.',
+    },
+    {
+      id: 'faq-feedback-sichtbarkeit',
+      question: 'Wer kann das Feedback sehen?',
+      answer:
+        'Nur berechtigte Personen im geschützten Teilnehmerkonto sowie die zuständigen Lehrpersonen können auf die Prüfungsunterlagen zugreifen.',
+    },
+    {
+      id: 'faq-besprechung',
+      question: 'Kann das Feedback mit einer Lehrperson besprochen werden?',
+      answer: 'Optional kann ein persönliches Auswertungsgespräch oder eine Nachbesprechung gebucht werden.',
+    },
+    {
       id: 'faq-ohne-kurs',
       question: 'Kann man auch ohne laufenden Vorbereitungskurs teilnehmen?',
       answer: 'Ja. Die Prüfungssimulation eignet sich auch als unabhängige Standortbestimmung.',
@@ -590,6 +677,30 @@ export const sechsKlassePruefungssimulationSessions = [
     source: { kind: 'intensivwoche_kurse', kursId: 9102 },
     kurs: 'Donnerstag, 18. Februar',
     dateLabel: 'Donnerstag, 18. Februar',
+    timeLabel: '08.00–11.45',
+    standort: 'Winterthur',
+    deliveryModes: ['onsite'],
+    ablauf: { kind: 'simple', items: [] },
+  },
+  {
+    id: 9103,
+    offerId: 'offer-6klasse-pruefungssimulation',
+    capacity: 20,
+    source: { kind: 'intensivwoche_kurse', kursId: 9103 },
+    kurs: 'Dienstag, 23. Februar',
+    dateLabel: 'Dienstag, 23. Februar',
+    timeLabel: '08.00–11.45',
+    standort: 'Zürich HB',
+    deliveryModes: ['onsite'],
+    ablauf: { kind: 'simple', items: [] },
+  },
+  {
+    id: 9104,
+    offerId: 'offer-6klasse-pruefungssimulation',
+    capacity: 20,
+    source: { kind: 'intensivwoche_kurse', kursId: 9104 },
+    kurs: 'Samstag, 27. Februar',
+    dateLabel: 'Samstag, 27. Februar',
     timeLabel: '08.00–11.45',
     standort: 'Winterthur',
     deliveryModes: ['onsite'],
@@ -1494,7 +1605,7 @@ export const vierKlasseLerncampSessions = [
         { id: 'di', label: 'Di, 09. Feb.', value: '09.00–12.00' },
         { id: 'mi', label: 'Mi, 10. Feb.', value: '09.00–12.00' },
         { id: 'do', label: 'Do, 11. Feb.', value: '09.00–12.00' },
-        { id: 'fr', label: 'Fr, 12. Feb. (Rückblick)', value: '09.00–12.00', highlight: true },
+        { id: 'fr', label: 'Fr, 12. Feb.', value: '09.00–12.00', highlight: true },
       ],
     },
   },
@@ -1515,7 +1626,7 @@ export const vierKlasseLerncampSessions = [
         { id: 'di', label: 'Di, 16. Feb.', value: '13.30–16.30' },
         { id: 'mi', label: 'Mi, 17. Feb.', value: '13.30–16.30' },
         { id: 'do', label: 'Do, 18. Feb.', value: '13.30–16.30' },
-        { id: 'fr', label: 'Fr, 19. Feb. (Rückblick)', value: '13.30–16.30', highlight: true },
+        { id: 'fr', label: 'Fr, 19. Feb.', value: '13.30–16.30', highlight: true },
       ],
     },
   },
@@ -1536,7 +1647,7 @@ export const vierKlasseLerncampSessions = [
         { id: 'di', label: 'Di, 23. Feb.', value: '09.00–12.00' },
         { id: 'mi', label: 'Mi, 24. Feb.', value: '09.00–12.00' },
         { id: 'do', label: 'Do, 25. Feb.', value: '09.00–12.00' },
-        { id: 'fr', label: 'Fr, 26. Feb. (Rückblick)', value: '09.00–12.00', highlight: true },
+        { id: 'fr', label: 'Fr, 26. Feb.', value: '09.00–12.00', highlight: true },
       ],
     },
   },
@@ -1557,7 +1668,7 @@ export const vierKlasseLerncampSessions = [
         { id: 'di', label: 'Di, 23. Feb.', value: '13.30–16.30' },
         { id: 'mi', label: 'Mi, 24. Feb.', value: '13.30–16.30' },
         { id: 'do', label: 'Do, 25. Feb.', value: '13.30–16.30' },
-        { id: 'fr', label: 'Fr, 26. Feb. (Rückblick)', value: '13.30–16.30', highlight: true },
+        { id: 'fr', label: 'Fr, 26. Feb.', value: '13.30–16.30', highlight: true },
       ],
     },
   },
@@ -1943,7 +2054,7 @@ export const fuenfKlasseLerncampSessions = [
         { id: 'di', label: 'Di, 09. Feb.', value: '09.00–12.00' },
         { id: 'mi', label: 'Mi, 10. Feb.', value: '09.00–12.00' },
         { id: 'do', label: 'Do, 11. Feb.', value: '09.00–12.00' },
-        { id: 'fr', label: 'Fr, 12. Feb. (Rückblick)', value: '09.00–12.00', highlight: true },
+        { id: 'fr', label: 'Fr, 12. Feb.', value: '09.00–12.00', highlight: true },
       ],
     },
   },
@@ -1964,7 +2075,7 @@ export const fuenfKlasseLerncampSessions = [
         { id: 'di', label: 'Di, 16. Feb.', value: '13.30–16.30' },
         { id: 'mi', label: 'Mi, 17. Feb.', value: '13.30–16.30' },
         { id: 'do', label: 'Do, 18. Feb.', value: '13.30–16.30' },
-        { id: 'fr', label: 'Fr, 19. Feb. (Rückblick)', value: '13.30–16.30', highlight: true },
+        { id: 'fr', label: 'Fr, 19. Feb.', value: '13.30–16.30', highlight: true },
       ],
     },
   },
@@ -1985,7 +2096,7 @@ export const fuenfKlasseLerncampSessions = [
         { id: 'di', label: 'Di, 23. Feb.', value: '09.00–12.00' },
         { id: 'mi', label: 'Mi, 24. Feb.', value: '09.00–12.00' },
         { id: 'do', label: 'Do, 25. Feb.', value: '09.00–12.00' },
-        { id: 'fr', label: 'Fr, 26. Feb. (Rückblick)', value: '09.00–12.00', highlight: true },
+        { id: 'fr', label: 'Fr, 26. Feb.', value: '09.00–12.00', highlight: true },
       ],
     },
   },
@@ -2006,7 +2117,7 @@ export const fuenfKlasseLerncampSessions = [
         { id: 'di', label: 'Di, 23. Feb.', value: '13.30–16.30' },
         { id: 'mi', label: 'Mi, 24. Feb.', value: '13.30–16.30' },
         { id: 'do', label: 'Do, 25. Feb.', value: '13.30–16.30' },
-        { id: 'fr', label: 'Fr, 26. Feb. (Rückblick)', value: '13.30–16.30', highlight: true },
+        { id: 'fr', label: 'Fr, 26. Feb.', value: '13.30–16.30', highlight: true },
       ],
     },
   },
@@ -2340,6 +2451,12 @@ export const einsSekVorkursDetailPageModel = {
   sessions: einsSekVorkursSessions,
 } as const satisfies CourseDetailPageModel
 
+const einsSekLerncampWeekOptions = [
+  { id: '0812', label: '8.–12. Februar' },
+  { id: '1519', label: '15.–19. Februar' },
+  { id: '2226', label: '22.–26. Februar' },
+] satisfies { id: string; label: string }[]
+
 export const einsSekLerncampSessions = [
   {
     id: 6101,
@@ -2347,7 +2464,10 @@ export const einsSekLerncampSessions = [
     capacity: 8,
     source: { kind: 'intensivwoche_kurse', kursId: 6101 },
     kurs: 'Kurs A',
+    weekId: '0812',
     dateLabel: '08.–12. Feb.',
+    startAt: '2027-02-08',
+    endAt: '2027-02-12',
     timeLabel: '09.00–12.00',
     standort: 'Zürich HB',
     deliveryModes: ['onsite'],
@@ -2358,7 +2478,7 @@ export const einsSekLerncampSessions = [
         { id: 'di', label: 'Di, 09. Feb.', value: '09.00–12.00' },
         { id: 'mi', label: 'Mi, 10. Feb.', value: '09.00–12.00' },
         { id: 'do', label: 'Do, 11. Feb.', value: '09.00–12.00' },
-        { id: 'fr', label: 'Fr, 12. Feb. (Rückblick)', value: '09.00–12.00', highlight: true },
+        { id: 'fr', label: 'Fr, 12. Feb.', value: '09.00–12.00', highlight: true },
       ],
     },
   },
@@ -2368,7 +2488,10 @@ export const einsSekLerncampSessions = [
     capacity: 8,
     source: { kind: 'intensivwoche_kurse', kursId: 6102 },
     kurs: 'Kurs B',
+    weekId: '1519',
     dateLabel: '15.–19. Feb.',
+    startAt: '2027-02-15',
+    endAt: '2027-02-19',
     timeLabel: '13.30–16.30',
     standort: 'Winterthur',
     deliveryModes: ['onsite'],
@@ -2379,7 +2502,7 @@ export const einsSekLerncampSessions = [
         { id: 'di', label: 'Di, 16. Feb.', value: '13.30–16.30' },
         { id: 'mi', label: 'Mi, 17. Feb.', value: '13.30–16.30' },
         { id: 'do', label: 'Do, 18. Feb.', value: '13.30–16.30' },
-        { id: 'fr', label: 'Fr, 19. Feb. (Rückblick)', value: '13.30–16.30', highlight: true },
+        { id: 'fr', label: 'Fr, 19. Feb.', value: '13.30–16.30', highlight: true },
       ],
     },
   },
@@ -2389,7 +2512,10 @@ export const einsSekLerncampSessions = [
     capacity: 8,
     source: { kind: 'intensivwoche_kurse', kursId: 6103 },
     kurs: 'Kurs C',
+    weekId: '2226',
     dateLabel: '22.–26. Feb.',
+    startAt: '2027-02-22',
+    endAt: '2027-02-26',
     timeLabel: '13.30–16.30',
     standort: 'Winterthur',
     deliveryModes: ['onsite'],
@@ -2400,7 +2526,7 @@ export const einsSekLerncampSessions = [
         { id: 'di', label: 'Di, 23. Feb.', value: '13.30–16.30' },
         { id: 'mi', label: 'Mi, 24. Feb.', value: '13.30–16.30' },
         { id: 'do', label: 'Do, 25. Feb.', value: '13.30–16.30' },
-        { id: 'fr', label: 'Fr, 26. Feb. (Rückblick)', value: '13.30–16.30', highlight: true },
+        { id: 'fr', label: 'Fr, 26. Feb.', value: '13.30–16.30', highlight: true },
       ],
     },
   },
@@ -2456,6 +2582,7 @@ export const einsSekLerncampSportferien = {
     },
   ],
   kurstyp: 'intensivkurs',
+  weekOptions: einsSekLerncampWeekOptions,
   flowSteps: [
     {
       id: 'ankommen-einschaetzen',
@@ -4007,13 +4134,10 @@ export const zweiDreiSekSelbststudiumPageModel = {
 // laut Abschnitt 4 ein fremdes, iframe-srcdoc-exportiertes Design-System; Inhalt wörtlich aus dem
 // eingebetteten Markup übernommen, nicht aus dem Wrapper-CSS/der Navigation). Preis CHF 145
 // stimmt mit der 6.-Klasse-Detailseite und der BMS-Prüfungssimulation überein -- kein Preis-Bug
-// hier. Die Quelle enthält zusätzlich einen vierteiligen Bewertungsraster-Abschnitt ("Note" /
-// "Inhalt & Aufbau" / "Sprache & Ausdruck" / "Hinweise") sowie einen dreistufigen
-// Nachprüfungs-Feedbackfluss ("Digitalisieren" / "Rückmeldung" / "Freigeben"). Weder
-// ExamSimulationOffer/ExamSimulationPageModel (Abschnitt 2.2/2.8) noch die BookableOffer-Weiche in
-// [angebot]/page.tsx (rendert für Prüfungssimulationen nur whyUs/flowSteps/examTimeline/faq)
-// haben dafür ein Feld -- dieser Inhalt bleibt deshalb bewusst unübernommen statt in ein
-// semantisch falsches Feld gepresst zu werden.
+// hier. Der vierteilige Bewertungsraster-Abschnitt ("Note" / "Inhalt & Aufbau" / "Sprache &
+// Ausdruck" / "Hinweise") und der dreistufige Nachprüfungs-Feedbackfluss ("Digitalisieren" /
+// "Rückmeldung" / "Freigeben") werden für beide Prüfungssimulationsseiten zentral in
+// exam-simulation-detail.tsx gerendert.
 // ---------------------------------------------------------------------------------------------
 
 export const zweiDreiSekPruefungssimulation = {
