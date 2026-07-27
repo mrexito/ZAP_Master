@@ -38,7 +38,7 @@ Dies ist die Neuentwicklung (v2) der ursprünglichen ZAP-Plattform — vollstän
 | Feature | Beschreibung |
 |---|---|
 | **Prüfungstrainer** | Interaktive Übungen für Mathematik und Deutsch |
-| **Alte Prüfungen** | Zugriff auf vergangene Prüfungsaufgaben mit Musterlösungen |
+| **Simulationsprüfung** | Simuliert eine echte ZAP-Prüfung mit Rückmeldung zu den Antworten |
 | **Lernmaterialien** | Strukturierte Lerninhalte, hochgeladen von Trainer:innen |
 | **Aufsätze** | Aufsatzübungen mit KI-gestützter Korrektur |
 | **Intensivkurse** | Kursverwaltung und Anmeldung für Vorbereitungskurse |

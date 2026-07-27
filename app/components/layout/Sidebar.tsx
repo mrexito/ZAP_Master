@@ -39,7 +39,7 @@ const lernenNavigation = [
   { name: 'Prüfungstrainer', href: '/trainer', icon: GraduationCap },
   { name: 'Übungen', href: '/uebungen', icon: ClipboardList },
   { name: 'Lernmaterialien', href: '/materialien', icon: BookOpen },
-  { name: 'Alte Prüfungen', href: '/pruefung', icon: FileText },
+  { name: 'Simulationsprüfung', href: '/pruefung', icon: FileText },
   { name: 'Aufsätze', href: '/aufsaetze', icon: PenLine },
 ]
 
