@@ -41,26 +41,26 @@ export default async function DistanceLearningPage({
 
   return (
     <>
-      <Section spacing="lg">
+      <Section spacing="default">
         <AudienceHero content={distanceLearningPageModel.hero} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         <CourseFlow steps={distanceLearningPageModel.flowSteps} />
       </Section>
 
-      <Section>
+      <Section spacing="sm">
         <TargetedAudiencePicker options={pickerOptions} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         {distanceLearningPageModel.contentSections.map((section) => (
           <CourseContent key={section.id} sections={[section]} />
         ))}
       </Section>
 
       {distanceLearningPageModel.faq && distanceLearningPageModel.faq.length > 0 ? (
-        <Section>
+        <Section spacing="sm">
           <FaqAccordion items={distanceLearningPageModel.faq} />
         </Section>
       ) : null}

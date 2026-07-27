@@ -82,7 +82,7 @@ export default async function AudienceOverviewPage({
     <>
       <Breadcrumb items={[{ label: 'Startseite', href: '/' }, { label: audience.displayLabel }]} />
 
-      <Section spacing="lg">
+      <Section spacing="default">
         <AudienceHero content={hero} />
         {offers.some(coversDeutschUndMathematik) ? (
           <div className="mt-9">
@@ -92,7 +92,7 @@ export default async function AudienceOverviewPage({
       </Section>
 
       {offers.length > 0 || addOnOffers.length > 0 ? (
-        <Section variant="muted">
+        <Section spacing="sm" variant="muted">
           <div className="flex flex-col gap-10">
             {offers.length > 0 ? <CourseCardGrid offers={offers} /> : null}
             <AddOnCourses offers={addOnOffers} />

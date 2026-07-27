@@ -103,7 +103,8 @@ export const audiences = [
 export const serviceGroups = [
   {
     id: 'core',
-    label: 'Ergänzend zu unseren Kursen',
+    // Kein `label`: Lerncoaching/Nachhilfe stehen laut Vorlage direkt unter dem Section-h2
+    // "Ergänzend zu unseren Kursen" (homePageModel.servicesTitle), ohne eigene Unterüberschrift.
     cards: [
       {
         id: 'lerncoaching',
@@ -172,11 +173,36 @@ export const serviceGroups = [
 export const homePageModel = {
   hero: {
     eyebrow: 'Kompetenzzentrum Gymivorbereitung Zürich',
-    title: 'Der richtige Weg zur Gymiprüfung — für jede Klassenstufe.',
+    // Zeilenumbrüche 1:1 aus design-reference/Startseite.html (<br>-Stellen im h1/.lede) --
+    // als \n statt rohem HTML, gerendert über whitespace-pre-line in page.tsx.
+    title: 'Der richtige Weg zur Gymiprüfung —\nfür jede Klassenstufe.',
     description:
-      'Individuelle Förderung in Kleingruppen, von der 4. Klasse bis zur 2./3. Sek. Sagen Sie uns, wo Ihr Kind steht — wir zeigen Ihnen den passenden Kurs.',
+      'Individuelle Förderung in Kleingruppen, von der 4. Klasse bis zur 2./3. Sek.\nSagen Sie uns, wo Ihr Kind steht — wir zeigen Ihnen den passenden Kurs.',
   },
   audiences,
+  values: [
+    {
+      id: 'individuelle-foerderung',
+      title: 'Individuelle Förderung',
+      description: 'Kleingruppen von 3 bis max. 8 Kindern statt Frontalunterricht.',
+    },
+    {
+      id: 'standortbestimmung',
+      title: 'Standortbestimmung',
+      description: 'Zu Beginn erkennen wir Lücken gezielt und schliessen sie Schritt für Schritt.',
+    },
+    {
+      id: 'aufsatztraining',
+      title: 'Aufsatztraining',
+      description: 'Individuelles Coaching mit Korrektur und Feedback zu jedem Text.',
+    },
+    {
+      id: 'betreuung-ausserhalb-kurszeiten',
+      title: 'Betreuung ausserhalb der Kurszeiten',
+      description: 'Fragen jederzeit per Chat — im Kurspreis inbegriffen.',
+    },
+  ],
+  servicesTitle: 'Ergänzend zu unseren Kursen',
   serviceGroups,
   featuredTestimonial: {
     id: 'testi-adina',
@@ -184,6 +210,15 @@ export const homePageModel = {
       'Ich war mir nicht sicher, ob ich die Prüfung schaffe und ins Gymi soll. Dank Ihnen habe ich nun die Prüfung bestanden und freue mich aufs Gymnasium.',
     author: 'Adina, 13 Jahre',
     role: 'Langzeitgymnasium, Intensivkurs Sportferien',
+  },
+  finalCta: {
+    title: 'Nicht sicher, welcher Kurs passt?',
+    description:
+      'Wir beraten Sie unverbindlich und finden gemeinsam die passende Vorbereitung für Ihr Kind.',
+    // Aus design-reference/Startseite.html: "Kostenloses Beratungsgespräch vereinbaren" ist dort
+    // href="#" -- laut Architektur-Briefing Abschnitt 6 (Auflösung der 99 href="#"-Platzhalter)
+    // zeigt jeder Beratungs-CTA auf /kontakt, bis ein eigener Terminbuchungsflow existiert.
+    action: { label: 'Kostenloses Beratungsgespräch vereinbaren', href: '/kontakt' },
   },
 } satisfies HomePageModel
 
@@ -217,7 +252,6 @@ export const siteFooter = {
     { label: 'AGB', href: '/agb' },
     { label: 'Datenschutzerklärung', href: '/datenschutz' },
   ],
-  copyright: '© 2026 Lernecke',
 } satisfies SiteFooterModel
 
 export const marketingLayoutModel = {

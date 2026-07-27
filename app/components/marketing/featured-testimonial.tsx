@@ -8,8 +8,8 @@ interface FeaturedTestimonialProps {
 // Schritt 6, kein Wrapper darum.
 function FeaturedTestimonial({ testimonial }: FeaturedTestimonialProps) {
   return (
-    <figure className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
-      <blockquote className="font-serif text-2xl leading-snug text-foreground md:text-3xl">
+    <figure className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
+      <blockquote className="font-serif text-lg leading-snug text-foreground md:text-xl">
         &ldquo;{testimonial.quote}&rdquo;
       </blockquote>
       <figcaption className="font-mono text-sm text-muted-foreground">

@@ -298,7 +298,11 @@ export type ServiceCardModel = {
 
 export type ServiceSubgroupModel = {
   id: string
-  label: string
+  // Optional: nur die beiden Nur-für-Zielgruppe-Untergruppen ("Nur 6. Klasse & 2./3. Sek",
+  // "Berufsmatura & Gymnasium") tragen laut design-reference/Startseite.html eine eigene
+  // .service-subgroup-label. Die erste Gruppe (Lerncoaching/Nachhilfe) steht direkt unter dem
+  // Section-h2 und hat keine eigene Unterüberschrift.
+  label?: string
   eligibleFor?: AudienceId[]
   cards: ServiceCardModel[]
 }
@@ -329,7 +333,6 @@ export type SiteFooterModel = {
   brand: string
   navigation: NavItem[]
   legal: LinkAction[] // nur reale Ziele; keine #-/Mockup-Links
-  copyright: string
 }
 
 export type ExistingCourseCardModel = {
@@ -373,8 +376,15 @@ export type MarketingLayoutModel = {
 export type HomePageModel = {
   hero: AudienceHeroContent
   audiences: Audience[] // Platzierung steuert KlassenPicker, Nav und BMS-/Matura-Karten
+  values: Feature[] // "Unsere Leistungen" -- 4 Value-Props unter dem Hero-Picker
+  servicesTitle: string // Section-h2 "Ergänzend zu unseren Kursen" -- kein ServiceSubgroupModel.label
   serviceGroups: ServiceSubgroupModel[]
   featuredTestimonial: Testimonial
+  finalCta: {
+    title: string
+    description: string
+    action: LinkAction
+  }
 }
 
 export type TargetedServicePageModel = {

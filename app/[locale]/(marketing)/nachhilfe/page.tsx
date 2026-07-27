@@ -31,11 +31,11 @@ export default async function NachhilfePage({
 
   return (
     <>
-      <Section spacing="lg">
+      <Section spacing="default">
         <AudienceHero content={nachhilfePageModel.hero} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         <ResponsiveGrid columns={{ base: 1, md: 2 }}>
           {nachhilfePageModel.plans.map((plan) => (
             <SubscriptionCard key={plan.id} plan={plan} />

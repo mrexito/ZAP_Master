@@ -41,30 +41,30 @@ export default async function PruefungssimulationPage({
 
   return (
     <>
-      <Section spacing="lg">
+      <Section spacing="default">
         <AudienceHero content={pruefungssimulationPageModel.hero} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         <CourseFlow steps={pruefungssimulationPageModel.flowSteps} />
       </Section>
 
-      <Section>
+      <Section spacing="sm">
         <TargetedAudiencePicker options={pickerOptions} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         <WhyUsGrid features={pruefungssimulationPageModel.features} />
       </Section>
 
-      <Section>
+      <Section spacing="sm">
         {pruefungssimulationPageModel.contentSections.map((section) => (
           <CourseContent key={section.id} sections={[section]} />
         ))}
       </Section>
 
       {pruefungssimulationPageModel.faq && pruefungssimulationPageModel.faq.length > 0 ? (
-        <Section variant="muted">
+        <Section spacing="sm" variant="muted">
           <FaqAccordion items={pruefungssimulationPageModel.faq} />
         </Section>
       ) : null}

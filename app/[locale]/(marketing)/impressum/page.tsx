@@ -109,7 +109,7 @@ export default async function ImpressumPage({
   setRequestLocale(locale)
 
   return (
-    <Section spacing="lg">
+    <Section spacing="default">
       <LegalPageContent model={impressumModel} />
     </Section>
   )

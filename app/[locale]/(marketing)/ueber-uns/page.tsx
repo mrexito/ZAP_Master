@@ -36,19 +36,19 @@ export default async function UeberUnsPage({
 
   return (
     <>
-      <Section spacing="lg">
+      <Section spacing="default">
         <AudienceHero content={aboutPageModel.hero} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         <CourseContent sections={aboutPageModel.storySections} />
       </Section>
 
-      <Section>
+      <Section spacing="sm">
         <WhyUsGrid features={aboutPageModel.principles} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         <div className="flex flex-col gap-6">
           <SectionHeading title="Team" level={3} />
           <ResponsiveGrid columns={{ base: 1, md: 2 }}>
@@ -67,7 +67,7 @@ export default async function UeberUnsPage({
       </Section>
 
       {aboutPageModel.cta ? (
-        <Section>
+        <Section spacing="sm">
           <Button asChild>
             <Link href={aboutPageModel.cta.href}>{aboutPageModel.cta.label}</Link>
           </Button>

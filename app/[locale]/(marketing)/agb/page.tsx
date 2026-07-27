@@ -324,7 +324,7 @@ export default async function AgbPage({
   setRequestLocale(locale)
 
   return (
-    <Section spacing="lg">
+    <Section spacing="default">
       <LegalPageContent model={agbModel} />
     </Section>
   )

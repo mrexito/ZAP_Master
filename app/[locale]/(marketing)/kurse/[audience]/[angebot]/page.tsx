@@ -129,17 +129,17 @@ function SelfStudyOfferPage({ offer, audienceLabel, audienceHref }: { offer: Sel
         items={[{ label: 'Startseite', href: '/' }, { label: audienceLabel, href: audienceHref }, { label: offer.displayName }]}
       />
 
-      <Section spacing="lg">
+      <Section spacing="default">
         <AudienceHero content={hero} />
       </Section>
 
       {offer.whyUs.length > 0 ? (
-        <Section variant="muted">
+        <Section spacing="sm" variant="muted">
           <WhyUsGrid features={offer.whyUs} />
         </Section>
       ) : null}
 
-      <Section>
+      <Section spacing="sm">
         <SelfStudyAccess offer={offer} accessAction={accessAction} />
       </Section>
     </>
@@ -200,44 +200,44 @@ export default async function CourseOfferDetailPage({
         items={[{ label: 'Startseite', href: '/' }, { label: audience.displayLabel, href: audience.href }, { label: offer.displayName }]}
       />
 
-      <Section spacing="lg">
+      <Section spacing="default">
         <CourseHero offer={offer} audience={audience} />
       </Section>
 
       {offer.flowSteps.length > 0 ? (
-        <Section variant="muted">
+        <Section spacing="sm" variant="muted">
           {!isExamSimulation ? <SectionNumberLabel number={1} label="Kursaufbau" /> : null}
           <CourseFlow steps={offer.flowSteps} />
         </Section>
       ) : null}
 
       {isExamSimulation && offer.examTimeline.length > 0 ? (
-        <Section>
+        <Section spacing="sm">
           <ExamSimTimeline segments={offer.examTimeline} />
         </Section>
       ) : null}
 
       {isExamSimulation && offer.faq.length > 0 ? (
-        <Section variant="muted">
+        <Section spacing="sm" variant="muted">
           <FaqAccordion items={offer.faq} />
         </Section>
       ) : null}
 
       {!isExamSimulation && offer.contentSections.length > 0 ? (
-        <Section>
+        <Section spacing="sm">
           <SectionNumberLabel number={2} label="Kursinhalt" />
           <CourseContent sections={offer.contentSections} />
         </Section>
       ) : null}
 
       {offer.kurstyp !== 'pruefungssimulation' ? (
-        <Section>
+        <Section spacing="sm">
           <SectionNumberLabel number={3} label="Überblick & Preis" />
           <OverviewPriceBox offer={offer} />
         </Section>
       ) : null}
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         {!isExamSimulation ? <SectionNumberLabel number={4} label={offer.booking.title} /> : null}
         <Suspense fallback={<SessionTableSkeleton />}>
           <BookingSectionLoader offer={offer} sessions={sessions} />
@@ -245,13 +245,13 @@ export default async function CourseOfferDetailPage({
       </Section>
 
       {offer.whyUs.length > 0 ? (
-        <Section>
+        <Section spacing="sm">
           <WhyUsGrid features={offer.whyUs} />
         </Section>
       ) : null}
 
       {offer.testimonials && offer.testimonials.length > 0 ? (
-        <Section variant="muted">
+        <Section spacing="sm" variant="muted">
           <Testimonials testimonials={offer.testimonials} />
         </Section>
       ) : null}

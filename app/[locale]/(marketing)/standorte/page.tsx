@@ -42,7 +42,7 @@ export default async function StandortePage({
   setRequestLocale(locale)
 
   return (
-    <Section spacing="lg">
+    <Section spacing="default">
       <AudienceHero content={standortePageContent} />
       <ul className="mt-8 flex flex-col gap-3">
         {STANDORTE.map((standort) => (

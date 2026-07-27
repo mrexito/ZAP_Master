@@ -115,6 +115,9 @@ Aktueller Live-Datenbankstand und verbindliche DB-Entscheidungen:
 @design-reference/datenmodell-review.md
 Designkorrekturen und redaktionelle Publikationsgates:
 @design-reference/design-review-todo.md
+Verbindliche UI-Konventionen (Section-Rhythmus, Typografie-Skala, Card-Muster, Farbsystem) für
+alle Marketing-/Kursseiten, vor jeder neuen Sektion/Komponente prüfen:
+@design-reference/design-system.md
 Referenz-Prototyp Buchungstabelle: @design-reference/SessionTable.jsx
 Die Startseite in design-reference/Startseite.html ERSETZT die
 bestehende Startseite vollständig, sie wird nicht ergänzt.

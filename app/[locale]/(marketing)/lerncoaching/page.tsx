@@ -35,32 +35,32 @@ export default async function LerncoachingPage({
 
   return (
     <>
-      <Section spacing="lg">
+      <Section spacing="default">
         <AudienceHero content={lerncoachingPageModel.hero} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         <CourseFlow steps={lerncoachingPageModel.flowSteps} />
       </Section>
 
-      <Section>
+      <Section spacing="sm">
         <WhyUsGrid features={lerncoachingPageModel.features} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         {lerncoachingPageModel.contentSections.map((section) => (
           <CourseContent key={section.id} sections={[section]} />
         ))}
       </Section>
 
       {lerncoachingPageModel.faq && lerncoachingPageModel.faq.length > 0 ? (
-        <Section>
+        <Section spacing="sm">
           <FaqAccordion items={lerncoachingPageModel.faq} />
         </Section>
       ) : null}
 
       {lerncoachingPageModel.relatedActions && lerncoachingPageModel.relatedActions.length > 0 ? (
-        <Section variant="muted">
+        <Section spacing="sm" variant="muted">
           <div className="flex flex-wrap gap-3">
             {lerncoachingPageModel.relatedActions.map((action) => (
               <Button key={action.href} asChild variant="outline">

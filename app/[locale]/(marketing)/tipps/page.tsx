@@ -31,11 +31,11 @@ export default async function TippsPage({
 
   return (
     <>
-      <Section spacing="lg">
+      <Section spacing="default">
         <AudienceHero content={tipsPageModel.hero} />
       </Section>
 
-      <Section variant="muted">
+      <Section spacing="sm" variant="muted">
         <div className="flex flex-col gap-12">
           {tipsPageModel.categories.map((category) => (
             <TipCategorySection key={category.id} category={category} />
@@ -43,7 +43,7 @@ export default async function TippsPage({
         </div>
       </Section>
 
-      <Section>
+      <Section spacing="sm">
         <FaqAccordion items={tipsPageModel.faq} />
       </Section>
     </>

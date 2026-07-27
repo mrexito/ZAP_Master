@@ -67,7 +67,7 @@ export default async function DatenschutzPage({
   setRequestLocale(locale)
 
   return (
-    <Section spacing="lg">
+    <Section spacing="default">
       <LegalPageContent model={datenschutzModel} />
     </Section>
   )

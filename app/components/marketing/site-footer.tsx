@@ -46,11 +46,6 @@ function SiteFooter({ model }: SiteFooterProps) {
           </ul>
         </div>
       </PageContainer>
-      <div className="border-t border-primary-foreground/15">
-        <PageContainer className="py-6 text-sm text-primary-foreground/70">
-          {model.copyright}
-        </PageContainer>
-      </div>
     </footer>
   )
 }
