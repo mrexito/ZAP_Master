@@ -19,12 +19,17 @@ import type {
 import { mapKursRowToExistingCourseCard, mapKlassenstufeToAudienceIds } from './mapper'
 import {
   findOfferBySlug,
+  findOfferById,
   getAudienceHeroOverride,
   getOfferCatalogEntry,
   getSessionsForOfferId,
 } from './offer-catalog'
 import { localizeContent, type LocaleOverlay } from '@/lib/i18n/localize-content'
 import { AUDIENCE_HERO_TRANSLATIONS, OFFER_TRANSLATIONS, SESSION_TRANSLATIONS } from '@/types/marketing.translations'
+import {
+  applyFixedIntensiveScheduleToSessions,
+  buildFixedIntensiveWeekOptions,
+} from '@/lib/kurse/fixed-school-schedule'
 
 // Cookie-freier anon-Client -- innerhalb von 'use cache' ist cookies()/headers() nicht erlaubt.
 // Identisches, bereits etabliertes Muster wie getPublicKurse() in app/(public)/kurse/actions.ts.
@@ -61,14 +66,10 @@ export async function getExistingCoursesForAudience(
     .filter((card): card is ExistingCourseCardModel => card != null)
 }
 
-// Abschnitt 2.12: Preise sollen ab jetzt über /dashboard/kurse/angebote live editierbar sein,
-// nicht mehr nur als statischer Fixture-Wert. Überschreibt AUSSCHLIESSLICH die Preisfelder mit dem
-// zugehörigen published offer_editions-Datensatz (20260722130621_seed_published_offer_editions.sql
-// hat für jedes bereits publizierte Angebot einen mit dem bisherigen Fixture-Wert identischen
-// Startwert angelegt) -- Titel/Tagline/Beschreibung/Sessions bleiben bewusst bei den Fixtures, das
-// war nicht Teil dieser Anfrage. Ohne passende published-Zeile (z. B. BMS-Halbjahreskurs, das
-// bewusst ohne Edition bleibt) bleibt der Fixture-Preis unverändert die Quelle -- kein Fallback auf
-// 0 oder ein Fehler.
+// Abschnitt 2.12: Preise und das Schuljahr der automatischen Intensivkurs-Terminperioden kommen
+// über /dashboard/kurse/angebote aus der veröffentlichten Edition. Titel/Tagline/Beschreibung und
+// die buchbaren Kursgruppen bleiben bei den Fixtures; nur deren Datumsperioden werden weiter unten
+// aus derselben zentralen KW-Logik wie in der Administration erzeugt.
 async function applyLivePriceOverrides<T extends CourseOffer | ExamSimulationOffer | SelfStudyOffer>(
   offers: T[]
 ): Promise<T[]> {
@@ -95,29 +96,61 @@ async function applyLivePriceOverrides<T extends CourseOffer | ExamSimulationOff
 
   const { data: editionRows, error: editionsError } = await supabase
     .from('offer_editions')
-    .select('offer_id, regular_price_rappen, early_bird_enabled, early_bird_price_rappen, early_bird_deadline')
+    .select('offer_id, school_year, regular_price_rappen, early_bird_enabled, early_bird_price_rappen, early_bird_deadline')
     .eq('status', 'published')
     .in('offer_id', offerRows.map((row) => row.id))
 
   if (editionsError || !editionRows) return offers
 
-  const priceByOfferId = new Map(editionRows.map((row) => [row.offer_id, row]))
+  const editionByOfferId = new Map(editionRows.map((row) => [row.offer_id, row]))
 
   return offers.map((offer) => {
     const offerId = offerIdByKey.get(`${offer.audienceId}|${offer.kurstyp}|${offer.slug}`)
-    const livePrice = offerId != null ? priceByOfferId.get(offerId) : undefined
-    if (!livePrice) return offer
+    const liveEdition = offerId != null ? editionByOfferId.get(offerId) : undefined
+    if (!liveEdition) return offer
 
     if (offer.kurstyp === 'selbststudium') {
-      return { ...offer, regularPriceRappen: livePrice.regular_price_rappen }
+      return { ...offer, regularPriceRappen: liveEdition.regular_price_rappen }
     }
-    return {
+    const withLivePrice = {
       ...offer,
-      regularPriceRappen: livePrice.regular_price_rappen,
-      earlyBirdPriceRappen: livePrice.early_bird_enabled ? livePrice.early_bird_price_rappen ?? undefined : undefined,
-      earlyBirdDeadline: livePrice.early_bird_enabled ? livePrice.early_bird_deadline ?? undefined : undefined,
+      regularPriceRappen: liveEdition.regular_price_rappen,
+      earlyBirdPriceRappen: liveEdition.early_bird_enabled ? liveEdition.early_bird_price_rappen ?? undefined : undefined,
+      earlyBirdDeadline: liveEdition.early_bird_enabled ? liveEdition.early_bird_deadline ?? undefined : undefined,
     }
+    return offer.kurstyp === 'intensivkurs'
+      ? {
+          ...withLivePrice,
+          weekOptions: buildFixedIntensiveWeekOptions(liveEdition.school_year, offer.audienceId),
+        }
+      : withLivePrice
   })
+}
+
+async function getPublishedSchoolYear(
+  offer: CourseOffer | ExamSimulationOffer | SelfStudyOffer
+): Promise<string | null> {
+  const supabase = createCatalogSupabaseClient()
+  const { data: offerRow, error: offerError } = await supabase
+    .from('offers')
+    .select('id')
+    .eq('audience_id', offer.audienceId)
+    .eq('kurstyp', offer.kurstyp)
+    .eq('slug', offer.slug)
+    .maybeSingle()
+
+  if (offerError || !offerRow) return null
+
+  const { data: editionRow, error: editionError } = await supabase
+    .from('offer_editions')
+    .select('school_year')
+    .eq('offer_id', offerRow.id)
+    .eq('status', 'published')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return editionError ? null : editionRow?.school_year ?? null
 }
 
 // Wendet das englische Uebersetzungs-Overlay (falls vorhanden) auf ein einzelnes Angebot an --
@@ -184,9 +217,23 @@ export async function getOfferBySlug(
 export async function getSessionsForOffer(offerId: string, locale: string): Promise<SessionDefinition[]> {
   'use cache'
   cacheLife('hours')
-  cacheTag('courses', `course:${offerId}`)
+  // Das Schuljahr der generierten Intensivkursperioden kommt aus offer_editions. Admin-Speichern
+  // invalidiert den globalen "offers"-Tag; deshalb muss neben Kurs-/Verfügbarkeitsänderungen auch
+  // dieser Tag die gecachten öffentlichen Sessionperioden erneuern.
+  cacheTag('offers', 'courses', `course:${offerId}`)
 
-  return getSessionsForOfferId(offerId).map((session) =>
+  const offer = findOfferById(offerId)
+  const fixtureSessions = getSessionsForOfferId(offerId)
+  const sessions =
+    offer?.kurstyp === 'intensivkurs'
+      ? applyFixedIntensiveScheduleToSessions(
+          fixtureSessions,
+          (await getPublishedSchoolYear(offer)) ?? '2026/27',
+          offer.audienceId
+        )
+      : fixtureSessions
+
+  return sessions.map((session) =>
     localizeContent(session, SESSION_TRANSLATIONS[session.id], locale)
   )
 }

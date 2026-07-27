@@ -120,6 +120,54 @@ for (const { overviewRoute, detailRoute } of [
   })
 }
 
+for (const { route, includesKw8 } of [
+  { route: '/de/kurse/4-klasse/lerncamp-sportferien', includesKw8: true },
+  { route: '/de/kurse/5-klasse/lerncamp-sportferien', includesKw8: true },
+  { route: '/de/kurse/6-klasse/intensivkurs-sportferien', includesKw8: true },
+  { route: '/de/kurse/1-sek/lerncamp-sportferien', includesKw8: true },
+  { route: '/de/kurse/2-3-sek/intensivkurs-sportferien', includesKw8: true },
+  { route: '/de/kurse/bms/intensivkurs', includesKw8: true },
+  { route: '/de/kurse/matura/intensivwoche', includesKw8: false },
+]) {
+  test(`Intensivkursperioden stammen auf ${route} aus den administrativen Fixwochen`, async ({ page }) => {
+    await page.goto(route)
+
+    await expect(page.getByText('KW 6 · 08.02.27–12.02.27', { exact: true })).toBeVisible()
+    await expect(page.getByText('KW 7 · 15.02.27–19.02.27', { exact: true })).toBeVisible()
+
+    const kw8 = page.getByText('KW 8 · 22.02.27–26.02.27', { exact: true })
+    if (includesKw8) {
+      await expect(kw8).toBeVisible()
+    } else {
+      await expect(kw8).toHaveCount(0)
+    }
+
+    await expect(page.getByText(/15\.02\.27 – 19\.02\.27/).first()).toBeVisible()
+  })
+}
+
+test('BMS übernimmt die Standortbelegung der Fixwochen aus den Kursangeboten', async ({ page }) => {
+  await page.goto('/de/kurse/bms/intensivkurs')
+
+  const booking = page.locator('#buchung')
+  const table = booking.locator('table')
+
+  await booking.getByRole('button', { name: /^KW 6 ·/ }).click()
+  await expect(table.locator('tbody tr')).toHaveCount(1)
+  await expect(table.getByText('Winterthur', { exact: true })).toHaveCount(1)
+  await expect(table.getByText('Zürich HB', { exact: true })).toHaveCount(0)
+
+  await booking.getByRole('button', { name: /^KW 7 ·/ }).click()
+  await expect(table.locator('tbody tr')).toHaveCount(2)
+  await expect(table.getByText('Winterthur', { exact: true })).toHaveCount(1)
+  await expect(table.getByText('Zürich HB', { exact: true })).toHaveCount(1)
+
+  await booking.getByRole('button', { name: /^KW 8 ·/ }).click()
+  await expect(table.locator('tbody tr')).toHaveCount(1)
+  await expect(table.getByText('Zürich HB', { exact: true })).toHaveCount(1)
+  await expect(table.getByText('Winterthur', { exact: true })).toHaveCount(0)
+})
+
 test('Zusatzangebote haben eigene Markenfarben auf den Kursübersichten', async ({ page }) => {
   await page.goto('/de/kurse/6-klasse')
 

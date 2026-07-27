@@ -24,8 +24,10 @@ import {
 } from '@/types/kurs-edition'
 import { saveSessionAction, cancelSessionAction } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
 import {
+  buildFixedIntensiveAudienceSchedule,
   buildFixedIntensiveSchedule,
   buildFixedVorkursSchedule,
+  getFixedIntensiveLocations,
   hasFixedIntensiveSchedule,
   hasFixedSchoolSchedule,
 } from '@/lib/kurse/fixed-school-schedule'
@@ -276,11 +278,11 @@ function FixedIntensiveSchedule({ schoolYear }: { schoolYear: string }) {
     },
     {
       label: 'BMS',
-      schedule: buildFixedIntensiveSchedule(schoolYear, 'bms', 'Zürich HB'),
+      schedule: buildFixedIntensiveAudienceSchedule(schoolYear, 'bms'),
     },
     {
       label: 'Matura',
-      schedule: buildFixedIntensiveSchedule(schoolYear, 'matura', 'Zürich HB'),
+      schedule: buildFixedIntensiveAudienceSchedule(schoolYear, 'matura'),
     },
   ] as const
   const weekdays = [
@@ -322,7 +324,14 @@ function FixedIntensiveSchedule({ schoolYear }: { schoolYear: string }) {
               </th>
               {columns.map((column) => (
                 <td key={column.label} className="whitespace-nowrap px-3 py-3 font-mono-marketing text-xs font-semibold text-foreground">
-                  {column.schedule.map((week) => `KW ${week.calendarWeek}`).join(' / ')}
+                  {column.schedule.map((week) => {
+                    if (column.label !== 'BMS') return `KW ${week.calendarWeek}`
+
+                    const locations = getFixedIntensiveLocations('bms', week.calendarWeek)
+                      .map((location) => location === 'Zürich HB' ? 'Zürich' : location)
+                      .join(' + ')
+                    return `KW ${week.calendarWeek} (${locations})`
+                  }).join(' / ')}
                 </td>
               ))}
             </tr>
