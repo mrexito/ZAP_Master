@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 // Schritt 10b (Abschnitt 2.13 des Architektur-Briefings): Domain-Typen fuer die Tagesfreigaben-
-// Admin-Maske. exercises/trainer_exams sind bereits oeffentlich lesbar (siehe Migration
-// 20260721082939) -- ReleaseContentItem bildet beide auf eine gemeinsame Anzeigeform ab, damit
+// Lehrpersonen-Maske. learning_materials/exercises/trainer_exams werden auf eine gemeinsame
+// Anzeigeform abgebildet, damit
 // ReleaseMaterialSelector eine einzige Liste durchsuchen kann, ohne dass die UI zwei
 // unterschiedliche Quelltypen kennen muss.
 
@@ -15,7 +15,8 @@ export type CourseDayDB = {
 
 export type ReleaseContentCatalogDB = {
   id: string
-  kind: 'exercise' | 'trainer_exam'
+  kind: 'learning_material' | 'exercise' | 'trainer_exam'
+  learning_material_id: number | null
   exercise_id: number | null
   trainer_exam_id: string | null
   created_at: string
@@ -43,9 +44,9 @@ export type DailyReleaseItemDB = {
   position: number
 }
 
-/** Einheitliche Anzeigeform fuer exercises/trainer_exams im ReleaseMaterialSelector. */
+/** Einheitliche Anzeigeform fuer Lerneinheiten, Übungen und bestehende Prüfungsinhalte. */
 export type ReleaseContentItem = {
-  kind: 'exercise' | 'trainer_exam'
+  kind: 'learning_material' | 'exercise' | 'trainer_exam'
   sourceId: string
   title: string
   subject: string
@@ -67,7 +68,7 @@ export const releaseFormSchema = z
     opensAt: z.string().optional().nullable(),
     closesAt: z.string().optional().nullable(),
     selectedItems: z
-      .array(z.object({ kind: z.enum(['exercise', 'trainer_exam']), sourceId: z.string() }))
+      .array(z.object({ kind: z.enum(['learning_material', 'exercise', 'trainer_exam']), sourceId: z.string() }))
       .min(1, 'Mindestens ein Inhalt muss ausgewählt sein.'),
   })
   .refine((data) => data.mode !== 'scheduled' || (data.opensAt && data.closesAt), {

@@ -1,7 +1,9 @@
 'use server'
 
 // Schritt 10a (Abschnitt 2.12 des Architektur-Briefings): Server Actions für die Admin-Maske
-// "Kursangebot verwalten". Alle Mutationen sind admin-only (requireAdminAuth()) -- deckt sich mit
+// "Kursangebot verwalten". Mutationen sind admin-only (requireAdminAuth()); die lesenden
+// Katalog-/Durchführungsabfragen stehen auch Lehrpersonen für die Tagesfreigaben zur Verfügung.
+// Das deckt sich mit
 // den RLS-Policies aus Migration 20260721074500_offer_editions_admin_writes.sql, die INSERT/UPDATE
 // auf offer_editions/course_sessions/audit_log ausschliesslich für is_admin() erlauben.
 //
@@ -36,6 +38,20 @@ async function requireAdminAuth(): Promise<
   }
   if (session.user.role !== 'admin') {
     return { authorized: false, error: { success: false, error: 'Nur Administratorinnen und Administratoren dürfen Kursangebote verwalten.' } }
+  }
+  return { authorized: true, userId: session.user.id, supabaseAccessToken: session.supabaseAccessToken }
+}
+
+async function requireContentManagerAuth(): Promise<
+  | { authorized: true; userId: string; supabaseAccessToken: string }
+  | { authorized: false; error: EditionActionResult<never> }
+> {
+  const session = await auth()
+  if (!session?.user || !session.supabaseAccessToken) {
+    return { authorized: false, error: { success: false, error: 'Du musst angemeldet sein, um diese Aktion auszuführen.' } }
+  }
+  if (session.user.role !== 'admin' && session.user.role !== 'lehrperson') {
+    return { authorized: false, error: { success: false, error: 'Nur Lehrpersonen sowie Administratorinnen und Administratoren dürfen Kursdurchführungen lesen.' } }
   }
   return { authorized: true, userId: session.user.id, supabaseAccessToken: session.supabaseAccessToken }
 }
@@ -86,7 +102,7 @@ export type AdminOfferListEntry = AdminOfferCatalogEntry & { offerId: number }
 //    Segmente auf derselben Ebene erlaubt und /dashboard/kurse/[id] bereits für den bestehenden
 //    Einzelkurs-Editor vergeben ist).
 export async function getAdminOfferList(): Promise<EditionActionResult<AdminOfferListEntry[]>> {
-  const authCheck = await requireAdminAuth()
+  const authCheck = await requireContentManagerAuth()
   if (!authCheck.authorized) return authCheck.error
 
   const supabase = createAuthenticatedSupabaseClient(authCheck.supabaseAccessToken)
@@ -119,7 +135,7 @@ export type EditionSummary = {
 // Für den Angebote-Index: pro Offer die neueste Edition (nach school_year) samt Status, ohne den
 // vollen Formular-/Session-Datensatz zu laden.
 export async function getAdminEditionSummaries(): Promise<EditionActionResult<EditionSummary[]>> {
-  const authCheck = await requireAdminAuth()
+  const authCheck = await requireContentManagerAuth()
   if (!authCheck.authorized) return authCheck.error
 
   const supabase = createAuthenticatedSupabaseClient(authCheck.supabaseAccessToken)
@@ -155,7 +171,7 @@ export async function getAdminEditionSummaries(): Promise<EditionActionResult<Ed
 export async function getOfferWithCatalogEntry(
   offerId: number
 ): Promise<EditionActionResult<{ offer: OfferDB; catalogEntry: AdminOfferCatalogEntry }>> {
-  const authCheck = await requireAdminAuth()
+  const authCheck = await requireContentManagerAuth()
   if (!authCheck.authorized) return authCheck.error
 
   const supabase = createAuthenticatedSupabaseClient(authCheck.supabaseAccessToken)
@@ -180,7 +196,7 @@ export async function getOfferWithCatalogEntry(
 
 // 2) Editionen eines Angebots (für "Prüfungsjahr"/"Durchführung"-Selects), neueste zuerst.
 export async function getEditionsForOffer(offerId: number): Promise<EditionActionResult<OfferEditionDB[]>> {
-  const authCheck = await requireAdminAuth()
+  const authCheck = await requireContentManagerAuth()
   if (!authCheck.authorized) return authCheck.error
 
   const supabase = createAuthenticatedSupabaseClient(authCheck.supabaseAccessToken)
@@ -201,7 +217,7 @@ export async function getEditionsForOffer(offerId: number): Promise<EditionActio
 export async function getEditionDetail(
   editionId: string
 ): Promise<EditionActionResult<{ edition: OfferEditionDB; sessions: CourseSessionWithKursDB[] }>> {
-  const authCheck = await requireAdminAuth()
+  const authCheck = await requireContentManagerAuth()
   if (!authCheck.authorized) return authCheck.error
 
   const supabase = createAuthenticatedSupabaseClient(authCheck.supabaseAccessToken)

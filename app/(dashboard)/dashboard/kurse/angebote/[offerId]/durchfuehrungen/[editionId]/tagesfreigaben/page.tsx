@@ -39,7 +39,7 @@ export default async function TagesfreigabenPage({
         </Link>
         <h1 className="text-2xl font-bold text-foreground mt-1">Tagesfreigaben</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Übungen und Prüfungen gezielt für den jeweiligen Kurstag freischalten.
+          Lerneinheiten und Übungen gezielt für die heutige Sitzung freigeben.
         </p>
       </div>
 

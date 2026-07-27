@@ -42,7 +42,7 @@ export function ReleaseMaterialSelector({
     <section className="rounded-2xl border border-border bg-card overflow-hidden">
       <div className="editor-head flex items-center justify-between px-5 py-4 border-b border-border">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Material auswählen</h2>
+          <h2 className="text-lg font-semibold text-foreground">Lerneinheiten und Übungen auswählen</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Die Reihenfolge entspricht dem Schüler-Dashboard.</p>
         </div>
         <span className="font-mono text-xs bg-muted px-2.5 py-1.5 rounded-full whitespace-nowrap">
@@ -82,10 +82,14 @@ export function ReleaseMaterialSelector({
               <input type="checkbox" checked={checked} onChange={() => onToggle(item)} className="w-4 h-4" />
               <span
                 className={`w-9 h-9 rounded-lg grid place-items-center text-sm font-bold shrink-0 ${
-                  item.kind === 'trainer_exam' ? 'bg-accent/20 text-accent-foreground' : 'bg-secondary/20 text-secondary-foreground'
+                  item.kind === 'trainer_exam'
+                    ? 'bg-accent/20 text-accent-foreground'
+                    : item.kind === 'learning_material'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-secondary/20 text-secondary-foreground'
                 }`}
               >
-                {item.kind === 'trainer_exam' ? 'P' : 'Ü'}
+                {item.kind === 'trainer_exam' ? 'P' : item.kind === 'learning_material' ? 'L' : 'Ü'}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-foreground truncate">{item.title}</span>

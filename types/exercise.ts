@@ -16,6 +16,7 @@ export interface Exercise {
   title: string
   subtitle?: string
   table?: boolean
+  class_levels: string[]
   tasks: ExerciseTask[]
 }
 

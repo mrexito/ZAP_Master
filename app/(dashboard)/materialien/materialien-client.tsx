@@ -219,11 +219,15 @@ export function MaterialienClient({ initialMaterials, subjects }: Props) {
       {filteredMaterials.length === 0 ? (
         <div className="text-center py-16 rounded-2xl border border-dashed border-border">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">Keine Materialien gefunden</h3>
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            {selectedClass ? `Keine Materialien für ${selectedClass}` : 'Keine Materialien gefunden'}
+          </h3>
           <p className="text-muted-foreground">
             {searchTerm || activeFilters.length > 0
               ? 'Versuche andere Suchbegriffe oder Filter'
-              : 'Es wurden noch keine Lernmaterialien hochgeladen'}
+              : selectedClass
+                ? 'Wähle oben eine andere Klassenstufe oder schau später wieder vorbei.'
+                : 'Es wurden noch keine Lernmaterialien hochgeladen'}
           </p>
         </div>
       ) : (

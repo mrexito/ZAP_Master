@@ -368,6 +368,18 @@ test.describe('authentifiziert als E2E-Nutzer (Rolle "user")', () => {
     expect(url.searchParams.get('error')).toBe('unauthorized')
   })
 
+  test('Nicht-Admin wird von den administrativen Kursübersichten weggeleitet', async ({ page }) => {
+    await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD)
+
+    for (const route of ['/dashboard/kurse/intensivkurse', '/dashboard/kurse/vorkurse']) {
+      await page.goto(route)
+      await waitForRedirectAway(page, route)
+      const url = new URL(page.url())
+      expect(url.pathname).toBe('/dashboard')
+      expect(url.searchParams.get('error')).toBe('unauthorized')
+    }
+  })
+
   test('Nicht-Admin wird von /dashboard/arbeitszeiten weggeleitet', async ({ page }) => {
     await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD)
     await page.goto('/dashboard/arbeitszeiten')
@@ -430,6 +442,30 @@ test.describe('authentifiziert als E2E-Admin', () => {
     const response = await page.goto('/dashboard/kurse/tagesfreigaben')
     expect(response?.status()).toBe(200)
     expect(new URL(page.url()).pathname).toBe('/dashboard/kurse/tagesfreigaben')
+  })
+
+  test('Admin sieht Intensivkurse und Vorkurse im Kursabschnitt nach der Administration', async ({ page }) => {
+    await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD)
+
+    const administrationButton = page.getByRole('button', { name: 'Administration', exact: true })
+    const coursesButton = page.getByRole('button', { name: 'Kurse', exact: true })
+    await expect(administrationButton).toBeVisible()
+    await expect(coursesButton).toBeVisible()
+
+    const administrationBox = await administrationButton.boundingBox()
+    const coursesBox = await coursesButton.boundingBox()
+    expect(administrationBox).not.toBeNull()
+    expect(coursesBox).not.toBeNull()
+    expect(coursesBox!.y).toBeGreaterThan(administrationBox!.y)
+
+    await coursesButton.click()
+    await page.getByRole('link', { name: 'Intensivkurse', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Intensivkurse', exact: true })).toBeVisible()
+    await expect(page.getByRole('row')).toHaveCount(8)
+
+    await page.goto('/dashboard/kurse/vorkurse')
+    await expect(page.getByRole('heading', { name: 'Vorkurse', exact: true })).toBeVisible()
+    await expect(page.getByRole('row')).toHaveCount(8)
   })
 
   test('Admin erreicht /dashboard/arbeitszeiten', async ({ page }) => {

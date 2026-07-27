@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createAuthenticatedBrowserClient } from '@/lib/supabase/client'
 import { BookOpen, CheckCircle2, XCircle, Lightbulb, RotateCcw } from 'lucide-react'
 import type { Exercise } from '@/types/exercise'
+import { useClassFilter, useFilterByClass } from '@/context/ClassFilterContext'
 
 interface Props {
   aufgaben: Exercise[]
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export function DeutschExercises({ aufgaben, userId, token }: Props) {
+  const { selectedClass } = useClassFilter()
+  const filteredAufgaben = useFilterByClass(aufgaben)
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({})
   const [checked, setChecked] = useState(false)
   const [results, setResults] = useState<Record<number, boolean>>({})
@@ -42,6 +45,16 @@ export function DeutschExercises({ aufgaben, userId, token }: Props) {
     fetchUserAnswers()
   }, [userId, supabase])
 
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setChecked(false)
+      setResults({})
+      setShowHint({})
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [selectedClass])
+
   const handleInputChange = (id: number, value: string) => {
     setUserAnswers((prev) => ({ ...prev, [id]: value }))
   }
@@ -50,7 +63,7 @@ export function DeutschExercises({ aufgaben, userId, token }: Props) {
     const currentResults: Record<number, boolean> = {}
     setIsSaving(true)
 
-    for (const aufgabe of aufgaben) {
+    for (const aufgabe of filteredAufgaben) {
       for (const task of aufgabe.tasks) {
         const userAnswer = userAnswers[task.id] || ''
         const isCorrect = userAnswer.trim().toLowerCase() === task.solution.toLowerCase()
@@ -85,11 +98,23 @@ export function DeutschExercises({ aufgaben, userId, token }: Props) {
     setShowHint({})
   }
 
-  const totalTasks = aufgaben.reduce((sum, a) => sum + a.tasks.length, 0)
+  const totalTasks = filteredAufgaben.reduce((sum, a) => sum + a.tasks.length, 0)
   const correctCount = Object.values(results).filter(Boolean).length
 
   return (
     <>
+      {filteredAufgaben.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border py-16 text-center">
+          <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h2 className="mb-2 text-lg font-medium text-foreground">
+            Keine Deutsch-Übungen für {selectedClass ?? 'diese Klasse'}
+          </h2>
+          <p className="text-muted-foreground">
+            Wähle oben eine andere Klassenstufe oder schau später wieder vorbei.
+          </p>
+        </div>
+      )}
+
       {checked && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-4 mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -103,7 +128,7 @@ export function DeutschExercises({ aufgaben, userId, token }: Props) {
       )}
 
       <div className="space-y-6">
-        {aufgaben.map((aufgabe) => (
+        {filteredAufgaben.map((aufgabe) => (
           <div key={aufgabe.id} className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <h2 className="text-xl font-bold text-foreground mb-2">{aufgabe.title}</h2>
             {aufgabe.subtitle && <p className="text-muted-foreground mb-4">{aufgabe.subtitle}</p>}
@@ -169,7 +194,7 @@ export function DeutschExercises({ aufgaben, userId, token }: Props) {
         ))}
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-4">
+      {filteredAufgaben.length > 0 && <div className="mt-8 flex flex-wrap gap-4">
         {!checked ? (
           <button onClick={handleCheckAnswers} disabled={isSaving} className="px-6 py-3 bg-yellow-600 dark:bg-yellow-500 text-white dark:text-gray-900 rounded-xl font-medium hover:bg-yellow-700 dark:hover:bg-yellow-400 transition-colors disabled:opacity-50">
             {isSaving ? 'Speichern...' : 'Antworten überprüfen'}
@@ -180,7 +205,7 @@ export function DeutschExercises({ aufgaben, userId, token }: Props) {
             Neu starten
           </button>
         )}
-      </div>
+      </div>}
     </>
   )
 }

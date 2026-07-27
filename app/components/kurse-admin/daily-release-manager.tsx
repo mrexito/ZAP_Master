@@ -29,6 +29,17 @@ function dayLabel(dateStr: string): string {
   return `${WEEKDAY_LABELS[date.getUTCDay()]}, ${date.toLocaleDateString('de-CH', { day: '2-digit', month: 'long', timeZone: 'UTC' })}`
 }
 
+function todayInZurich(): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Zurich',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? ''
+  return `${part('year')}-${part('month')}-${part('day')}`
+}
+
 const STATUS_COPY: Record<DailyReleaseStatus | 'empty', { title: string; copy: string }> = {
   draft: { title: 'Entwurf', copy: 'Noch nicht für Lernende sichtbar' },
   scheduled: { title: 'Geplant', copy: 'Öffnet automatisch zum gewählten Zeitpunkt' },
@@ -82,7 +93,8 @@ export function DailyReleaseManager({
       if (ignore) return
       if (daysResult.success && daysResult.data) {
         setDays(daysResult.data)
-        setActiveDayId(daysResult.data[0]?.id ?? null)
+        const today = todayInZurich()
+        setActiveDayId(daysResult.data.find((day) => day.course_date === today)?.id ?? daysResult.data[0]?.id ?? null)
       }
       if (statusResult.success && statusResult.data) {
         setStatusByDayId(statusResult.data)

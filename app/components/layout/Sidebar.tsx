@@ -48,6 +48,12 @@ const kurseNavigation = [
   { name: 'Intensivkurse', href: '/intensivkurse', icon: Calendar },
 ]
 
+// Admin-Kursübersichten auf Basis des zentralen Angebotskatalogs
+const adminKurseNavigation = [
+  { name: 'Intensivkurse', href: '/dashboard/kurse/intensivkurse', icon: Calendar },
+  { name: 'Vorkurse', href: '/dashboard/kurse/vorkurse', icon: GraduationCap },
+]
+
 // Mentoring-System (Mentorship)
 const mentoringNavigation = [
   { name: 'Marktplatz', href: '/dashboard/mentorship', icon: Handshake, exact: true },
@@ -57,7 +63,8 @@ const mentoringNavigation = [
 
 // Navigation für Lehrpersonen (Content-Management)
 const lehrpersonNavigation = [
-  { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar },
+  { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar, exact: true },
+  { name: 'Tagesfreigaben', href: '/dashboard/kurse/tagesfreigaben', icon: CalendarCheck2 },
   { name: 'Übungen verwalten', href: '/dashboard/uebungen', icon: ClipboardList },
   { name: 'Lernmaterialien', href: '/dashboard/materialien', icon: BookOpen },
   { name: 'Aufsätze bewerten', href: '/dashboard/aufsaetze', icon: PenLine },
@@ -66,7 +73,6 @@ const lehrpersonNavigation = [
 // Navigation nur für System-Admins
 const adminNavigation = [
   { name: 'Kursangebote', href: '/dashboard/kurse/angebote', icon: BookOpen },
-  { name: 'Tagesfreigaben', href: '/dashboard/kurse/tagesfreigaben', icon: CalendarCheck2 },
   { name: 'Finanz-Cockpit', href: '/dashboard/finanzen', icon: BarChart3 },
   { name: 'Benutzer', href: '/dashboard/admin/benutzer', icon: Users },
   { name: 'Mail-Warteschlange', href: '/dashboard/mail-outbox', icon: Mail },
@@ -277,15 +283,6 @@ export default function Sidebar() {
           isCollapsed={isCollapsed}
           onExpandSidebar={expandSidebar}
         />
-        
-        <NavGroup 
-          title="Kurse" 
-          icon={Calendar} 
-          items={kurseNavigation}
-          isCollapsed={isCollapsed}
-          onExpandSidebar={expandSidebar}
-        />
-
         {/* Mentoring temporär ausgeblendet
         <NavGroup
           title="Mentoring"
@@ -323,6 +320,18 @@ export default function Sidebar() {
           />
         </div>
       )}
+
+      {/* Kurse stehen bewusst nach der Administration. Admins erhalten die
+          vollständigen Angebotsübersichten, andere Rollen den Buchungsbereich. */}
+      <div className="mt-6 pt-4 border-t border-border">
+        <NavGroup
+          title="Kurse"
+          icon={Calendar}
+          items={isAdmin ? adminKurseNavigation : kurseNavigation}
+          isCollapsed={isCollapsed}
+          onExpandSidebar={expandSidebar}
+        />
+      </div>
     </aside>
   )
 }

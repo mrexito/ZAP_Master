@@ -54,7 +54,7 @@ export default async function TagesfreigabenIndexPage() {
           <h1 className="text-3xl font-bold text-foreground">Tagesfreigaben</h1>
         </div>
         <p className="text-muted-foreground">
-          Wähle eine Kursdurchführung, um Übungen und Prüfungen pro Kurstag freizuschalten.
+          Wähle eine Kursdurchführung, um Lerneinheiten und Übungen für die heutige Sitzung freizugeben.
         </p>
       </div>
 

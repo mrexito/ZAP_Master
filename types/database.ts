@@ -502,6 +502,7 @@ export type Database = {
       }
       exercises: {
         Row: {
+          class_levels: string[]
           created_at: string
           id: number
           subject_id: number | null
@@ -511,6 +512,7 @@ export type Database = {
           type: string | null
         }
         Insert: {
+          class_levels: string[]
           created_at?: string
           id?: number
           subject_id?: number | null
@@ -520,6 +522,7 @@ export type Database = {
           type?: string | null
         }
         Update: {
+          class_levels?: string[]
           created_at?: string
           id?: number
           subject_id?: number | null
@@ -1760,6 +1763,7 @@ export type Database = {
           exercise_id: number | null
           id: string
           kind: string
+          learning_material_id: number | null
           trainer_exam_id: string | null
         }
         Insert: {
@@ -1767,6 +1771,7 @@ export type Database = {
           exercise_id?: number | null
           id?: string
           kind: string
+          learning_material_id?: number | null
           trainer_exam_id?: string | null
         }
         Update: {
@@ -1774,6 +1779,7 @@ export type Database = {
           exercise_id?: number | null
           id?: string
           kind?: string
+          learning_material_id?: number | null
           trainer_exam_id?: string | null
         }
         Relationships: [
@@ -1782,6 +1788,13 @@ export type Database = {
             columns: ["exercise_id"]
             isOneToOne: true
             referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "release_content_catalog_learning_material_id_fkey"
+            columns: ["learning_material_id"]
+            isOneToOne: true
+            referencedRelation: "learning_materials"
             referencedColumns: ["id"]
           },
           {

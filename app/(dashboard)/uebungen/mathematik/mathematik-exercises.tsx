@@ -4,9 +4,10 @@ import 'katex/dist/katex.min.css'
 import { useState, useEffect, useMemo } from 'react'
 import { createAuthenticatedBrowserClient } from '@/lib/supabase/client'
 import { InlineMath } from 'react-katex'
-import { CheckCircle2, XCircle, Lightbulb, RotateCcw, Loader2, ListOrdered } from 'lucide-react'
+import { Calculator, CheckCircle2, XCircle, Lightbulb, RotateCcw, Loader2, ListOrdered } from 'lucide-react'
 import type { Exercise, MathSolutionStep } from '@/types/exercise'
 import { generateMathSteps } from './actions'
+import { useClassFilter, useFilterByClass } from '@/context/ClassFilterContext'
 
 interface Props {
   aufgaben: Exercise[]
@@ -41,6 +42,8 @@ const TravelTable = () => (
 )
 
 export function MathematikExercises({ aufgaben, userId, token }: Props) {
+  const { selectedClass } = useClassFilter()
+  const filteredAufgaben = useFilterByClass(aufgaben)
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({})
   const [checked, setChecked] = useState(false)
   const [results, setResults] = useState<Record<number, boolean>>({})
@@ -73,6 +76,18 @@ export function MathematikExercises({ aufgaben, userId, token }: Props) {
     fetchUserAnswers()
   }, [userId, supabase])
 
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setChecked(false)
+      setResults({})
+      setShowHint({})
+      setMathSteps({})
+      setLoadingSteps({})
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [selectedClass])
+
   const handleInputChange = (id: number, value: string) => {
     setUserAnswers((prev) => ({ ...prev, [id]: value }))
   }
@@ -81,7 +96,7 @@ export function MathematikExercises({ aufgaben, userId, token }: Props) {
     const currentResults: Record<number, boolean> = {}
     setIsSaving(true)
 
-    for (const aufgabe of aufgaben) {
+    for (const aufgabe of filteredAufgaben) {
       for (const task of aufgabe.tasks) {
         const userAnswer = userAnswers[task.id] || ''
         const isCorrect = task.type === 'bool'
@@ -128,11 +143,23 @@ export function MathematikExercises({ aufgaben, userId, token }: Props) {
     setLoadingSteps({})
   }
 
-  const totalTasks = aufgaben.reduce((sum, a) => sum + a.tasks.length, 0)
+  const totalTasks = filteredAufgaben.reduce((sum, a) => sum + a.tasks.length, 0)
   const correctCount = Object.values(results).filter(Boolean).length
 
   return (
     <>
+      {filteredAufgaben.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border py-16 text-center">
+          <Calculator className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h2 className="mb-2 text-lg font-medium text-foreground">
+            Keine Mathematik-Übungen für {selectedClass ?? 'diese Klasse'}
+          </h2>
+          <p className="text-muted-foreground">
+            Wähle oben eine andere Klassenstufe oder schau später wieder vorbei.
+          </p>
+        </div>
+      )}
+
       {checked && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-4 mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -146,7 +173,7 @@ export function MathematikExercises({ aufgaben, userId, token }: Props) {
       )}
 
       <div className="space-y-6">
-        {aufgaben.map((aufgabe) => (
+        {filteredAufgaben.map((aufgabe) => (
           <div key={aufgabe.id} className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <h2 className="text-xl font-bold text-foreground mb-2">{aufgabe.title}</h2>
             {aufgabe.subtitle && <p className="text-muted-foreground mb-4">{aufgabe.subtitle}</p>}
@@ -272,7 +299,7 @@ export function MathematikExercises({ aufgaben, userId, token }: Props) {
         ))}
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-4">
+      {filteredAufgaben.length > 0 && <div className="mt-8 flex flex-wrap gap-4">
         {!checked ? (
           <button onClick={handleCheckAnswers} disabled={isSaving} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
             {isSaving ? 'Speichern...' : 'Antworten überprüfen'}
@@ -283,7 +310,7 @@ export function MathematikExercises({ aufgaben, userId, token }: Props) {
             Neu starten
           </button>
         )}
-      </div>
+      </div>}
     </>
   )
 }

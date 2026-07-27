@@ -16,7 +16,10 @@ export default async function MathematikPage() {
 
   const supabase = await createServerSupabaseClient()
   const { data: dbExercises } = await supabase
-    .from('exercises').select('id, title, subtitle, type').eq('subject_id', 1).order('id')
+    .from('exercises')
+    .select('id, title, subtitle, type, class_levels')
+    .eq('subject_id', 1)
+    .order('id')
   const exerciseIds = (dbExercises ?? []).map((e) => e.id)
   const { data: dbTasks } = await supabase
     .from('tasks').select('id, exercise_id, question, solution, type, formula, hint, options')
@@ -27,6 +30,7 @@ export default async function MathematikPage() {
     title: ex.title ?? '',
     subtitle: ex.subtitle ?? undefined,
     table: ex.type === 'table',
+    class_levels: ex.class_levels,
     tasks: (dbTasks ?? [])
       .filter((t) => t.exercise_id === ex.id)
       .map((t) => ({
