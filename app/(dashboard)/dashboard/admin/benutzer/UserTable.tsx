@@ -332,7 +332,7 @@ export function UserTable({ users, currentUserId }: Props) {
                   </button>
                 </th>
                 <th className="px-6 py-4 text-left">
-                  <button 
+                  <button
                     onClick={() => handleSort('role')}
                     className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   >
@@ -340,8 +340,11 @@ export function UserTable({ users, currentUserId }: Props) {
                     {getSortIcon('role')}
                   </button>
                 </th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                  Kurs
+                </th>
                 <th className="px-6 py-4 text-left">
-                  <button 
+                  <button
                     onClick={() => handleSort('created_at')}
                     className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   >
@@ -355,7 +358,7 @@ export function UserTable({ users, currentUserId }: Props) {
             <tbody className="divide-y divide-border">
               {filteredAndSortedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <Search className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
                     <p className="text-muted-foreground">
                       {searchQuery || roleFilters.size > 0 
@@ -419,8 +422,25 @@ export function UserTable({ users, currentUserId }: Props) {
                         {config.label}
                       </span>
                     </td>
+                    <td className="px-6 py-4">
+                      {user.enrolledCourses.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {user.enrolledCourses.map((course) => (
+                            <span
+                              key={course.kursId}
+                              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-foreground"
+                              title={course.fach}
+                            >
+                              {course.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">–</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {user.created_at 
+                      {user.created_at
                         ? new Date(user.created_at).toLocaleDateString('de-CH', {
                             day: '2-digit',
                             month: '2-digit',

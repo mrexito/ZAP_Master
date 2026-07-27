@@ -21,6 +21,12 @@ function getAdminClient() {
   )
 }
 
+export type UserEnrolledCourse = {
+  kursId: number
+  name: string
+  fach: string
+}
+
 export type UserWithProfile = {
   id: string
   email: string
@@ -29,6 +35,7 @@ export type UserWithProfile = {
   role: UserRole
   created_at: string | null
   avatar_url: string | null
+  enrolledCourses: UserEnrolledCourse[]
 }
 
 /**
@@ -36,18 +43,60 @@ export type UserWithProfile = {
  */
 export async function getUsers(): Promise<{ users: UserWithProfile[], error: string | null }> {
   await requireAdmin()
-  
+
   const supabase = getAdminClient()
-  
+
   const { data, error } = await supabase
     .from('profiles')
     .select('id, email, first_name, last_name, role, created_at, avatar_url')
     .order('created_at', { ascending: false })
-  
+
   if (error) {
     return { users: [], error: error.message }
   }
-  
+
+  // Kurseinschreibungen laden: beneficiary_user_id wird bei der Buchung per
+  // E-Mail-Abgleich automatisch mit dem Profil verknüpft (siehe
+  // link_anmeldung_beneficiary(), Migration 20260721082939). Stornierte
+  // Anmeldungen zählen nicht als aktive Einschreibung.
+  const { data: anmeldungenData, error: anmeldungenError } = await supabase
+    .from('intensivwoche_anmeldungen')
+    .select('beneficiary_user_id, kurs_id, status')
+    .not('beneficiary_user_id', 'is', null)
+    .neq('status', 'storniert')
+
+  if (anmeldungenError) {
+    return { users: [], error: anmeldungenError.message }
+  }
+
+  const kursIds = Array.from(
+    new Set(
+      (anmeldungenData || [])
+        .map((a) => a.kurs_id)
+        .filter((id): id is number => id !== null)
+    )
+  )
+
+  const { data: kurseData, error: kurseError } = kursIds.length > 0
+    ? await supabase.from('intensivwoche_kurse').select('id, name, fach').in('id', kursIds)
+    : { data: [] as { id: number; name: string; fach: string }[], error: null }
+
+  if (kurseError) {
+    return { users: [], error: kurseError.message }
+  }
+
+  const kursById = new Map((kurseData || []).map((k) => [k.id, k]))
+
+  const coursesByUser = new Map<string, UserEnrolledCourse[]>()
+  for (const anmeldung of anmeldungenData || []) {
+    if (!anmeldung.beneficiary_user_id || anmeldung.kurs_id === null) continue
+    const kurs = kursById.get(anmeldung.kurs_id)
+    if (!kurs) continue
+    const existing = coursesByUser.get(anmeldung.beneficiary_user_id) || []
+    existing.push({ kursId: kurs.id, name: kurs.name, fach: kurs.fach })
+    coursesByUser.set(anmeldung.beneficiary_user_id, existing)
+  }
+
   const users: UserWithProfile[] = (data || []).map((u) => ({
     id: u.id,
     email: u.email || '',
@@ -56,8 +105,9 @@ export async function getUsers(): Promise<{ users: UserWithProfile[], error: str
     role: (u.role as UserRole) || 'user',
     created_at: u.created_at,
     avatar_url: u.avatar_url,
+    enrolledCourses: coursesByUser.get(u.id) || [],
   }))
-  
+
   return { users, error: null }
 }
 
