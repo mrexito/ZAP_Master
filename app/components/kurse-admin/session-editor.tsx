@@ -23,6 +23,12 @@ import {
   type OfferEditionDB,
 } from '@/types/kurs-edition'
 import { saveSessionAction, cancelSessionAction } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
+import {
+  buildFixedIntensiveSchedule,
+  buildFixedVorkursSchedule,
+  hasFixedIntensiveSchedule,
+  hasFixedSchoolSchedule,
+} from '@/lib/kurse/fixed-school-schedule'
 
 const inputClass =
   'w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors'
@@ -208,23 +214,173 @@ function SessionRow({
   )
 }
 
+function MissingScheduleYear() {
+  return (
+    <div className="rounded-xl border border-accent/40 bg-accent/10 p-4 text-sm text-foreground">
+      Trage im Bearbeitungskontext ein gültiges Schul-/Prüfungsjahr ein, damit die Fixtermine
+      berechnet werden.
+    </div>
+  )
+}
+
+function FixedVorkursSchedule({ schoolYear }: { schoolYear: string }) {
+  const schedule = buildFixedVorkursSchedule(schoolYear)
+
+  if (schedule.length === 0) {
+    return <MissingScheduleYear />
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <div className="border-b border-border bg-muted/30 px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground">Vorkurs · Fixtermine</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Wöchentliche Termine am Samstag und Mittwoch, automatisch aus den festen KW berechnet.
+        </p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-[#F7F8F3] text-left text-xs text-muted-foreground">
+              <th scope="col" className="w-24 px-4 py-2.5 font-semibold">KW</th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">Samstag</th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">Mittwoch</th>
+            </tr>
+          </thead>
+          <tbody>
+            {schedule.map((row) => (
+              <tr key={row.calendarWeek} className="border-t border-border first:border-t-0">
+                <th scope="row" className="px-4 py-2.5 text-left font-mono-marketing text-xs font-semibold text-foreground">
+                  {row.calendarWeek}
+                </th>
+                <td className="px-4 py-2.5 text-foreground">{row.saturday}</td>
+                <td className="px-4 py-2.5 text-foreground">{row.wednesday}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function FixedIntensiveSchedule({ schoolYear }: { schoolYear: string }) {
+  const columns = [
+    {
+      label: 'Zürich',
+      schedule: buildFixedIntensiveSchedule(schoolYear, '6', 'Zürich HB'),
+    },
+    {
+      label: 'Winterthur',
+      schedule: buildFixedIntensiveSchedule(schoolYear, '6', 'Winterthur'),
+    },
+    {
+      label: 'BMS',
+      schedule: buildFixedIntensiveSchedule(schoolYear, 'bms', 'Zürich HB'),
+    },
+    {
+      label: 'Matura',
+      schedule: buildFixedIntensiveSchedule(schoolYear, 'matura', 'Zürich HB'),
+    },
+  ] as const
+  const weekdays = [
+    ['Montag', 'monday'],
+    ['Dienstag', 'tuesday'],
+    ['Mittwoch', 'wednesday'],
+    ['Donnerstag', 'thursday'],
+    ['Freitag', 'friday'],
+  ] as const
+
+  if (columns.some((column) => column.schedule.length === 0)) {
+    return <MissingScheduleYear />
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <div className="border-b border-border bg-muted/30 px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground">Intensivkurs · Fixwochen</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Kalenderwochen und fünf aufeinanderfolgende Kurstage auf einen Blick.
+        </p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px] border-collapse text-sm">
+          <thead>
+            <tr className="bg-[#F7F8F3] text-left text-xs text-muted-foreground">
+              <th scope="col" className="w-36 px-3 py-2.5 font-semibold">Termin</th>
+              {columns.map((column) => (
+                <th key={column.label} scope="col" className="px-3 py-2.5 font-semibold">
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-t border-border bg-secondary/5">
+              <th scope="row" className="px-3 py-3 text-left text-xs font-semibold text-foreground">
+                Kalenderwoche
+              </th>
+              {columns.map((column) => (
+                <td key={column.label} className="whitespace-nowrap px-3 py-3 font-mono-marketing text-xs font-semibold text-foreground">
+                  {column.schedule.map((week) => `KW ${week.calendarWeek}`).join(' / ')}
+                </td>
+              ))}
+            </tr>
+            {weekdays.map(([label, field]) => (
+              <tr key={field} className="border-t border-border">
+                <th scope="row" className="px-3 py-3 text-left text-xs font-semibold text-foreground">
+                  {label}
+                </th>
+                {columns.map((column) => (
+                  <td key={column.label} className="whitespace-nowrap px-3 py-3 text-xs text-foreground">
+                    {column.schedule.map((week) => week[field]).join(' / ')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 export function SessionEditor({
   offerId,
   edition,
   sessions,
+  audienceId,
+  schoolYear,
+  offerType,
 }: {
   offerId: number
   edition: OfferEditionDB | null
   sessions: CourseSessionWithKursDB[]
+  audienceId: string
+  schoolYear: string
+  offerType: string
 }) {
   const [drafts, setDrafts] = useState<number[]>([])
+  const showVorkursSchedule = hasFixedSchoolSchedule(audienceId) && offerType === 'halbjahreskurs'
+  const showIntensiveSchedule = hasFixedIntensiveSchedule(audienceId) && offerType === 'intensivkurs'
+  const showAutomaticSchedule = showVorkursSchedule || showIntensiveSchedule
+  const automaticSchedule = showVorkursSchedule ? (
+    <FixedVorkursSchedule schoolYear={schoolYear} />
+  ) : showIntensiveSchedule ? (
+    <FixedIntensiveSchedule schoolYear={schoolYear} />
+  ) : null
 
   if (!edition) {
     return (
-      <div id="termine" className="scroll-mt-24 rounded-xl border border-border bg-card p-6">
+      <div id="termine" className="order-3 scroll-mt-24 rounded-xl border border-border bg-card p-6">
         <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">3 · Termine &amp; Kapazität</h2>
+        {automaticSchedule && (
+          <div className="mt-4">
+            {automaticSchedule}
+          </div>
+        )}
         <p className="text-sm text-muted-foreground mt-2">
-          Speichere zuerst einen Entwurf in „1 · Grundlagen“, um Termine hinzuzufügen.
+          Speichere zuerst einen Entwurf, um buchbare Kursgruppen hinzuzufügen.
         </p>
       </div>
     )
@@ -233,7 +389,7 @@ export function SessionEditor({
   const activeSessions = sessions.filter((s) => s.registration_status !== 'cancelled')
 
   return (
-    <section id="termine" className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
+    <section id="termine" className="order-3 scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
       <div className="flex items-start justify-between gap-4 border-b border-border px-[22px] pb-[15px] pt-5">
         <div>
         <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">3 · Termine &amp; Kapazität</h2>
@@ -245,6 +401,15 @@ export function SessionEditor({
       </div>
 
       <div className="space-y-4 p-[22px]">
+      {automaticSchedule}
+      {showAutomaticSchedule && (
+        <div className="border-t border-border pt-4">
+          <h3 className="text-sm font-semibold text-foreground">Buchbare Kursgruppen</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Standort, Kurszeit, Kapazität und Status werden weiterhin pro Kursgruppe gepflegt.
+          </p>
+        </div>
+      )}
       <div className="space-y-3">
         {sessions.map((session, index) => (
           <SessionRow key={session.kurs.id} index={index} offerId={offerId} edition={edition} session={session} />

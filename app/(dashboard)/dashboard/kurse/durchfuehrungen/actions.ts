@@ -356,7 +356,7 @@ export async function publishEditionAction(
 
   const issues: string[] = []
   if (!typedEdition.public_title || !typedEdition.tagline || !typedEdition.description) {
-    issues.push('Pflichtfelder in Grundlagen fehlen.')
+    issues.push('Öffentliche Angebotsinformationen fehlen.')
   }
   if (!typedEdition.regular_price_rappen || typedEdition.regular_price_rappen <= 0) {
     issues.push('Regulärer Preis muss gesetzt sein.')

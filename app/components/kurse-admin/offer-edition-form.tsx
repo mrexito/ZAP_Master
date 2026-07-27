@@ -1,7 +1,8 @@
 'use client'
 
-// Schritt 10a: Grundlagen + Preise + Veröffentlichung aus Layout_Admin_Kursangebot_Maske.html,
-// Abschnitte 1/2/4. "Interner Code" und "Distance Learning verfügbar" aus dem Mockup sind bewusst
+// Schritt 10a: Preise + Veröffentlichung aus Layout_Admin_Kursangebot_Maske.html. Die öffentlichen
+// Texte bleiben Teil der Edition, werden nach dem Entfernen des redundanten Grundlagen-Panels aber
+// nicht mehr separat bearbeitet. "Interner Code" und "Distance Learning verfügbar" aus dem Mockup sind bewusst
 // nicht übernommen -- OfferEdition (Abschnitt 2.12) und course_sessions besitzen dafür kein Feld;
 // distanceLearningAvailable gehört zum öffentlichen CourseOffer-Marketingtyp, nicht zur admin-
 // seitigen Edition. Kein erfundenes Schema-Feld für eine Mockup-Zeile ohne Typquelle.
@@ -21,18 +22,20 @@ import { utcIsoToZurichLocal } from '@/lib/utils/zurich-time'
 
 const inputClass =
   'w-full h-11 px-4 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors'
-const textareaClass =
-  'w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-none'
 const labelClass = 'block text-sm font-medium text-foreground mb-2'
 const errorClass = 'mt-1.5 text-sm text-destructive'
 
-function defaultValuesFor(edition: OfferEditionDB | null): OfferEditionFormInput {
+function defaultValuesFor(
+  edition: OfferEditionDB | null,
+  contentTemplate: OfferEditionDB | null,
+  schoolYear: string
+): OfferEditionFormInput {
   if (!edition) {
     return {
-      schoolYear: '',
-      publicTitle: '',
-      tagline: '',
-      description: '',
+      schoolYear,
+      publicTitle: contentTemplate?.public_title ?? '',
+      tagline: contentTemplate?.tagline ?? '',
+      description: contentTemplate?.description ?? '',
       regularPriceChf: 0,
       earlyBirdEnabled: true,
       earlyBirdPriceChf: null,
@@ -43,7 +46,7 @@ function defaultValuesFor(edition: OfferEditionDB | null): OfferEditionFormInput
     }
   }
   return {
-    schoolYear: edition.school_year,
+    schoolYear,
     publicTitle: edition.public_title,
     tagline: edition.tagline,
     description: edition.description,
@@ -62,15 +65,17 @@ function defaultValuesFor(edition: OfferEditionDB | null): OfferEditionFormInput
 export function OfferEditionForm({
   offerId,
   edition,
-  audienceLabel,
-  offerTypeLabel,
+  contentTemplate,
+  schoolYear,
+  onSchoolYearError,
   onValuesChange,
   onSaved,
 }: {
   offerId: number
   edition: OfferEditionDB | null
-  audienceLabel: string
-  offerTypeLabel: string
+  contentTemplate: OfferEditionDB | null
+  schoolYear: string
+  onSchoolYearError?: (message: string) => void
   onValuesChange?: (values: OfferEditionFormInput) => void
   onSaved: (edition: OfferEditionDB) => void
 }) {
@@ -83,19 +88,28 @@ export function OfferEditionForm({
     watch,
     formState: { errors },
     setError,
+    setValue,
     reset,
   } = useForm<OfferEditionFormInput>({
     resolver: zodResolver(offerEditionFormSchema) as never,
-    defaultValues: defaultValuesFor(edition),
+    defaultValues: defaultValuesFor(edition, contentTemplate, schoolYear),
   })
 
   // Kontextwechsel (andere Edition geladen): Formular komplett neu befüllen statt alte Werte
   // stehen zu lassen (Abschnitt 1c: "Beim Kontextwechsel werden alle Felder aus der neuen Edition
   // geladen").
   useEffect(() => {
-    reset(defaultValuesFor(edition))
+    reset(defaultValuesFor(edition, contentTemplate, schoolYear))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edition?.id])
+
+  useEffect(() => {
+    setValue('schoolYear', schoolYear, { shouldValidate: submitState === 'error' })
+  }, [schoolYear, setValue, submitState])
+
+  useEffect(() => {
+    onSchoolYearError?.(errors.schoolYear?.message ?? '')
+  }, [errors.schoolYear?.message, onSchoolYearError])
 
   useEffect(() => {
     if (!onValuesChange) return
@@ -162,10 +176,10 @@ export function OfferEditionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSave)} className="contents">
       {serverMessage && (
         <div
-          className={`rounded-xl border p-4 text-sm ${
+          className={`order-1 rounded-xl border p-4 text-sm ${
             submitState === 'error'
               ? 'border-destructive/50 bg-destructive/10 text-destructive'
               : 'border-secondary/50 bg-secondary/10 text-secondary-foreground'
@@ -175,59 +189,13 @@ export function OfferEditionForm({
         </div>
       )}
 
-      {/* 1 · Grundlagen */}
-      <section id="grundlagen" className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
-        <div className="flex items-start justify-between gap-4 border-b border-border px-[22px] pb-[15px] pt-5">
-          <div>
-          <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">1 · Grundlagen</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Stabile Zuordnung und öffentliche Texte dieser Jahresdurchführung.
-          </p>
-          </div>
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-subject-de-pale font-mono-marketing text-[11px] font-semibold text-subject-de-foreground">01</span>
-        </div>
-        <div className="grid grid-cols-1 gap-4 p-[22px] md:grid-cols-2">
-          <div className="grid grid-cols-1 gap-3 rounded-[10px] border border-border bg-[#F7F8F3] p-[14px] md:col-span-2 md:grid-cols-2">
-            <div className="px-1 py-0.5">
-              <span className="mb-1 block font-mono-marketing text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Zielgruppe</span>
-              <strong className="text-[13px]">{audienceLabel}</strong>
-            </div>
-            <div className="px-1 py-0.5">
-              <span className="mb-1 block font-mono-marketing text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Angebotstyp</span>
-              <strong className="text-[13px]">{offerTypeLabel}</strong>
-            </div>
-            <p className="border-t border-border pt-2.5 text-[11px] text-muted-foreground md:col-span-2">
-              Diese Stammdaten werden aus dem oben gewählten Kursangebot abgeleitet und hier nicht doppelt bearbeitet.
-            </p>
-          </div>
-          <div>
-            <label className={labelClass}>Schul-/Prüfungsjahr *</label>
-            <input type="text" {...register('schoolYear')} placeholder="z.B. 2026/27" className={inputClass} />
-            {errors.schoolYear && <p className={errorClass}>{errors.schoolYear.message}</p>}
-          </div>
-          <div className="md:col-span-2">
-            <label className={labelClass}>Öffentlicher Titel *</label>
-            <input type="text" {...register('publicTitle')} className={inputClass} />
-            {errors.publicTitle && <p className={errorClass}>{errors.publicTitle.message}</p>}
-          </div>
-          <div className="md:col-span-2">
-            <label className={labelClass}>Kachel-Tagline *</label>
-            <input type="text" {...register('tagline')} className={inputClass} />
-            <p className="text-xs text-muted-foreground mt-1.5">
-              Erscheint auf Hauptseite und Kursdetailseite aus derselben Datenquelle.
-            </p>
-            {errors.tagline && <p className={errorClass}>{errors.tagline.message}</p>}
-          </div>
-          <div className="md:col-span-2">
-            <label className={labelClass}>Kurzbeschreibung *</label>
-            <textarea rows={3} {...register('description')} className={textareaClass} />
-            {errors.description && <p className={errorClass}>{errors.description.message}</p>}
-          </div>
-        </div>
-      </section>
+      <input type="hidden" {...register('schoolYear')} />
+      <input type="hidden" {...register('publicTitle')} />
+      <input type="hidden" {...register('tagline')} />
+      <input type="hidden" {...register('description')} />
 
       {/* 2 · Preise */}
-      <section id="preise" className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
+      <section id="preise" className="order-2 scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
         <div className="flex items-start justify-between gap-4 border-b border-border px-[22px] pb-[15px] pt-5">
           <div>
           <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">2 · Preise</h2>
@@ -282,9 +250,8 @@ export function OfferEditionForm({
         </div>
       </section>
 
-      {/* 4 · Veröffentlichung (Panel-Nummer folgt der Referenz; Termine/SessionEditor sitzt als
-          eigene Komponente dazwischen, siehe Workspace) */}
-      <section id="publikation" className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
+      {/* 4 · Veröffentlichung; Termine/SessionEditor sitzt als eigene Komponente dazwischen. */}
+      <section id="publikation" className="order-4 scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-[0_7px_22px_rgba(22,35,63,.045)]">
         <div className="flex items-start justify-between gap-4 border-b border-border px-[22px] pb-[15px] pt-5">
           <div>
           <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">4 · Veröffentlichung</h2>

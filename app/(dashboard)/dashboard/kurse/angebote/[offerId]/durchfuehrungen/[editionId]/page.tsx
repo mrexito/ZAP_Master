@@ -35,6 +35,7 @@ export default async function OfferEditionPage({
   if (editionIdParam === 'neu') {
     return (
       <EditionWorkspace
+        key={`${offerId}:neu`}
         offerList={offerList}
         offerId={offerId}
         catalogEntry={catalogEntry}
@@ -52,6 +53,7 @@ export default async function OfferEditionPage({
 
   return (
     <EditionWorkspace
+      key={`${offerId}:${editionIdParam}`}
       offerList={offerList}
       offerId={offerId}
       catalogEntry={catalogEntry}

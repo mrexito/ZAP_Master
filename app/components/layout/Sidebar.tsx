@@ -300,16 +300,8 @@ export default function Sidebar() {
       {/* Lehrperson Section */}
       {isContentManager && (
         <div className="mt-6 pt-4 border-t border-border">
-          {!isCollapsed && (
-            <div className="flex items-center gap-2 px-4 mb-2">
-              <GraduationCap className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Lehrperson
-              </span>
-            </div>
-          )}
           <NavGroup 
-            title="Verwaltung" 
+            title="Lehrperson"
             icon={Settings} 
             items={lehrpersonNavigation}
             isCollapsed={isCollapsed}
@@ -321,14 +313,6 @@ export default function Sidebar() {
       {/* Admin Section */}
       {isAdmin && (
         <div className="mt-6 pt-4 border-t border-border">
-          {!isCollapsed && (
-            <div className="flex items-center gap-2 px-4 mb-2">
-              <Shield className="w-3.5 h-3.5 text-destructive" />
-              <span className="text-[10px] font-semibold text-destructive uppercase tracking-wider">
-                System-Admin
-              </span>
-            </div>
-          )}
           <NavGroup 
             title="Administration" 
             icon={Shield} 
