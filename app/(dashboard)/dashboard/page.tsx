@@ -43,12 +43,6 @@ function DashboardSkeleton() {
         ))}
       </div>
 
-      {/* Quick Actions Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Skeleton className="h-[152px] rounded-2xl" />
-        <Skeleton className="h-[152px] rounded-2xl" />
-      </div>
-
       {/* Subject Overview Skeleton */}
       <Skeleton className="h-[180px] rounded-2xl" />
     </>

@@ -44,9 +44,15 @@ export async function DashboardData({ userId, token, firstName }: Props) {
         </p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid — jede Kachel verlinkt auf den Prüfungstrainer, da sich alle vier Werte
+          auf trainer_exams/trainer_progress beziehen; ersetzt die vormals separate
+          "Prüfungstrainer"-Quick-Action-Karte, statt sie als reinen Sidebar-Duplikat-Link
+          danebenzustellen. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <Link
+          href="/trainer"
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:border-primary/50 hover:bg-primary/5 transition-colors"
+        >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-primary/10 rounded-xl">
               <GraduationCap className="w-6 h-6 text-primary" />
@@ -56,9 +62,12 @@ export async function DashboardData({ userId, token, firstName }: Props) {
               <p className="text-2xl font-bold text-foreground">{totalExams}</p>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <Link
+          href="/trainer"
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:border-primary/50 hover:bg-primary/5 transition-colors"
+        >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-500/10 rounded-xl">
               <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -68,9 +77,12 @@ export async function DashboardData({ userId, token, firstName }: Props) {
               <p className="text-2xl font-bold text-foreground">{completedExams}</p>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <Link
+          href="/trainer"
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:border-primary/50 hover:bg-primary/5 transition-colors"
+        >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-yellow-500/10 rounded-xl">
               <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
@@ -80,9 +92,12 @@ export async function DashboardData({ userId, token, firstName }: Props) {
               <p className="text-2xl font-bold text-foreground">{inProgressExams}</p>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <Link
+          href="/trainer"
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:border-primary/50 hover:bg-primary/5 transition-colors"
+        >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-500/10 rounded-xl">
               <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -92,48 +107,7 @@ export async function DashboardData({ userId, token, firstName }: Props) {
               <p className="text-2xl font-bold text-foreground">{progressPercent}%</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 text-primary-foreground shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Prüfungstrainer</h3>
-              <p className="text-primary-foreground/80 text-sm mb-4">
-                Übe mit {mathExams} Mathe- und {germanExams} Deutsch-Prüfungen.
-              </p>
-              <Link
-                href="/trainer"
-                className="inline-flex items-center gap-2 bg-white text-primary px-4 py-2 rounded-xl font-medium hover:bg-white/90 transition-colors"
-              >
-                Zum Trainer
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <GraduationCap className="w-12 h-12 text-primary-foreground/30" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-600 to-green-500 dark:from-green-700 dark:to-green-600 rounded-2xl p-6 text-white shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Übungen</h3>
-              <p className="text-white/80 text-sm mb-4">
-                Verbessere deine Fähigkeiten mit interaktiven Übungen.
-              </p>
-              <Link
-                href="/uebungen"
-                className="inline-flex items-center gap-2 bg-white text-green-600 px-4 py-2 rounded-xl font-medium hover:bg-white/90 transition-colors"
-              >
-                Zu den Übungen
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <BookOpen className="w-12 h-12 text-white/30" />
-          </div>
-        </div>
+        </Link>
       </div>
 
       {/* Subject Overview */}
