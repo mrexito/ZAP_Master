@@ -394,8 +394,6 @@ export const sechsKlasseHalbjahreskurs = {
     'Betreuung auch ausserhalb der Kurszeiten',
   ],
   regularPriceRappen: 349000,
-  earlyBirdPriceRappen: 339000,
-  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: [
     'Deutsch (inkl. Aufsatztraining) & Mathematik',
@@ -1435,8 +1433,6 @@ export const vierKlasseHalbjahreskurs = {
     'Samstag- oder Mittwochnachmittag',
   ],
   regularPriceRappen: 349000,
-  earlyBirdPriceRappen: 269000,
-  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: [
     '14 Kurstage zwischen März und Juli 2027',
@@ -1907,8 +1903,6 @@ export const fuenfKlasseHalbjahreskurs = {
     'Samstag- oder Mittwochnachmittag',
   ],
   regularPriceRappen: 319000,
-  earlyBirdPriceRappen: 287100,
-  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: [
     '8 Kurstage zwischen Frühlings- und Sommerferien (Mai – Juli 2027)',
@@ -2326,8 +2320,6 @@ export const einsSekVorkurs = {
     'Umfassende Standortbestimmung inbegriffen',
   ],
   regularPriceRappen: 319000,
-  earlyBirdPriceRappen: 287100,
-  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: ['Mai – Juli 2027', 'Kleingruppen', 'Standortbestimmung & Lerncoaching inbegriffen'],
   whyUs: [
@@ -2723,8 +2715,6 @@ export const zweiDreiSekHalbjahreskurs = {
     'Betreuung auch ausserhalb der Kurszeiten',
   ],
   regularPriceRappen: 319000,
-  earlyBirdPriceRappen: 287100,
-  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: [
     'Sept. 2026 – März 2027',
@@ -3161,8 +3151,6 @@ export const bmsHalbjahreskurs = {
     'Prüfungssimulation & laufendes Feedback inbegriffen',
   ],
   regularPriceRappen: 299000,
-  earlyBirdPriceRappen: 289000,
-  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: [
     'Sept. 2026 – Feb. 2027',
@@ -3726,8 +3714,6 @@ export const maturaHalbjahreskurs = {
     'Betreuung auch ausserhalb der Kurszeiten',
   ],
   regularPriceRappen: 279000,
-  earlyBirdPriceRappen: 269000,
-  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: [
     'Nov. 2026 – April 2027',

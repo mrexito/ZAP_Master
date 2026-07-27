@@ -28,32 +28,26 @@ const errorClass = 'mt-1.5 text-sm text-destructive'
 function defaultValuesFor(
   edition: OfferEditionDB | null,
   contentTemplate: OfferEditionDB | null,
-  schoolYear: string
+  initialSchoolYear: string
 ): OfferEditionFormInput {
   if (!edition) {
     return {
-      schoolYear,
+      schoolYear: initialSchoolYear,
       publicTitle: contentTemplate?.public_title ?? '',
       tagline: contentTemplate?.tagline ?? '',
       description: contentTemplate?.description ?? '',
       regularPriceChf: 0,
-      earlyBirdEnabled: true,
-      earlyBirdPriceChf: null,
-      earlyBirdDeadline: null,
       registrationOpensAt: null,
       registrationClosesAt: null,
       status: 'draft',
     }
   }
   return {
-    schoolYear,
+    schoolYear: edition.school_year,
     publicTitle: edition.public_title,
     tagline: edition.tagline,
     description: edition.description,
     regularPriceChf: edition.regular_price_rappen / 100,
-    earlyBirdEnabled: edition.early_bird_enabled,
-    earlyBirdPriceChf: edition.early_bird_price_rappen != null ? edition.early_bird_price_rappen / 100 : null,
-    earlyBirdDeadline: edition.early_bird_deadline,
     // Gespeicherter Wert ist UTC -- ein reines .slice(0, 16) würde die UTC-Ziffern unverändert
     // als Zürcher Ortszeit anzeigen und damit um 1-2 Stunden danebenliegen, siehe zurich-time.ts.
     registrationOpensAt: edition.registration_opens_at ? utcIsoToZurichLocal(edition.registration_opens_at) : null,
@@ -66,16 +60,14 @@ export function OfferEditionForm({
   offerId,
   edition,
   contentTemplate,
-  schoolYear,
-  onSchoolYearError,
+  initialSchoolYear,
   onValuesChange,
   onSaved,
 }: {
   offerId: number
   edition: OfferEditionDB | null
   contentTemplate: OfferEditionDB | null
-  schoolYear: string
-  onSchoolYearError?: (message: string) => void
+  initialSchoolYear: string
   onValuesChange?: (values: OfferEditionFormInput) => void
   onSaved: (edition: OfferEditionDB) => void
 }) {
@@ -88,36 +80,26 @@ export function OfferEditionForm({
     watch,
     formState: { errors },
     setError,
-    setValue,
     reset,
   } = useForm<OfferEditionFormInput>({
     resolver: zodResolver(offerEditionFormSchema) as never,
-    defaultValues: defaultValuesFor(edition, contentTemplate, schoolYear),
+    defaultValues: defaultValuesFor(edition, contentTemplate, initialSchoolYear),
   })
 
   // Kontextwechsel (andere Edition geladen): Formular komplett neu befüllen statt alte Werte
   // stehen zu lassen (Abschnitt 1c: "Beim Kontextwechsel werden alle Felder aus der neuen Edition
-  // geladen").
+  // geladen"). Das schliesst schoolYear ein -- es ist jetzt ein normales Formularfeld, kein von
+  // aussen synchronisierter Wert mehr.
   useEffect(() => {
-    reset(defaultValuesFor(edition, contentTemplate, schoolYear))
+    reset(defaultValuesFor(edition, contentTemplate, initialSchoolYear))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edition?.id])
-
-  useEffect(() => {
-    setValue('schoolYear', schoolYear, { shouldValidate: submitState === 'error' })
-  }, [schoolYear, setValue, submitState])
-
-  useEffect(() => {
-    onSchoolYearError?.(errors.schoolYear?.message ?? '')
-  }, [errors.schoolYear?.message, onSchoolYearError])
 
   useEffect(() => {
     if (!onValuesChange) return
     const subscription = watch((values) => onValuesChange(values as OfferEditionFormInput))
     return () => subscription.unsubscribe()
   }, [watch, onValuesChange])
-
-  const earlyBirdEnabled = watch('earlyBirdEnabled')
 
   const onSave = async (data: OfferEditionFormInput) => {
     setSubmitState('saving')
@@ -189,7 +171,6 @@ export function OfferEditionForm({
         </div>
       )}
 
-      <input type="hidden" {...register('schoolYear')} />
       <input type="hidden" {...register('publicTitle')} />
       <input type="hidden" {...register('tagline')} />
       <input type="hidden" {...register('description')} />
@@ -208,40 +189,27 @@ export function OfferEditionForm({
         <div className="space-y-5 p-[22px]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
+            <label className={labelClass}>Schul-/Prüfungsjahr *</label>
+            <input
+              type="text"
+              minLength={4}
+              maxLength={20}
+              placeholder="z.B. 2026/27"
+              {...register('schoolYear')}
+              className={inputClass}
+            />
+            {errors.schoolYear && <p className={errorClass}>{errors.schoolYear.message}</p>}
+          </div>
+          <div>
             <label className={labelClass}>Regulärer Preis (CHF) *</label>
             <input type="number" min={0} step={1} {...register('regularPriceChf', { valueAsNumber: true })} className={inputClass} />
             {errors.regularPriceChf && <p className={errorClass}>{errors.regularPriceChf.message}</p>}
           </div>
-          <label className="flex gap-3 items-start border border-border rounded-xl p-4 bg-muted/30">
-            <input type="checkbox" className="mt-1" {...register('earlyBirdEnabled')} />
-            <span>
-              <strong className="block text-sm text-foreground">Frühbucherpreis aktivieren</strong>
-              <small className="text-xs text-muted-foreground">
-                Für Vorkurse und Intensivkurse/Lerncamps empfohlen; für Prüfungssimulation und
-                Selbststudium standardmässig deaktiviert.
-              </small>
-            </span>
-          </label>
-          {earlyBirdEnabled && (
-            <>
-              <div>
-                <label className={labelClass}>Frühbucherpreis (CHF) *</label>
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  {...register('earlyBirdPriceChf', { valueAsNumber: true })}
-                  className={inputClass}
-                />
-                {errors.earlyBirdPriceChf && <p className={errorClass}>{errors.earlyBirdPriceChf.message}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>Frühbucher bis *</label>
-                <input type="date" {...register('earlyBirdDeadline')} className={inputClass} />
-                {errors.earlyBirdDeadline && <p className={errorClass}>{errors.earlyBirdDeadline.message}</p>}
-              </div>
-            </>
-          )}
+        </div>
+        <div className="rounded-xl border-l-4 border-secondary bg-secondary/10 p-4 text-sm text-foreground">
+          <strong>Automatischer Frühbucherrabatt:</strong> 10% auf den Preis oben, wenn die
+          Anmeldung mindestens 6 Wochen vor dem unter „3 · Termine&rdquo; hinterlegten Kursstart der
+          jeweiligen Durchführung erfolgt. Kein separates Frühbucherfeld mehr nötig.
         </div>
         <div className="rounded-xl border-l-4 border-accent bg-accent/10 p-4 text-sm text-foreground">
           <strong>Historie geschützt:</strong> Bestehende Anmeldungen behalten ihren gebuchten Preis.

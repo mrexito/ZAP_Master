@@ -1,13 +1,17 @@
 -- Editions-/Sessions-Schema (step0Baseline.revision2.md / Schritt 5, Teil 3; Migration
--- 20260720170000_offer_editions_schema.sql). Prüft: offers-Eindeutigkeit, die
--- Frühbucher-Konsistenz-CHECK auf offer_editions, dass course_sessions.id wirklich dieselbe
--- Identität wie eine echte intensivwoche_kurse-Zeile trägt, die erweiterte
+-- 20260720170000_offer_editions_schema.sql). Prüft: offers-Eindeutigkeit, dass course_sessions.id
+-- wirklich dieselbe Identität wie eine echte intensivwoche_kurse-Zeile trägt, die erweiterte
 -- Preis-Snapshot-Immutability (jetzt inkl. edition_id/session_id), RLS/Grants auf allen vier
 -- neuen Tabellen und die published/draft-Sichtbarkeitsregel.
+--
+-- Die frühere Frühbucher-Konsistenz-CHECK (early_bird_enabled/early_bird_price_rappen/
+-- early_bird_deadline) entfiel mit Migration 20260727170000_automatic_early_bird_discount.sql --
+-- der Rabatt wird seither automatisch in book_intensivwoche_kurs() berechnet, siehe
+-- 0023_automatic_early_bird_discount.sql.
 
 begin;
 
-select plan(16);
+select plan(13);
 
 -- 1) offers: Eindeutigkeit auf (audience_id, kurstyp, slug). audience_id 'pgtap-test' ist bewusst
 --    kein echtes Audience-Kuerzel -- vermeidet eine Kollision mit den 20 echten, seit
@@ -29,47 +33,13 @@ with fixture_offer as (
 )
 select set_config('pgtap.offer_id', (select id::text from fixture_offer), true);
 
--- 2) offer_editions: Frühbucher-Konsistenz-CHECK.
-select throws_ok(
-    format($$insert into public.offer_editions
-        (offer_id, school_year, public_title, tagline, description, regular_price_rappen, early_bird_enabled)
-        values (%L::bigint, '2026/27', 'Titel', 'Tagline', 'Beschreibung', 100000, true)$$,
-        current_setting('pgtap.offer_id')),
-    '23514'::char(5),
-    NULL,
-    'early_bird_enabled=true ohne Preis/Deadline wird abgelehnt'
-);
-
-select throws_ok(
-    format($$insert into public.offer_editions
-        (offer_id, school_year, public_title, tagline, description, regular_price_rappen,
-         early_bird_enabled, early_bird_price_rappen, early_bird_deadline)
-        values (%L::bigint, '2026/27', 'Titel', 'Tagline', 'Beschreibung', 100000, true, 100000, '2026-08-01')$$,
-        current_setting('pgtap.offer_id')),
-    '23514'::char(5),
-    NULL,
-    'Fruehbucherpreis >= Regulaerpreis wird abgelehnt'
-);
-
-select throws_ok(
-    format($$insert into public.offer_editions
-        (offer_id, school_year, public_title, tagline, description, regular_price_rappen,
-         early_bird_enabled, early_bird_price_rappen)
-        values (%L::bigint, '2026/27', 'Titel', 'Tagline', 'Beschreibung', 100000, false, 90000)$$,
-        current_setting('pgtap.offer_id')),
-    '23514'::char(5),
-    NULL,
-    'early_bird_enabled=false mit gesetztem Preis wird abgelehnt'
-);
-
+-- 2) offer_editions: einfache Preis-Inserts (kein Frühbucherfeld mehr).
 select lives_ok(
     format($$insert into public.offer_editions
-        (offer_id, school_year, public_title, tagline, description, regular_price_rappen,
-         early_bird_enabled, early_bird_price_rappen, early_bird_deadline, status)
-        values (%L::bigint, '2026/27', 'Intensivkurs-Sportferien', 'Tagline', 'Beschreibung', 119500,
-                true, 109500, '2026-12-01', 'published')$$,
+        (offer_id, school_year, public_title, tagline, description, regular_price_rappen, status)
+        values (%L::bigint, '2026/27', 'Intensivkurs-Sportferien', 'Tagline', 'Beschreibung', 119500, 'published')$$,
         current_setting('pgtap.offer_id')),
-    'gueltige aktive Fruehbucher-Edition (published) wird angelegt'
+    'gueltige published Edition wird angelegt'
 );
 
 with fixture_edition as (
@@ -79,10 +49,10 @@ select set_config('pgtap.edition_id', (select id::text from fixture_edition), tr
 
 select lives_ok(
     format($$insert into public.offer_editions
-        (offer_id, school_year, public_title, tagline, description, regular_price_rappen, early_bird_enabled, status)
-        values (%L::bigint, '2027/28', 'Naechstes Jahr', 'Tagline', 'Beschreibung', 129500, false, 'draft')$$,
+        (offer_id, school_year, public_title, tagline, description, regular_price_rappen, status)
+        values (%L::bigint, '2027/28', 'Naechstes Jahr', 'Tagline', 'Beschreibung', 129500, 'draft')$$,
         current_setting('pgtap.offer_id')),
-    'gueltige Edition ohne Fruehbucher (draft) wird angelegt'
+    'gueltige weitere Edition (draft) wird angelegt'
 );
 
 -- 3) course_sessions: id = echte intensivwoche_kurse.id (1:1-Erweiterung, kein zweites System).

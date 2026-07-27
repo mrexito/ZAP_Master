@@ -14,8 +14,22 @@ import { OfferEditionForm } from '@/app/components/kurse-admin/offer-edition-for
 import { SessionEditor } from '@/app/components/kurse-admin/session-editor'
 import { EditionPreview } from '@/app/components/kurse-admin/edition-preview'
 import { PublicationChecklist } from '@/app/components/kurse-admin/publication-checklist'
-import { duplicateEditionAction, type AdminOfferListEntry } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
+import type { AdminOfferListEntry } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
 import type { OfferEditionDB, OfferEditionFormInput, CourseSessionWithKursDB } from '@/types/kurs-edition'
+
+// Kein "Vorjahr duplizieren" mehr -- eine neue Durchführung schlägt stattdessen automatisch das
+// Jahr nach der zuletzt vorhandenen Durchführung dieses Angebots vor (im Formular unten unter
+// "2 · Preise" weiterhin korrigierbar). Ohne vorhandene Durchführungen bleibt das Feld leer.
+function suggestNextSchoolYear(editions: OfferEditionDB[]): string {
+  const latestYear = editions.reduce((max, e) => {
+    const year = Number.parseInt(e.school_year.slice(0, 4), 10)
+    return Number.isFinite(year) && year > max ? year : max
+  }, 0)
+  if (latestYear === 0) return ''
+  const nextStart = latestYear + 1
+  const nextEndShort = String((nextStart + 1) % 100).padStart(2, '0')
+  return `${nextStart}/${nextEndShort}`
+}
 
 export function EditionWorkspace({
   offerList,
@@ -36,12 +50,6 @@ export function EditionWorkspace({
 }) {
   const router = useRouter()
   const [liveValues, setLiveValues] = useState<OfferEditionFormInput | null>(null)
-  const [schoolYear, setSchoolYear] = useState(edition?.school_year ?? '')
-  const [schoolYearError, setSchoolYearError] = useState('')
-  const [showDuplicate, setShowDuplicate] = useState(false)
-  const [duplicateYear, setDuplicateYear] = useState('')
-  const [duplicateState, setDuplicateState] = useState<'idle' | 'saving' | 'error'>('idle')
-  const [duplicateError, setDuplicateError] = useState('')
 
   const handleValuesChange = useCallback((values: OfferEditionFormInput) => setLiveValues(values), [])
 
@@ -53,20 +61,10 @@ export function EditionWorkspace({
     }
   }
 
-  const handleDuplicate = async () => {
-    if (!edition || !duplicateYear.trim()) return
-    setDuplicateState('saving')
-    setDuplicateError('')
-    const result = await duplicateEditionAction(offerId, edition.id, duplicateYear.trim())
-    if (result.success && result.data) {
-      setDuplicateState('idle')
-      setShowDuplicate(false)
-      router.push(`/dashboard/kurse/angebote/${offerId}/durchfuehrungen/${result.data.id}`)
-    } else if (!result.success) {
-      setDuplicateState('error')
-      setDuplicateError(result.error)
-    }
-  }
+  // Initialwert fürs Formular (nur beim Mount/Kontextwechsel relevant); der tatsächlich aktuelle
+  // Stand kommt danach live aus liveValues.schoolYear (onValuesChange-Watch des Formulars).
+  const initialSchoolYear = edition ? edition.school_year : suggestNextSchoolYear(editions)
+  const schoolYear = liveValues?.schoolYear ?? initialSchoolYear
 
   const activeSessionCount = sessions.filter((s) => s.registration_status === 'bookable').length
   const statusLabel =
@@ -113,8 +111,8 @@ export function EditionWorkspace({
       </div>
 
       {/* Bearbeitungskontext */}
-      <section className="mb-[18px] grid grid-cols-1 items-end gap-3 rounded-xl border border-border bg-card p-[15px] shadow-[0_14px_36px_rgba(22,35,63,.08)] md:grid-cols-[1.3fr_.7fr_.7fr_auto]">
-        <div className="flex flex-col gap-1 border-b border-border pb-2 md:col-span-4 md:flex-row md:items-baseline md:justify-between">
+      <section className="mb-[18px] grid grid-cols-1 items-end gap-3 rounded-xl border border-border bg-card p-[15px] shadow-[0_14px_36px_rgba(22,35,63,.08)] md:grid-cols-[1.3fr_.7fr]">
+        <div className="flex flex-col gap-1 border-b border-border pb-2 md:col-span-2 md:flex-row md:items-baseline md:justify-between">
           <strong className="font-serif-marketing text-[17px] font-semibold">Bearbeitungskontext</strong>
           <span className="text-[11.5px] text-muted-foreground">
             Bestimmt, welches stabile Angebot und welche Jahresdurchführung bearbeitet werden.
@@ -149,53 +147,6 @@ export function EditionWorkspace({
             <option value="neu">Neue Durchführung …</option>
           </select>
         </div>
-        <div>
-          <label htmlFor="school-year" className="mb-1.5 block text-xs font-semibold text-foreground">
-            Schul-/Prüfungsjahr
-          </label>
-          <input
-            id="school-year"
-            type="text"
-            required
-            minLength={4}
-            maxLength={20}
-            placeholder="z.B. 2026/27"
-            value={schoolYear}
-            onChange={(event) => {
-              setSchoolYear(event.target.value)
-              setSchoolYearError('')
-            }}
-            aria-invalid={schoolYearError ? true : undefined}
-            aria-describedby={schoolYearError ? 'school-year-error' : undefined}
-            className="h-[42px] w-full rounded-[9px] border border-border bg-white px-3 text-sm outline-none focus:border-secondary focus:ring-3 focus:ring-secondary/15"
-          />
-          {schoolYearError && (
-            <p id="school-year-error" className="mt-1 text-xs text-destructive">
-              {schoolYearError}
-            </p>
-          )}
-        </div>
-        <Button type="button" variant="outline" className="h-[42px] rounded-[9px] bg-card" disabled={!edition} onClick={() => setShowDuplicate((v) => !v)}>
-          Vorjahr duplizieren
-        </Button>
-        {showDuplicate && (
-          <div className="flex flex-wrap items-end gap-3 border-t border-border pt-2 md:col-span-4">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">Neues Schuljahr</label>
-              <input
-                type="text"
-                placeholder="z.B. 2027/28"
-                value={duplicateYear}
-                onChange={(event) => setDuplicateYear(event.target.value)}
-                className="h-10 px-3 rounded-lg border border-border bg-background text-sm"
-              />
-            </div>
-            <Button type="button" size="sm" onClick={handleDuplicate} disabled={duplicateState === 'saving' || !duplicateYear.trim()}>
-              Duplizieren
-            </Button>
-            {duplicateError && <p className="text-xs text-destructive">{duplicateError}</p>}
-          </div>
-        )}
       </section>
 
       <nav className="mb-[18px] flex gap-1 overflow-x-auto rounded-[10px] bg-[#E9EBE4] p-[5px]" aria-label="Formularabschnitte">
@@ -225,8 +176,7 @@ export function EditionWorkspace({
             offerId={offerId}
             edition={edition}
             contentTemplate={edition ? null : editions[0] ?? null}
-            schoolYear={schoolYear}
-            onSchoolYearError={setSchoolYearError}
+            initialSchoolYear={initialSchoolYear}
             onValuesChange={handleValuesChange}
             onSaved={handleEditionSaved}
           />

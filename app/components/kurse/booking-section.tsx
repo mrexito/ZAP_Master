@@ -27,6 +27,7 @@ function columnsForKurstyp(
       { key: 'time', label: t('tagUndZeit') },
       { key: 'details', label: t('ablauf') },
       { key: 'location', label: t('standort') },
+      { key: 'price', label: t('preis') },
       { key: 'status', label: t('status') },
     ]
   }
@@ -37,6 +38,7 @@ function columnsForKurstyp(
       { key: 'date', label: t('datum') },
       { key: 'time', label: t('zeit') },
       { key: 'location', label: t('standort') },
+      { key: 'price', label: t('preis') },
       { key: 'status', label: t('status') },
     ]
   }
@@ -46,6 +48,7 @@ function columnsForKurstyp(
     { key: 'time', label: t('zeit') },
     { key: 'details', label: t('tagesplan') },
     { key: 'location', label: t('standort') },
+    { key: 'price', label: t('preis') },
     { key: 'status', label: t('status') },
   ]
 }

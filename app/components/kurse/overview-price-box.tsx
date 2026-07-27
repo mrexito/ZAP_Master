@@ -9,7 +9,7 @@ interface OverviewPriceBoxProps {
 // über formatOfferPrice berechneten Preis -- dieselbe Preislogik wie CourseHero/CourseCard, damit
 // hier kein zweiter, unabhängiger Preiswert entstehen kann (Abschnitt 2.3).
 function OverviewPriceBox({ offer }: OverviewPriceBoxProps) {
-  const price = formatOfferPrice(offer)
+  const price = formatOfferPrice({ ...offer, hasSessions: true })
 
   return (
     <div className="flex flex-col gap-6 rounded-xl border border-border bg-card p-6 md:flex-row md:items-center md:justify-between">

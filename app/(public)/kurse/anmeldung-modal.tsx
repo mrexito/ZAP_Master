@@ -25,6 +25,7 @@ import {
   type IntensivwocheAnmeldungInput
 } from '@/types/intensivwoche'
 import { submitIntensivwocheAnmeldung } from './actions'
+import { computeSessionPricing, formatChfRappen } from '@/lib/pricing'
 
 // Generisches Kurs-Interface für Modal
 interface KursForModal {
@@ -134,6 +135,11 @@ export function AnmeldungModal({ kurs, onClose }: AnmeldungModalProps) {
       ? `${formatDatum(kurs.startDatum)} – ${formatDatum(kurs.endDatum)}`
       : 'Termin gemäss Kursauswahl')
 
+  // Automatischer Frühbucherrabatt (Betreiberentscheid 27.07.2026): dieselbe Regel wie
+  // book_intensivwoche_kurs() (supabase/migrations/20260727170000_automatic_early_bird_discount.sql),
+  // damit der hier angezeigte Preis dem tatsächlich belasteten Preis entspricht.
+  const pricing = computeSessionPricing(Math.round(kurs.preis * 100), kurs.startDatum || undefined)
+
   // Erfolgs-Ansicht
   if (submitState === 'success') {
     return (
@@ -211,8 +217,13 @@ export function AnmeldungModal({ kurs, onClose }: AnmeldungModalProps) {
               {kurs.ort}
             </span>
           </div>
-          <div className="mt-2 text-lg font-semibold text-foreground">
-            CHF {kurs.preis}
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-lg font-semibold text-foreground">
+              {formatChfRappen(pricing.effectivePriceRappen)}
+            </span>
+            {pricing.isEarlyBird ? (
+              <span className="font-mono text-xs text-secondary">Frühbucherpreis</span>
+            ) : null}
           </div>
         </div>
 

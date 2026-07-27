@@ -21,9 +21,6 @@ export function EditionPreview({
   const title = liveValues?.publicTitle || catalogEntry.label
   const tagline = liveValues?.tagline || ''
   const regularPrice = liveValues?.regularPriceChf ?? 0
-  const earlyBirdEnabled = liveValues?.earlyBirdEnabled ?? false
-  const earlyBirdPrice = liveValues?.earlyBirdPriceChf
-  const earlyBirdDeadline = liveValues?.earlyBirdDeadline
 
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-[0_14px_36px_rgba(22,35,63,.08)]">
@@ -49,14 +46,10 @@ export function EditionPreview({
           <span className="text-muted-foreground">Preis</span>
           <strong className="font-serif-marketing text-2xl font-semibold text-secondary">{formatChf(regularPrice)}</strong>
         </div>
-        {earlyBirdEnabled && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Frühbucherpreis</span>
-            <strong>
-              {earlyBirdPrice != null ? `${formatChf(earlyBirdPrice)} · bis ${earlyBirdDeadline || 'Stichtag offen'}` : 'Noch festlegen'}
-            </strong>
-          </div>
-        )}
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Frühbucherrabatt</span>
+          <strong>10% ab 6 Wochen vor Kursstart</strong>
+        </div>
       </div>
     </section>
   )

@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -1472,9 +1492,6 @@ export type Database = {
           created_at: string
           currency: string
           description: string
-          early_bird_deadline: string | null
-          early_bird_enabled: boolean
-          early_bird_price_rappen: number | null
           id: string
           offer_id: number
           public_title: string
@@ -1492,9 +1509,6 @@ export type Database = {
           created_at?: string
           currency?: string
           description: string
-          early_bird_deadline?: string | null
-          early_bird_enabled?: boolean
-          early_bird_price_rappen?: number | null
           id?: string
           offer_id: number
           public_title: string
@@ -1512,9 +1526,6 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string
-          early_bird_deadline?: string | null
-          early_bird_enabled?: boolean
-          early_bird_price_rappen?: number | null
           id?: string
           offer_id?: number
           public_title?: string
@@ -2502,6 +2513,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
@@ -2517,3 +2531,4 @@ export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"]
 
 export type UserRole = "user" | "lehrperson" | "admin"
 export type Gender = "male" | "female" | "other" | "prefer_not_to_say"
+

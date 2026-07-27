@@ -64,8 +64,6 @@ export type OfferBase = {
   dateSummary: string[] // Card-Datumszeilen, kein zusammengesetztes HTML
   features: string[] // CourseCard-Aufzählung
   regularPriceRappen: number // ganze Rappen; NIE Text oder CHF-Float
-  earlyBirdPriceRappen?: number
-  earlyBirdDeadline?: string // ISO-Datum YYYY-MM-DD
   currency: 'CHF'
   priceUnit?: string // "pro Teilnahme", "Zugang bis März 2027" -- optional
   overviewBullets: string[]
@@ -99,8 +97,6 @@ export type SelfStudyOffer = OfferBase & {
   kurstyp: 'selbststudium'
   materialAreaId: MaterialAreaId
   access: AccessCopy
-  earlyBirdPriceRappen?: never
-  earlyBirdDeadline?: never
   flowSteps?: never
   contentSections?: never
   examTimeline?: never
@@ -166,9 +162,19 @@ export type SessionDefinition = {
   ablauf: Ablauf
 }
 
+// Frühbucherrabatt ist genau wie Verfügbarkeit zeitabhängig und request-time berechnet (Abschnitt
+// 7 des Architektur-Briefings), nie Teil der gecachten SessionDefinition -- siehe
+// lib/pricing.ts#computeSessionPricing.
+export type SessionPricing = {
+  regularPriceRappen: number
+  effectivePriceRappen: number
+  isEarlyBird: boolean
+}
+
 export type SessionRow = SessionDefinition & {
   availability: SessionAvailability
   bookingAction: BookingAction
+  pricing: SessionPricing
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -268,7 +274,7 @@ export type WeekOption = {
 }
 
 export type SessionColumn = {
-  key: 'kurs' | 'date' | 'time' | 'details' | 'location' | 'status' | 'booking'
+  key: 'kurs' | 'date' | 'time' | 'details' | 'location' | 'status' | 'price' | 'booking'
   label: string
   mobileLabel?: string
 }
@@ -479,9 +485,6 @@ export type OfferEdition = {
   tagline: string
   description: string
   regularPriceRappen: number
-  earlyBirdEnabled: boolean
-  earlyBirdPriceRappen: number | null
-  earlyBirdDeadline: string | null // ISO-Datum
   currency: 'CHF'
   registrationOpensAt?: string
   registrationClosesAt?: string

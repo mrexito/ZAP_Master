@@ -11,6 +11,7 @@ import { AnmeldungModal } from '@/app/(public)/kurse/anmeldung-modal'
 import { BookingSection } from '@/app/components/kurse/booking-section'
 import { SUBJECT_TO_FACH } from '@/lib/kurse/mapper'
 import { audiences } from '@/app/data/marketing-site'
+import { resolveSessionDates } from '@/lib/kurse/session-dates'
 
 interface BookingSectionWithModalProps {
   // ExamSimulationOffer teilt booking/Preisfelder mit CourseOffer (Schritt 11).
@@ -36,7 +37,10 @@ function BookingSectionWithModal({ offer, sessions }: BookingSectionWithModalPro
             // fachlich eindeutige course_sessions).
             fach:
               offer.subject && offer.subject !== 'mixed' ? SUBJECT_TO_FACH[offer.subject] : 'deutsch',
-            startDatum: selectedSession.startAt ?? '',
+            // Dieselbe Datumsauflösung wie beim Materialisieren von intensivwoche_kurse.start_datum
+            // (lib/kurse/session-dates.ts) -- sonst würde der im Modal angezeigte Frühbucherpreis
+            // vom tatsächlich belasteten Preis abweichen können.
+            startDatum: resolveSessionDates(selectedSession)?.start ?? selectedSession.startAt ?? '',
             endDatum: selectedSession.endAt ?? '',
             dateLabel: selectedSession.dateLabel,
             uhrzeit: selectedSession.timeLabel,

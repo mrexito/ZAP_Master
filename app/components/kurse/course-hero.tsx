@@ -26,7 +26,7 @@ function buildPageTitle(offer: CourseOffer, audience: Audience): string {
 
 function CourseHero({ offer, audience }: CourseHeroProps) {
   const isExamSimulation = offer.kurstyp === 'pruefungssimulation'
-  const price = formatOfferPrice(offer)
+  const price = formatOfferPrice({ ...offer, hasSessions: true })
 
   return (
     <div className="flex flex-col gap-4">

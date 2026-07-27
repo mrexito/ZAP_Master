@@ -46,10 +46,9 @@ select is(
 -- school_year)) darf keine Duplikate erzeugen.
 insert into public.offer_editions (
   offer_id, school_year, public_title, tagline, description,
-  regular_price_rappen, early_bird_enabled, early_bird_price_rappen, early_bird_deadline,
-  currency, status
+  regular_price_rappen, currency, status
 )
-select o.id, '2026/27', 'Duplikat-Testlauf', 'x', 'x', 1, false, null, null, 'CHF', 'published'
+select o.id, '2026/27', 'Duplikat-Testlauf', 'x', 'x', 1, 'CHF', 'published'
 from public.offers o
 where o.audience_id = '6' and o.kurstyp = 'halbjahreskurs' and o.slug = 'halbjahreskurs'
 on conflict (offer_id, school_year) do nothing;

@@ -111,7 +111,7 @@ async function BookingSectionLoader({
 }) {
   await connection()
   const availability = await getSessionAvailability(sessions.map((session) => session.source.kursId))
-  const rows = buildSessionRows(sessions, availability)
+  const rows = buildSessionRows(sessions, availability, offer.regularPriceRappen)
   return <BookingSectionWithModal offer={offer} sessions={rows} />
 }
 

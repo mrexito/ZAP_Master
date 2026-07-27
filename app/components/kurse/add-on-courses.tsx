@@ -30,7 +30,7 @@ function AddOnCourses({ offers }: AddOnCoursesProps) {
   return (
     <ResponsiveGrid columns={{ base: 1, md: 2 }} gap="sm">
       {offers.map((offer) => {
-        const price = formatOfferPrice(offer)
+        const price = formatOfferPrice({ ...offer, hasSessions: offer.kurstyp === 'pruefungssimulation' })
         const styles = ADD_ON_STYLES[offer.kurstyp]
 
         return (

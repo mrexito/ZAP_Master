@@ -2,55 +2,43 @@ import { z } from 'zod'
 import type { Fach } from './kurs'
 
 // Schritt 10a: Formulare arbeiten in ganzen CHF (wie die Admin-Referenz, "CHF ___"), die Server
-// Actions rechnen erst beim Schreiben in offer_editions.regular_price_rappen/early_bird_price_rappen
-// (ganze Rappen, Abschnitt 2.12/3.3) um -- kein Rappen-Eingabefeld in der UI.
-export const offerEditionFormSchema = z
-  .object({
-    schoolYear: z
-      .string()
-      .trim()
-      .min(4, 'Schul-/Prüfungsjahr ist erforderlich')
-      .max(20, 'Schul-/Prüfungsjahr darf maximal 20 Zeichen haben'),
-    publicTitle: z
-      .string()
-      .trim()
-      .min(5, 'Titel muss mindestens 5 Zeichen haben')
-      .max(150, 'Titel darf maximal 150 Zeichen haben'),
-    tagline: z
-      .string()
-      .trim()
-      .min(5, 'Tagline muss mindestens 5 Zeichen haben')
-      .max(150, 'Tagline darf maximal 150 Zeichen haben'),
-    description: z
-      .string()
-      .trim()
-      .min(10, 'Kurzbeschreibung muss mindestens 10 Zeichen haben')
-      .max(600, 'Kurzbeschreibung darf maximal 600 Zeichen haben'),
-    regularPriceChf: z.coerce
-      .number({ message: 'Preis muss eine Zahl sein' })
-      .int('Preis muss eine ganze Zahl sein')
-      .min(0, 'Preis darf nicht negativ sein')
-      .max(20000, 'Preis darf maximal CHF 20’000 sein'),
-    earlyBirdEnabled: z.boolean(),
-    earlyBirdPriceChf: z.coerce.number().int().min(0).optional().nullable(),
-    earlyBirdDeadline: z.string().optional().nullable(),
-    registrationOpensAt: z.string().optional().nullable(),
-    registrationClosesAt: z.string().optional().nullable(),
-    status: z.enum(['draft', 'published']),
-  })
-  .refine(
-    (data) =>
-      !data.earlyBirdEnabled ||
-      (data.earlyBirdPriceChf != null && data.earlyBirdDeadline != null && data.earlyBirdDeadline !== ''),
-    { message: 'Bei aktivem Frühbucherpreis sind Betrag und Stichtag Pflicht.', path: ['earlyBirdPriceChf'] }
-  )
-  .refine(
-    (data) =>
-      !data.earlyBirdEnabled ||
-      data.earlyBirdPriceChf == null ||
-      data.earlyBirdPriceChf < data.regularPriceChf,
-    { message: 'Der Frühbucherpreis muss unter dem regulären Preis liegen.', path: ['earlyBirdPriceChf'] }
-  )
+// Actions rechnen erst beim Schreiben in offer_editions.regular_price_rappen (ganze Rappen,
+// Abschnitt 2.12/3.3) um -- kein Rappen-Eingabefeld in der UI.
+//
+// Kein Frühbucherpreis-Feld mehr (Betreiberentscheid 27.07.2026): 10% Rabatt gilt automatisch,
+// wenn die Anmeldung mindestens 6 Wochen vor dem in Abschnitt 3 ("Termine") hinterlegten
+// Kursstart erfolgt -- berechnet in book_intensivwoche_kurs() und lib/pricing.ts, nicht mehr hier
+// manuell gepflegt.
+export const offerEditionFormSchema = z.object({
+  schoolYear: z
+    .string()
+    .trim()
+    .min(4, 'Schul-/Prüfungsjahr ist erforderlich')
+    .max(20, 'Schul-/Prüfungsjahr darf maximal 20 Zeichen haben'),
+  publicTitle: z
+    .string()
+    .trim()
+    .min(5, 'Titel muss mindestens 5 Zeichen haben')
+    .max(150, 'Titel darf maximal 150 Zeichen haben'),
+  tagline: z
+    .string()
+    .trim()
+    .min(5, 'Tagline muss mindestens 5 Zeichen haben')
+    .max(150, 'Tagline darf maximal 150 Zeichen haben'),
+  description: z
+    .string()
+    .trim()
+    .min(10, 'Kurzbeschreibung muss mindestens 10 Zeichen haben')
+    .max(600, 'Kurzbeschreibung darf maximal 600 Zeichen haben'),
+  regularPriceChf: z.coerce
+    .number({ message: 'Preis muss eine Zahl sein' })
+    .int('Preis muss eine ganze Zahl sein')
+    .min(0, 'Preis darf nicht negativ sein')
+    .max(20000, 'Preis darf maximal CHF 20’000 sein'),
+  registrationOpensAt: z.string().optional().nullable(),
+  registrationClosesAt: z.string().optional().nullable(),
+  status: z.enum(['draft', 'published']),
+})
 
 export type OfferEditionFormInput = z.infer<typeof offerEditionFormSchema>
 
@@ -126,9 +114,6 @@ export interface OfferEditionDB {
   tagline: string
   description: string
   regular_price_rappen: number
-  early_bird_enabled: boolean
-  early_bird_price_rappen: number | null
-  early_bird_deadline: string | null
   currency: string
   registration_opens_at: string | null
   registration_closes_at: string | null

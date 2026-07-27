@@ -29,16 +29,17 @@ function sqlString(value) {
   return `$str$${value}$str$`
 }
 
+// Kein Frühbucherpreis-/-Stichtag-Feld mehr (Betreiberentscheid 27.07.2026): 10% Rabatt gilt seit
+// supabase/migrations/20260727170000_automatic_early_bird_discount.sql automatisch, wenn die
+// Anmeldung mindestens 6 Wochen vor dem hinterlegten Kursstart erfolgt -- offer_editions speichert
+// nur noch den Regulärpreis.
 function offerEditionInsert(offer) {
-  const earlyBirdEnabled = offer.earlyBirdPriceRappen != null && offer.earlyBirdDeadline != null
   return `insert into public.offer_editions (
   offer_id, school_year, public_title, tagline, description,
-  regular_price_rappen, early_bird_enabled, early_bird_price_rappen, early_bird_deadline,
-  currency, status
+  regular_price_rappen, currency, status
 )
 select o.id, ${sqlString(SCHOOL_YEAR)}, ${sqlString(offer.displayName)}, ${sqlString(offer.tagline)}, ${sqlString(offer.description)},
-  ${offer.regularPriceRappen}, ${earlyBirdEnabled}, ${earlyBirdEnabled ? offer.earlyBirdPriceRappen : 'null'}, ${earlyBirdEnabled ? `'${offer.earlyBirdDeadline}'` : 'null'},
-  ${sqlString(offer.currency)}, 'published'
+  ${offer.regularPriceRappen}, ${sqlString(offer.currency)}, 'published'
 from public.offers o
 where o.audience_id = ${sqlString(offer.audienceId)} and o.kurstyp = ${sqlString(offer.kurstyp)} and o.slug = ${sqlString(offer.slug)}
 on conflict (offer_id, school_year) do nothing;`

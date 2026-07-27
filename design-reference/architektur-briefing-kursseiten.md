@@ -668,8 +668,6 @@ type OfferBase = {
   dateSummary: string[];               // Card-Datumszeilen, kein zusammengesetztes HTML
   features: string[];                  // CourseCard-Aufzählung
   regularPriceRappen: number;  // ganze Rappen; NIE Text oder CHF-Float
-  earlyBirdPriceRappen?: number;
-  earlyBirdDeadline?: string;          // ISO-Datum YYYY-MM-DD
   currency: "CHF";
   priceUnit?: string;          // "pro Teilnahme", "Zugang bis März 2027" — optional
   overviewBullets: string[];
@@ -703,8 +701,6 @@ type SelfStudyOffer = OfferBase & {
   kurstyp: "selbststudium";
   materialAreaId: MaterialAreaId;
   access: AccessCopy;
-  earlyBirdPriceRappen?: never;
-  earlyBirdDeadline?: never;
   flowSteps?: never;
   contentSections?: never;
   examTimeline?: never;
@@ -716,13 +712,15 @@ type SelfStudyOffer = OfferBase & {
 type Offer = CourseOffer | ExamSimulationOffer | SelfStudyOffer;
 ```
 
-Preis-Anzeige immer **berechnet**, nie als fertiger Satz gepflegt:
+Preis-Anzeige immer **berechnet**, nie als fertiger Satz gepflegt. Seit dem Betreiberentscheid vom
+27.07.2026 (Abschnitt 2.12) gibt es dafür kein `earlyBirdPriceRappen`/`earlyBirdDeadline`-Feld mehr
+auf `Offer` — Angebots-Ebene zeigt `formatOfferPrice(offer)` (Regulärpreis + statischer
+Hinweistext), der konkrete Rabattpreis pro Session kommt aus
+`computeSessionPricing(regularPriceRappen, session.startAt)`:
 
 ```
-{offer.earlyBirdPriceRappen != null && offer.earlyBirdDeadline
-  ? formatEarlyBirdPrice(offer.earlyBirdPriceRappen, offer.regularPriceRappen,
-      offer.earlyBirdDeadline, offer.currency, locale)
-  : null}
+const price = formatOfferPrice({ ...offer, hasSessions: true }); // Regulärpreis + Hinweistext
+const sessionPricing = computeSessionPricing(offer.regularPriceRappen, session.startAt); // pro Termin
 ```
 
 ### 2.3 Gefundene Preis-/Text-Bugs in den Mockups (zur Kenntnis, nicht übernehmen)
@@ -747,10 +745,12 @@ unverbundene Preisquelle einzuführen. Die Muster unten bleiben für den Compone
   **alle fünf** Halbjahreskurs-/Vorkurs-Unterseiten den Frühbucherhinweis, und die CSS-Regel ist
   überall vorhanden — der Bug ist behoben, unabhängig von diesem Dokument. **Klare Regel fürs neue
   Modell (weiterhin gültig, jetzt als Bestätigung des bereits erreichten Zustands statt als
-  Korrektur):** Hauptseite und Unterseite lesen `earlyBirdPriceRappen`/`earlyBirdDeadline` aus demselben
-  `Offer`-Datensatz und zeigen den Hinweis **immer**, wenn `earlyBirdPriceRappen` gesetzt ist — kein
-  optionaler Textblock, der pro Seite manuell gepflegt wird. Das verhindert auch ein Wiederauftreten
-  wie beim neuen 5.-Klasse-Wochenkurs-Bug oben.
+  Korrektur):** Hauptseite und Unterseite lesen denselben `Offer`-/`SessionRow`-Datensatz und zeigen
+  denselben Hinweis — kein optionaler Textblock, der pro Seite manuell gepflegt wird. Das verhindert
+  auch ein Wiederauftreten wie beim neuen 5.-Klasse-Wochenkurs-Bug oben. **Betreiberentscheid
+  27.07.2026:** `earlyBirdPriceRappen`/`earlyBirdDeadline` als manuell gepflegte `Offer`-Felder
+  existieren nicht mehr; der Hinweis ist jetzt ein statischer Text bei Angeboten mit Terminen, der
+  konkrete Rabattpreis wird automatisch pro Session berechnet (Abschnitt 2.12).
 
 ### 2.4 Buchungstabelle: Spalten sind stabil, Ablauf-Inhalt ist polymorph
 
@@ -812,9 +812,19 @@ type SessionDefinition = {
   ablauf: Ablauf;
 };
 
+// Betreiberentscheid 27.07.2026: SessionPricing ist wie SessionAvailability zeitabhängig und
+// request-time berechnet (nie Teil der gecachten SessionDefinition) -- 10% Rabatt, wenn heute
+// höchstens 42 Tage vor dem Startdatum dieser Session liegt, siehe Abschnitt 2.12.
+type SessionPricing = {
+  regularPriceRappen: number;
+  effectivePriceRappen: number;
+  isEarlyBird: boolean;
+};
+
 type SessionRow = SessionDefinition & {
   availability: SessionAvailability;
   bookingAction: BookingAction;
+  pricing: SessionPricing;
 };
 ```
 
@@ -1292,7 +1302,7 @@ ihre Klassenstufe eindeutig gemappt ist.
 | `start_datum` / `end_datum` | SQL-`DATE` bleibt zunächst ISO-Datum (`YYYY-MM-DD`) für Labels; `SessionDefinition.startAt`/`endAt` nur setzen, wenn Datum, Uhrzeit und Zeitzone (`Europe/Zurich`) validiert gemeinsam geparst wurden |
 | `uhrzeit` | zunächst verlustfrei `SessionRow.timeLabel`; erst nach validierter Parser-Migration in getrennte Zeiten zerlegen |
 | `ort` | Auf `SessionRow.standort` nur bei exakter Zuordnung zu `Zürich HB` oder `Winterthur` mappen. Andere Bestandswerte unverändert erhalten und als `needs_review` sperren; `online` wird ausschliesslich nach fachlicher Prüfung als `deliveryModes`-Wert übernommen, nie als Standort. |
-| `preis` | mit expliziter Rundung `round(preis * 100)` nach `regularPriceRappen`, `currency = "CHF"`; `earlyBirdPriceRappen`/`earlyBirdDeadline` bleiben `undefined` |
+| `preis` | mit expliziter Rundung `round(preis * 100)` nach `regularPriceRappen`, `currency = "CHF"`; Frühbucherrabatt entsteht automatisch pro Session, kein separates Preisfeld auf `ExistingCourseCardModel` |
 | `max_teilnehmer` | `SessionDefinition.capacity`; Belegung bleibt in `SessionAvailability` |
 | View `aktuelle_teilnehmer` | `bookedCount`; nur nicht stornierte Anmeldungen zählen |
 | View `status` | `offen→frei`, `wenige-plaetze→wenige`, `ausgebucht→voll`; `wenige` bei 1–2 Restplätzen, `voll` bei 0; überall aus derselben Kapazitäts-/Buchungsregel ableiten |
@@ -1477,9 +1487,6 @@ type OfferEdition = {
   tagline: string;
   description: string;
   regularPriceRappen: number;
-  earlyBirdEnabled: boolean;
-  earlyBirdPriceRappen: number | null;
-  earlyBirdDeadline: string | null; // ISO-Datum
   currency: "CHF";
   registrationOpensAt?: string;
   registrationClosesAt?: string;
@@ -1496,13 +1503,20 @@ type CourseSessionDefinition = SessionDefinition & {
 };
 ```
 
-Die Frühbucherlogik ist pro Durchführung konfigurierbar. Neue Halbjahreskurse sowie
-Intensivkurse/Lerncamps starten mit `earlyBirdEnabled = true`; Prüfungssimulationen und
-Selbststudium mit `false`. Dies ist eine Voreinstellung, keine im Frontend fest verdrahtete
-Geschäftsregel: Der Administrator kann begründete Ausnahmen aktivieren oder deaktivieren. Bei
-aktivem Frühbucherpreis sind Betrag und Stichtag Pflicht, der Frühbucherpreis muss kleiner als der
-reguläre Preis sein. Bei deaktivierter Option werden beide Werte als `null` gespeichert und auf
-öffentlichen Seiten nicht gerendert. Bestehende Buchungen behalten immer ihren Preis-Snapshot.
+**Betreiberentscheid 27.07.2026 (löst den vorherigen manuellen Frühbucher-Absatz ab):** Es gibt
+kein manuell gepflegtes Frühbucherfeld (`earlyBirdEnabled`/`earlyBirdPriceRappen`/
+`earlyBirdDeadline`) mehr — weder in `OfferEdition` noch in der Admin-Maske. Stattdessen gilt
+automatisch ein Rabatt von 10% auf `regularPriceRappen`, wenn die Anmeldung mindestens 6 Wochen
+(42 Tage) vor dem unter „3 · Termine“ hinterlegten Kursstart der jeweiligen Session erfolgt. Der
+Stichtag gilt **pro Session/Durchführung** (jede Kursgruppe hat ihr eigenes Startdatum), nicht
+pro Edition — ein separates Frühbucherfeld in „2 · Preise“ wäre redundant zu „3 · Termine“ gewesen.
+Die Regel ist identisch in `book_intensivwoche_kurs()`
+(`supabase/migrations/20260727170000_automatic_early_bird_discount.sql`, massgeblich für
+`booked_price_rappen`) und in `lib/pricing.ts#computeSessionPricing()` (Anzeige) implementiert.
+Angebots-Ebene (`CourseCard`/`CourseHero`/`OverviewPriceBox`, vor Terminwahl) zeigt weiterhin nur
+den Regulärpreis plus einen statischen Hinweistext, da dort kein einzelnes Startdatum feststeht;
+der konkret berechnete Preis erscheint erst pro Termin in der `SessionTable` (neue Spalte „Preis“).
+Bestehende Buchungen behalten immer ihren Preis-Snapshot.
 
 Für reguläre Kursgruppen gilt als verbindlicher Ausgangswert `capacity = 10`. Der Wert wird je
 Session gespeichert und darf bei fachlich begründeten Raum-/Kursabweichungen explizit angepasst
@@ -2308,8 +2322,9 @@ Tokenprüfung darf weder dupliziert noch entfernt werden.
    Für jedes Angebot existiert genau ein zentraler numerischer Preisdatensatz mit dokumentierter
    Quelle und Freigabestatus. Bis zur fachlichen Freigabe wird das betroffene Angebot nicht
    buchbar veröffentlicht; UI, Seed und Datenbank dürfen keine verschiedenen Werte enthalten.
-   Ein Frühbucherpreis wird nur bei aktivem `earlyBirdEnabled`, vorhandenem `earlyBirdPriceRappen` und
-   einer noch gültigen `earlyBirdDeadline` angezeigt beziehungsweise gebucht.
+   Ein Frühbucherpreis (10% Rabatt bei Anmeldung ≥6 Wochen vor Kursstart) wird seit dem
+   Betreiberentscheid vom 27.07.2026 nicht mehr manuell aktiviert, sondern automatisch pro Session
+   aus `regularPriceRappen` und dem Kursstartdatum berechnet — siehe Abschnitt 2.12.
 3. **Zielgruppen:** Diese Migration unterstützt verbindlich sieben Gruppen: fünf
    Gymiprüfungsgruppen plus BMS und Matura. Daten unbekannter Stufen/Zielgruppen bleiben erhalten
    und werden als `needs_review` gemeldet, aber nicht automatisch veröffentlicht. Weitere Gruppen

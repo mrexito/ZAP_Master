@@ -27,9 +27,13 @@ import {
   buildFixedIntensiveAudienceSchedule,
   buildFixedIntensiveSchedule,
   buildFixedVorkursSchedule,
-  getFixedIntensiveLocations,
+  getFixScheduleGroup,
+  getRepresentativeAudienceForGroup,
   hasFixedIntensiveSchedule,
   hasFixedSchoolSchedule,
+  FIX_SCHEDULE_GROUPS,
+  FIX_SCHEDULE_GROUP_LABELS,
+  type FixScheduleGroup,
 } from '@/lib/kurse/fixed-school-schedule'
 
 const inputClass =
@@ -225,8 +229,14 @@ function MissingScheduleYear() {
   )
 }
 
-function FixedVorkursSchedule({ schoolYear }: { schoolYear: string }) {
-  const schedule = buildFixedVorkursSchedule(schoolYear)
+function FixedVorkursSchedule({
+  schoolYear,
+  group,
+}: {
+  schoolYear: string
+  group: 'langzeitgymi' | 'kurzzeitgymi'
+}) {
+  const schedule = buildFixedVorkursSchedule(schoolYear, group)
 
   if (schedule.length === 0) {
     return <MissingScheduleYear />
@@ -266,25 +276,36 @@ function FixedVorkursSchedule({ schoolYear }: { schoolYear: string }) {
   )
 }
 
-function FixedIntensiveSchedule({ schoolYear }: { schoolYear: string }) {
-  const columns = [
-    {
-      label: 'Zürich',
-      schedule: buildFixedIntensiveSchedule(schoolYear, '6', 'Zürich HB'),
-    },
-    {
-      label: 'Winterthur',
-      schedule: buildFixedIntensiveSchedule(schoolYear, '6', 'Winterthur'),
-    },
-    {
-      label: 'BMS',
-      schedule: buildFixedIntensiveAudienceSchedule(schoolYear, 'bms'),
-    },
-    {
-      label: 'Matura',
-      schedule: buildFixedIntensiveAudienceSchedule(schoolYear, 'matura'),
-    },
-  ] as const
+function FixedIntensiveSchedule({ schoolYear, group }: { schoolYear: string; group: FixScheduleGroup }) {
+  // BMS wird wie Langzeitgymi/Kurzzeitgymi nach Standort in zwei eigene Spalten aufgeteilt
+  // (Zürich/Winterthur), statt in einer gemeinsamen "BMS"-Spalte mit Standort-Anmerkung pro
+  // Kalenderwoche. Matura kennt nur Zürich HB und bleibt eine eigene Einzelspalte.
+  const columns =
+    group === 'bms-matura'
+      ? ([
+          {
+            label: 'Zürich',
+            schedule: buildFixedIntensiveSchedule(schoolYear, 'bms', 'Zürich HB'),
+          },
+          {
+            label: 'Winterthur',
+            schedule: buildFixedIntensiveSchedule(schoolYear, 'bms', 'Winterthur'),
+          },
+          {
+            label: 'Matura',
+            schedule: buildFixedIntensiveAudienceSchedule(schoolYear, 'matura'),
+          },
+        ] as const)
+      : ([
+          {
+            label: 'Zürich',
+            schedule: buildFixedIntensiveSchedule(schoolYear, getRepresentativeAudienceForGroup(group), 'Zürich HB'),
+          },
+          {
+            label: 'Winterthur',
+            schedule: buildFixedIntensiveSchedule(schoolYear, getRepresentativeAudienceForGroup(group), 'Winterthur'),
+          },
+        ] as const)
   const weekdays = [
     ['Montag', 'monday'],
     ['Dienstag', 'tuesday'],
@@ -324,14 +345,7 @@ function FixedIntensiveSchedule({ schoolYear }: { schoolYear: string }) {
               </th>
               {columns.map((column) => (
                 <td key={column.label} className="whitespace-nowrap px-3 py-3 font-mono-marketing text-xs font-semibold text-foreground">
-                  {column.schedule.map((week) => {
-                    if (column.label !== 'BMS') return `KW ${week.calendarWeek}`
-
-                    const locations = getFixedIntensiveLocations('bms', week.calendarWeek)
-                      .map((location) => location === 'Zürich HB' ? 'Zürich' : location)
-                      .join(' + ')
-                    return `KW ${week.calendarWeek} (${locations})`
-                  }).join(' / ')}
+                  {column.schedule.map((week) => `KW ${week.calendarWeek}`).join(' / ')}
                 </td>
               ))}
             </tr>
@@ -370,19 +384,54 @@ export function SessionEditor({
   offerType: string
 }) {
   const [drafts, setDrafts] = useState<number[]>([])
+  // Default: Gruppe des aktuell bearbeiteten Angebots -- der Admin kann trotzdem zu anderen
+  // Gruppen wechseln, um deren Fixtermine als Referenz einzusehen.
+  const [scheduleGroup, setScheduleGroup] = useState<FixScheduleGroup>(
+    getFixScheduleGroup(audienceId) ?? 'langzeitgymi'
+  )
   const showVorkursSchedule = hasFixedSchoolSchedule(audienceId) && offerType === 'halbjahreskurs'
   const showIntensiveSchedule = hasFixedIntensiveSchedule(audienceId) && offerType === 'intensivkurs'
   const showAutomaticSchedule = showVorkursSchedule || showIntensiveSchedule
+
+  const scheduleGroupFilter = showAutomaticSchedule ? (
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Fixtermine nach Gruppe filtern">
+      {FIX_SCHEDULE_GROUPS.map((group) => (
+        <button
+          key={group}
+          type="button"
+          onClick={() => setScheduleGroup(group)}
+          aria-pressed={scheduleGroup === group}
+          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            scheduleGroup === group
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground hover:bg-muted/70'
+          }`}
+        >
+          {FIX_SCHEDULE_GROUP_LABELS[group]}
+        </button>
+      ))}
+    </div>
+  ) : null
+
+  // Die Termine (Fixtermin-Referenztabelle) sind abhängig von der Filterauswahl -- BMS & Matura
+  // besitzen keinen Vorkurs-Fixplan (hasFixedSchoolSchedule() deckt sie nicht ab).
   const automaticSchedule = showVorkursSchedule ? (
-    <FixedVorkursSchedule schoolYear={schoolYear} />
+    scheduleGroup === 'bms-matura' ? (
+      <p className="text-sm text-muted-foreground">
+        Für BMS &amp; Matura gibt es keinen Vorkurs-Fixplan.
+      </p>
+    ) : (
+      <FixedVorkursSchedule schoolYear={schoolYear} group={scheduleGroup} />
+    )
   ) : showIntensiveSchedule ? (
-    <FixedIntensiveSchedule schoolYear={schoolYear} />
+    <FixedIntensiveSchedule schoolYear={schoolYear} group={scheduleGroup} />
   ) : null
 
   if (!edition) {
     return (
       <div id="termine" className="order-3 scroll-mt-24 rounded-xl border border-border bg-card p-6">
         <h2 className="font-serif-marketing text-[22px] font-semibold text-foreground">3 · Termine &amp; Kapazität</h2>
+        {scheduleGroupFilter && <div className="mt-4">{scheduleGroupFilter}</div>}
         {automaticSchedule && (
           <div className="mt-4">
             {automaticSchedule}
@@ -410,6 +459,7 @@ export function SessionEditor({
       </div>
 
       <div className="space-y-4 p-[22px]">
+      {scheduleGroupFilter}
       {automaticSchedule}
       {showAutomaticSchedule && (
         <div className="border-t border-border pt-4">

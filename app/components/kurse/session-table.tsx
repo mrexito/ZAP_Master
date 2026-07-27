@@ -2,6 +2,7 @@ import type { SessionColumn, SessionRow } from '@/types/marketing'
 import { StatusBadge } from '@/app/components/kurse/status-badge'
 import { SessionDetails } from '@/app/components/kurse/session-details'
 import { BookingButton } from '@/app/components/kurse/booking-button'
+import { formatChfRappen } from '@/lib/pricing'
 
 interface SessionTableProps {
   columns: SessionColumn[]
@@ -92,6 +93,15 @@ function renderCell(row: SessionRow, column: SessionColumn) {
       return row.timeLabel
     case 'kurs':
       return row.kurs
+    case 'price':
+      return (
+        <span className="flex flex-col gap-0.5">
+          <span>{formatChfRappen(row.pricing.effectivePriceRappen)}</span>
+          {row.pricing.isEarlyBird ? (
+            <span className="font-mono text-[11px] text-secondary">Frühbucherpreis</span>
+          ) : null}
+        </span>
+      )
     case 'booking':
       return null
     default:

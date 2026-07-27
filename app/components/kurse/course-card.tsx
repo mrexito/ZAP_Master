@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter } from '@/app/components/ui/card'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
 import { CategoryBadge } from '@/app/components/kurse/category-badge'
-import { formatChfRappen, formatOfferPrice } from '@/lib/pricing'
+import { formatOfferPrice } from '@/lib/pricing'
 
 interface CourseCardProps {
   offer: CourseOffer
@@ -23,15 +23,7 @@ const CARD_DASH_ACCENTS = ['text-secondary', 'text-subject-ma-foreground']
 
 async function CourseCard({ offer, index = 0 }: CourseCardProps) {
   const t = await getTranslations('kurse.courseCard')
-  const price = formatOfferPrice(offer)
-  // Streichpreis (.price-strike im design-reference-Markup) für Halbjahreskurs-Angebote --
-  // dieselbe Frühbucher-Bedingung wie formatOfferPrice(), damit kein zweiter, unabhängiger
-  // Rabatt-Zustand entstehen kann (Abschnitt 2.3).
-  const showStrikePrice =
-    offer.kurstyp === 'halbjahreskurs' && offer.earlyBirdPriceRappen != null && offer.earlyBirdDeadline
-  // "regulär CHF X" ist redundant, sobald der Streichpreis selbst sichtbar ist -- formatOfferPrice()
-  // hängt diesen Teil per " · " an, siehe lib/pricing.ts.
-  const priceNote = showStrikePrice ? price.note?.split(' · ')[0] : price.note
+  const price = formatOfferPrice({ ...offer, hasSessions: true })
 
   return (
     <Card className="flex h-full flex-col gap-0 overflow-hidden p-0">
@@ -88,14 +80,9 @@ async function CourseCard({ offer, index = 0 }: CourseCardProps) {
       <CardFooter className="flex items-end justify-between gap-3 border-t pt-6 pb-6">
         <div>
           <p className="flex items-baseline gap-1.5">
-            {showStrikePrice ? (
-              <span className="text-sm font-medium text-muted-foreground line-through">
-                {formatChfRappen(offer.regularPriceRappen)}
-              </span>
-            ) : null}
             <span className="font-serif text-xl font-semibold text-foreground">{price.value}</span>
           </p>
-          {priceNote ? <p className="text-xs text-muted-foreground">{priceNote}</p> : null}
+          {price.note ? <p className="text-xs text-muted-foreground">{price.note}</p> : null}
         </div>
         <Button asChild>
           <Link href={offer.href}>{t('termineAnsehen')}</Link>

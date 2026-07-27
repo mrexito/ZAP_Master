@@ -1,14 +1,63 @@
 import type { SessionDefinition, WeekOption } from '@/types/marketing'
 
-export const FIXED_SCHOOL_CALENDAR_WEEKS = [10, 11, 13, 14, 15, 16, 20, 21, 22, 23, 24] as const
-
 const FIXED_SCHOOL_AUDIENCES = new Set(['4', '5', '6', '1-sek', '2-3-sek'])
 const ADVANCED_SCHOOL_AUDIENCES = new Set(['bms', 'matura'])
-const ZURICH_INTENSIVE_WEEKS = [7, 8] as const
-const WINTERTHUR_INTENSIVE_WEEKS = [6, 7] as const
-const MATURA_INTENSIVE_WEEKS = [6, 7] as const
 
 export type IntensiveScheduleLocation = 'Zürich HB' | 'Winterthur'
+
+// Gruppierung für den Termine-Filter in "3 · Termine" (Admin-Kursverwaltung): Langzeitgymi
+// (4./5./6. Klasse, ZAP1), Kurzzeitgymi (1. Sek/2.-3. Sek, ZAP2) und BMS & Matura. Kurzzeitgymi
+// verwendet unten vorläufig dieselben Kalenderwochen wie Langzeitgymi -- eigene, fachlich
+// bestätigte Wochen sind noch ausstehend (gleiches Muster wie "vorläufige Preise" in
+// design-review-todo.md Punkt 1). BMS behält seine bisherigen Werte, Matura ihren eigenen
+// Sonderfall -- beide unverändert gegenüber dem bisherigen Verhalten.
+export type FixScheduleGroup = 'langzeitgymi' | 'kurzzeitgymi' | 'bms-matura'
+
+export const FIX_SCHEDULE_GROUPS: readonly FixScheduleGroup[] = ['langzeitgymi', 'kurzzeitgymi', 'bms-matura']
+
+export const FIX_SCHEDULE_GROUP_LABELS: Readonly<Record<FixScheduleGroup, string>> = {
+  langzeitgymi: 'Langzeitgymi',
+  kurzzeitgymi: 'Kurzzeitgymi',
+  'bms-matura': 'BMS & Matura',
+}
+
+const AUDIENCE_TO_FIX_SCHEDULE_GROUP: Readonly<Record<string, FixScheduleGroup>> = {
+  '4': 'langzeitgymi',
+  '5': 'langzeitgymi',
+  '6': 'langzeitgymi',
+  '1-sek': 'kurzzeitgymi',
+  '2-3-sek': 'kurzzeitgymi',
+  bms: 'bms-matura',
+  matura: 'bms-matura',
+}
+
+export function getFixScheduleGroup(audienceId: string): FixScheduleGroup | null {
+  return AUDIENCE_TO_FIX_SCHEDULE_GROUP[audienceId] ?? null
+}
+
+// Repräsentative audienceId je Gruppe für die weiterhin audienceId-parametrisierten
+// Intensivkurs-Funktionen unten (buildFixedIntensiveSchedule() etc. bleiben so unverändert
+// aufrufbar aus lib/kurse/catalog.ts); die Gruppen-Ansicht in session-editor.tsx nutzt dieselbe
+// Berechnung stellvertretend für die ganze Gruppe.
+const REPRESENTATIVE_AUDIENCE_BY_GROUP: Readonly<Record<'langzeitgymi' | 'kurzzeitgymi', string>> = {
+  langzeitgymi: '6',
+  kurzzeitgymi: '2-3-sek',
+}
+
+export function getRepresentativeAudienceForGroup(group: 'langzeitgymi' | 'kurzzeitgymi'): string {
+  return REPRESENTATIVE_AUDIENCE_BY_GROUP[group]
+}
+
+const VORKURS_CALENDAR_WEEKS_BY_GROUP: Readonly<Record<'langzeitgymi' | 'kurzzeitgymi', readonly number[]>> = {
+  langzeitgymi: [10, 11, 13, 14, 15, 16, 20, 21, 22, 23, 24],
+  kurzzeitgymi: [10, 11, 13, 14, 15, 16, 20, 21, 22, 23, 24],
+}
+
+const INTENSIVE_WEEKS_BY_GROUP: Readonly<Record<'langzeitgymi' | 'kurzzeitgymi', Readonly<Record<IntensiveScheduleLocation, readonly number[]>>>> = {
+  langzeitgymi: { 'Zürich HB': [7, 8], Winterthur: [6, 7] },
+  kurzzeitgymi: { 'Zürich HB': [7, 8], Winterthur: [6, 7] },
+}
+const MATURA_INTENSIVE_WEEKS = [6, 7] as const
 
 export type FixedVorkursScheduleRow = {
   calendarWeek: number
@@ -40,7 +89,11 @@ function getFixedIntensiveCalendarWeeks(
   location: IntensiveScheduleLocation
 ): readonly number[] {
   if (audienceId === 'matura') return MATURA_INTENSIVE_WEEKS
-  return location === 'Zürich HB' ? ZURICH_INTENSIVE_WEEKS : WINTERTHUR_INTENSIVE_WEEKS
+  // 'bms' fällt wie jede unbekannte/nicht gemappte audienceId auf 'langzeitgymi' zurück -- exakt
+  // dieselben Zahlen wie vor der Gruppenaufteilung, keine Verhaltensänderung für Bestandsaufrufer.
+  const group = getFixScheduleGroup(audienceId)
+  const weeksGroup = group === 'kurzzeitgymi' ? 'kurzzeitgymi' : 'langzeitgymi'
+  return INTENSIVE_WEEKS_BY_GROUP[weeksGroup][location]
 }
 
 export function getScheduleCalendarYear(schoolYear: string): number | null {
@@ -92,11 +145,16 @@ function formatIsoDate(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-export function buildFixedVorkursSchedule(schoolYear: string): FixedVorkursScheduleRow[] {
+// BMS & Matura besitzen keinen Vorkurs-Fixplan (hasFixedSchoolSchedule() deckt sie nicht ab) --
+// group ist deshalb auf die beiden Gruppen beschränkt, die tatsächlich einen Vorkurs kennen.
+export function buildFixedVorkursSchedule(
+  schoolYear: string,
+  group: 'langzeitgymi' | 'kurzzeitgymi' = 'langzeitgymi'
+): FixedVorkursScheduleRow[] {
   const calendarYear = getScheduleCalendarYear(schoolYear)
   if (!calendarYear) return []
 
-  return FIXED_SCHOOL_CALENDAR_WEEKS.map((calendarWeek) => ({
+  return VORKURS_CALENDAR_WEEKS_BY_GROUP[group].map((calendarWeek) => ({
     calendarWeek,
     saturday: formatSwissDate(isoWeekDate(calendarYear, calendarWeek, 6)),
     wednesday: formatSwissDate(isoWeekDate(calendarYear, calendarWeek, 3)),
@@ -138,18 +196,6 @@ export function buildFixedIntensiveAudienceSchedule(
   return Array.from(
     new Map(schedules.map((schedule) => [schedule.calendarWeek, schedule])).values()
   ).sort((left, right) => left.calendarWeek - right.calendarWeek)
-}
-
-export function getFixedIntensiveLocations(
-  audienceId: string,
-  calendarWeek: number
-): IntensiveScheduleLocation[] {
-  const locations: IntensiveScheduleLocation[] =
-    audienceId === 'matura' ? ['Zürich HB'] : ['Zürich HB', 'Winterthur']
-
-  return locations.filter((location) =>
-    getFixedIntensiveCalendarWeeks(audienceId, location).includes(calendarWeek)
-  )
 }
 
 export function buildFixedIntensiveWeekOptions(

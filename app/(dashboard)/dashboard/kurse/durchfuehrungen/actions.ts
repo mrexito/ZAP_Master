@@ -281,9 +281,6 @@ export async function saveEditionAction(
     tagline: data.tagline,
     description: data.description,
     regular_price_rappen: Math.round(data.regularPriceChf * 100),
-    early_bird_enabled: data.earlyBirdEnabled,
-    early_bird_price_rappen: data.earlyBirdEnabled && data.earlyBirdPriceChf != null ? Math.round(data.earlyBirdPriceChf * 100) : null,
-    early_bird_deadline: data.earlyBirdEnabled ? data.earlyBirdDeadline || null : null,
     // datetime-local trägt keine Zeitzone -- roh gespeichert würde Postgres den String in der
     // Session-timezone (UTC) statt in Europe/Zurich interpretieren, siehe zurich-time.ts.
     registration_opens_at: data.registrationOpensAt ? zurichLocalToUtcIso(data.registrationOpensAt) : null,
@@ -299,7 +296,7 @@ export async function saveEditionAction(
 
     if (error) {
       console.error('Supabase Error:', error)
-      return { success: false, error: 'Durchführung konnte nicht erstellt werden. Prüfe Preis und Frühbucher-Angaben.' }
+      return { success: false, error: 'Durchführung konnte nicht erstellt werden. Prüfe die Preisangabe.' }
     }
 
     await writeAuditLog(supabase, authCheck.userId, 'offer_edition', created.id, 'create', null, created)
@@ -472,10 +469,6 @@ export async function duplicateEditionAction(
       tagline: typedSource.tagline,
       description: typedSource.description,
       regular_price_rappen: typedSource.regular_price_rappen,
-      // Frühbucherpreis/-Stichtag werden nie unbesehen übernommen -- ein alter Stichtag wäre in
-      // der neuen Durchführung sofort abgelaufen. Aktivierung/Betrag/Datum müssen bewusst neu
-      // gesetzt werden.
-      early_bird_enabled: false,
       status: 'draft',
     })
     .select()

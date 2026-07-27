@@ -106,17 +106,19 @@ for (const { overviewRoute, detailRoute } of [
     detailRoute: '/de/kurse/2-3-sek/halbjahreskurs',
   },
 ]) {
-  test(`Frühbucherrabatt erscheint konsistent auf ${overviewRoute} und der Unterseite`, async ({ page }) => {
+  // Betreiberentscheid 27.07.2026: kein manuell gepflegter Frühbucherpreis/-Stichtag mehr (siehe
+  // supabase/migrations/20260727170000_automatic_early_bird_discount.sql) -- Karte/Hero zeigen
+  // seither immer den Regulärpreis plus einen generischen, datumsunabhängigen Hinweistext statt
+  // eines fest hinterlegten Frühbucher-Stichtags/-Preises (lib/pricing.ts#formatOfferPrice).
+  test(`Regulärpreis + Frühbucher-Hinweistext erscheinen konsistent auf ${overviewRoute} und der Unterseite`, async ({ page }) => {
     await page.goto(overviewRoute)
     await expect(page.getByText(/CHF\s*3['’]190/)).toBeVisible()
-    await expect(page.getByText(/CHF\s*2['’]871/)).toBeVisible()
-    await expect(page.getByText('Frühbucherrabatt bis 31. Juli', { exact: true })).toBeVisible()
+    await expect(page.getByText('10% Rabatt bei Anmeldung mindestens 6 Wochen vor Kursstart')).toBeVisible()
+    await expect(page.getByText('Frühbucherrabatt bis 31. Juli', { exact: true })).not.toBeVisible()
 
     await page.goto(detailRoute)
-    await expect(page.getByText(/CHF\s*2['’]871/)).toBeVisible()
-    await expect(
-      page.getByText(/Frühbucherrabatt bis 31\. Juli · regulär CHF\s*3['’]190/)
-    ).toBeVisible()
+    await expect(page.getByText(/CHF\s*3['’]190/)).toBeVisible()
+    await expect(page.getByText('10% Rabatt bei Anmeldung mindestens 6 Wochen vor Kursstart')).toBeVisible()
   })
 }
 

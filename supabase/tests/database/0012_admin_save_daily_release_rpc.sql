@@ -10,8 +10,8 @@ with fixture_offer as (
     select id from public.offers where audience_id = '6' and kurstyp = 'intensivkurs'
 ), fixture_edition as (
     insert into public.offer_editions
-        (offer_id, school_year, public_title, tagline, description, regular_price_rappen, early_bird_enabled, status)
-    select id, '2029/30', 'pgTAP RPC Test 2', 'Tagline', 'Beschreibung', 100000, false, 'draft'
+        (offer_id, school_year, public_title, tagline, description, regular_price_rappen, status)
+    select id, '2029/30', 'pgTAP RPC Test 2', 'Tagline', 'Beschreibung', 100000, 'draft'
       from fixture_offer
     returning id
 ), fixture_kurs as (

@@ -9,7 +9,8 @@
       "ablauf": "TODO: Ablauf",
       "tagUndZeit": "TODO: Tag & Zeit",
       "standort": "TODO: Standort",
-      "status": "TODO: Status"
+      "status": "TODO: Status",
+      "preis": "TODO: Preis"
     },
     "courseCard": {
       "termineAnsehen": "Details & dates"

@@ -96,7 +96,7 @@ async function applyLivePriceOverrides<T extends CourseOffer | ExamSimulationOff
 
   const { data: editionRows, error: editionsError } = await supabase
     .from('offer_editions')
-    .select('offer_id, school_year, regular_price_rappen, early_bird_enabled, early_bird_price_rappen, early_bird_deadline')
+    .select('offer_id, school_year, regular_price_rappen')
     .eq('status', 'published')
     .in('offer_id', offerRows.map((row) => row.id))
 
@@ -109,15 +109,12 @@ async function applyLivePriceOverrides<T extends CourseOffer | ExamSimulationOff
     const liveEdition = offerId != null ? editionByOfferId.get(offerId) : undefined
     if (!liveEdition) return offer
 
+    // Frühbucherrabatt entsteht ab jetzt automatisch pro Session (Betreiberentscheid 27.07.2026,
+    // siehe lib/pricing.ts) -- offer_editions liefert hier nur noch den Regulärpreis.
     if (offer.kurstyp === 'selbststudium') {
       return { ...offer, regularPriceRappen: liveEdition.regular_price_rappen }
     }
-    const withLivePrice = {
-      ...offer,
-      regularPriceRappen: liveEdition.regular_price_rappen,
-      earlyBirdPriceRappen: liveEdition.early_bird_enabled ? liveEdition.early_bird_price_rappen ?? undefined : undefined,
-      earlyBirdDeadline: liveEdition.early_bird_enabled ? liveEdition.early_bird_deadline ?? undefined : undefined,
-    }
+    const withLivePrice = { ...offer, regularPriceRappen: liveEdition.regular_price_rappen }
     return offer.kurstyp === 'intensivkurs'
       ? {
           ...withLivePrice,

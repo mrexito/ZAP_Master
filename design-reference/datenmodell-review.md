@@ -121,10 +121,15 @@ neuen SQL-Dateien und Policy-Tests verboten.
 Alle neuen Geldwerte werden als ganze Rappen gespeichert und benannt:
 
 - `regular_price_rappen`
-- `early_bird_price_rappen`
 - `booked_price_rappen`
 - `hourly_rate_rappen`
 - `amount_rappen`
+
+**Betreiberentscheid 27.07.2026:** `early_bird_price_rappen` (und `early_bird_enabled`/
+`early_bird_deadline`) existieren nicht mehr auf `offer_editions` — der Frühbucherrabatt (10% bei
+Anmeldung ≥6 Wochen vor Kursstart) wird automatisch pro Session berechnet, nicht mehr manuell
+gepflegt. Siehe `supabase/migrations/20260727170000_automatic_early_bird_discount.sql` und
+Abschnitt 2.12 des Architektur-Briefings.
 
 Domainfelder verwenden dieselbe `...Rappen`-Benennung. Das bestehende
 `intensivwoche_kurse.preis NUMERIC` wird beim Mapping explizit mit `round(preis * 100)` konvertiert;
