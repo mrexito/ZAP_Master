@@ -92,6 +92,34 @@ for (const route of audienceOverviewRoutes) {
   })
 }
 
+for (const { overviewRoute, detailRoute } of [
+  {
+    overviewRoute: '/de/kurse/5-klasse',
+    detailRoute: '/de/kurse/5-klasse/halbjahreskurs',
+  },
+  {
+    overviewRoute: '/de/kurse/1-sek',
+    detailRoute: '/de/kurse/1-sek/vorkurs',
+  },
+  {
+    overviewRoute: '/de/kurse/2-3-sek',
+    detailRoute: '/de/kurse/2-3-sek/halbjahreskurs',
+  },
+]) {
+  test(`Frühbucherrabatt erscheint konsistent auf ${overviewRoute} und der Unterseite`, async ({ page }) => {
+    await page.goto(overviewRoute)
+    await expect(page.getByText(/CHF\s*3['’]190/)).toBeVisible()
+    await expect(page.getByText(/CHF\s*2['’]871/)).toBeVisible()
+    await expect(page.getByText('Frühbucherrabatt bis 31. Juli', { exact: true })).toBeVisible()
+
+    await page.goto(detailRoute)
+    await expect(page.getByText(/CHF\s*2['’]871/)).toBeVisible()
+    await expect(
+      page.getByText(/Frühbucherrabatt bis 31\. Juli · regulär CHF\s*3['’]190/)
+    ).toBeVisible()
+  })
+}
+
 test('Zusatzangebote haben eigene Markenfarben auf den Kursübersichten', async ({ page }) => {
   await page.goto('/de/kurse/6-klasse')
 

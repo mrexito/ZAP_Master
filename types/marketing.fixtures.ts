@@ -1782,12 +1782,10 @@ export const vierKlasseAudiencePageModel = {
 // Preisfreigabe ist damit keine Voraussetzung mehr, um ein Angebot aufzunehmen. Nutzer-Entscheid:
 // CHF 950 (Hauptseiten-Wert) wird verwendet, siehe fuenfKlasseLerncampSportferien unten.
 //
-// Beim Halbjahreskurs ist der Konflikt auflösbar: Haupt- und Unterseite stimmen im "regulär
-// CHF 3'490"-Wert überein, nur der angezeigte Frühbucherpreis weicht ab (CHF 3'190 vs. CHF 1'980,
-// zusätzlich nur "bis Juli" ohne Tagesdatum). regularPriceRappen wird deshalb gesetzt,
-// earlyBirdPriceRappen/-Deadline bleiben bewusst unset -- kein Preis wird produktiv beworben, der
-// nicht auf beiden Seiten übereinstimmt. Die Kurslaufzeit "Mai – Juli 2027" aus der spezifischeren
-// Unterseite wird verwendet, nicht die vagere Hauptseiten-Angabe "Nov. 2026 – Juli 2027".
+// Die alten Mockups widersprechen sich beim Preis. Gemäss Betreiberentscheid vom 27.07.2026 gilt
+// für 5. Klasse, 1. Sek und 2./3. Sek einheitlich CHF 3'190 regulär und exakt 10 % weniger als
+// Frühbucherpreis. Die Produktionswerte werden in offer_editions geführt; diese Fixture-Werte sind
+// der identische Fallback, falls keine veröffentlichte Edition geladen werden kann.
 // ---------------------------------------------------------------------------------------------
 
 export const fuenfKlasseHalbjahreskursSessions = [
@@ -1908,10 +1906,9 @@ export const fuenfKlasseHalbjahreskurs = {
     'Lerncoaching & Lernspiele pro Termin',
     'Samstag- oder Mittwochnachmittag',
   ],
-  // Nur der auf beiden Quellseiten übereinstimmende "regulär"-Preis wird geführt -- der
-  // Frühbucherpreis ist zwischen Haupt- und Unterseite widersprüchlich (siehe Kommentar oben) und
-  // bleibt deshalb bewusst unset.
-  regularPriceRappen: 349000,
+  regularPriceRappen: 319000,
+  earlyBirdPriceRappen: 287100,
+  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: [
     '8 Kurstage zwischen Frühlings- und Sommerferien (Mai – Juli 2027)',
@@ -2224,14 +2221,9 @@ export const fuenfKlasseAudiencePageModel = {
 // Layout_1_Sek_Halbjahesrkurs_Unterseite.html (Tippfehler im Original-Dateinamen selbst) +
 // Layout_1_Sek_Intensivkurs_Unterseite.html.
 //
-// Der in Abschnitt 2.3 dokumentierte Preis-Bug ist hier -- anders als beim 5.-Klasse-Lerncamp --
-// eindeutig auflösbar: CHF 990 erscheint konsistent auf Haupt- UND Unterseite (kein Widerspruch
-// beim Kernpreis). Die begleitende Notiz "regulär CHF 3'490" ist nachweislich ein
-// Copy-Paste-Rest aus der 6.-Klasse-Vorlage (dort: CHF 3'390 Frühbucher / "regulär CHF 3'490" --
-// eine plausible CHF-100-Differenz; bei 1. Sek wurde nur der Hauptpreis auf CHF 990 geändert, die
-// Notiz aber unverändert übernommen und bezieht sich auf nichts Reales mehr). regularPriceRappen
-// wird deshalb auf den einzigen echten, konsistenten Wert (990) gesetzt; die fehlerhafte Notiz
-// wird nicht übernommen, kein earlyBirdPriceRappen/-Deadline gesetzt.
+// Die fehlerhaften Mockup-Preise wurden durch den Betreiberentscheid vom 27.07.2026 ersetzt:
+// einheitlich CHF 3'190 regulär und exakt 10 % weniger als Frühbucherpreis. offer_editions bleibt
+// die Produktionswahrheit; die Fixture enthält denselben Fallback.
 // ---------------------------------------------------------------------------------------------
 
 export const einsSekVorkursSessions = [
@@ -2333,7 +2325,9 @@ export const einsSekVorkurs = {
     'Lerncoaching inbegriffen',
     'Umfassende Standortbestimmung inbegriffen',
   ],
-  regularPriceRappen: 99000,
+  regularPriceRappen: 319000,
+  earlyBirdPriceRappen: 287100,
+  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: ['Mai – Juli 2027', 'Kleingruppen', 'Standortbestimmung & Lerncoaching inbegriffen'],
   whyUs: [
@@ -2634,12 +2628,9 @@ export const einsSekAudiencePageModel = {
 // braucht eine eigene, separate Extraktionsrunde (analog zur bereits erfolgten 6.-Klasse-Trennung
 // in Schritt 11).
 //
-// Preis-Notiz-Bug (Abschnitt 2.3, hier verifiziert): Halbjahreskurs zeigt auf Haupt- UND
-// Unterseite identisch "CHF 3'490" mit Notiz "Frühbucherrabatt bis Juli · regulär CHF 3'490" --
-// beide Zahlen sind gleich, der Rabatt beträgt also 0. Anders als beim 5.-Klasse-Lerncamp
-// (zwei widersprüchliche Zahlen) gibt es hier nur EINE Zahl im Quellmaterial; die Notiz behauptet
-// nur fälschlich einen Rabatt, der nicht existiert. earlyBirdPriceRappen/-Deadline bleiben deshalb
-// unset (kein zweiter, tieferer Preis wird erfunden), nur der reale, einzige Preis wird geführt.
+// Der Preis-Notiz-Bug aus dem Mockup wurde durch den Betreiberentscheid vom 27.07.2026 ersetzt:
+// einheitlich CHF 3'190 regulär und exakt 10 % weniger als Frühbucherpreis. offer_editions bleibt
+// die Produktionswahrheit; die Fixture enthält denselben Fallback.
 //
 // AblaufPhased (Halbjahreskurs): alle 6 Terminzeilen teilen sich denselben 3-Phasen-/21-Termine-
 // Ablauf (kein pro-Kurs-Unterschied in der Quelle) -- als eine gemeinsame Konstante definiert.
@@ -2731,10 +2722,9 @@ export const zweiDreiSekHalbjahreskurs = {
     'Standortbestimmung & Prüfungssimulation inbegriffen',
     'Betreuung auch ausserhalb der Kurszeiten',
   ],
-  // Die Frühbucher-Notiz auf beiden Quellseiten nennt denselben Betrag (CHF 3'490) als "regulär"
-  // -- kein realer Rabatt, deshalb bleibt earlyBirdPriceRappen/-Deadline unset (siehe Kommentar
-  // oben).
-  regularPriceRappen: 349000,
+  regularPriceRappen: 319000,
+  earlyBirdPriceRappen: 287100,
+  earlyBirdDeadline: '2026-07-31',
   currency: 'CHF',
   overviewBullets: [
     'Sept. 2026 – März 2027',
