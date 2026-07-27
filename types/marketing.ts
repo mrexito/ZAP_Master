@@ -326,7 +326,7 @@ export type SiteNavModel = {
   audiences: Audience[]
   primaryItems: NavItem[]
   login: LinkAction // href bleibt "/login"
-  localeSwitch?: { locale: 'de' | 'en'; label: string; href: string }[]
+  localeSwitch?: { locale: 'de' | 'en'; label: string; href?: string }[]
 }
 
 export type SiteFooterModel = {

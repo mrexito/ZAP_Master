@@ -24,30 +24,30 @@ export type AdminOfferCatalogEntry = {
 }
 
 export const ADMIN_OFFER_CATALOG: readonly AdminOfferCatalogEntry[] = [
-  { audienceId: '4', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: '4. Klasse · Halbjahreskurs' },
+  { audienceId: '4', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: '4. Klasse · Vorkurs' },
   { audienceId: '4', kurstyp: 'intensivkurs', slug: 'lerncamp-sportferien', label: '4. Klasse · Lerncamp Sportferien' },
-  { audienceId: '5', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: '5. Klasse · Halbjahreskurs' },
+  { audienceId: '5', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: '5. Klasse · Vorkurs' },
   { audienceId: '5', kurstyp: 'intensivkurs', slug: 'lerncamp-sportferien', label: '5. Klasse · Lerncamp Sportferien' },
   { audienceId: '6', kurstyp: 'intensivkurs', slug: 'intensivkurs-sportferien', label: '6. Klasse · Intensivkurs' },
-  { audienceId: '6', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: '6. Klasse · Halbjahreskurs' },
+  { audienceId: '6', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: '6. Klasse · Vorkurs' },
   { audienceId: '6', kurstyp: 'pruefungssimulation', slug: 'pruefungssimulation', label: '6. Klasse · Prüfungssimulation' },
   { audienceId: '6', kurstyp: 'selbststudium', slug: 'selbststudium', label: '6. Klasse · Selbststudium' },
   { audienceId: '1-sek', kurstyp: 'halbjahreskurs', slug: 'vorkurs', label: '1. Sek · Vorkurs' },
   { audienceId: '1-sek', kurstyp: 'intensivkurs', slug: 'lerncamp-sportferien', label: '1. Sek · Lerncamp Sportferien' },
   { audienceId: '2-3-sek', kurstyp: 'intensivkurs', slug: 'intensivkurs-sportferien', label: '2./3. Sek · Intensivkurs' },
-  { audienceId: '2-3-sek', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: '2./3. Sek · Halbjahreskurs' },
+  { audienceId: '2-3-sek', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: '2./3. Sek · Vorkurs' },
   { audienceId: '2-3-sek', kurstyp: 'pruefungssimulation', slug: 'pruefungssimulation', label: '2./3. Sek · Prüfungssimulation' },
   { audienceId: '2-3-sek', kurstyp: 'selbststudium', slug: 'selbststudium', label: '2./3. Sek · Selbststudium' },
-  { audienceId: 'bms', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: 'BMS · Halbjahreskurs' },
+  { audienceId: 'bms', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: 'BMS · Vorkurs' },
   { audienceId: 'bms', kurstyp: 'intensivkurs', slug: 'intensivkurs', label: 'BMS · Intensivkurs' },
   { audienceId: 'bms', kurstyp: 'pruefungssimulation', slug: 'pruefungssimulation', label: 'BMS · Prüfungssimulation' },
   { audienceId: 'bms', kurstyp: 'selbststudium', slug: 'selbststudium', label: 'BMS · Selbststudium' },
-  { audienceId: 'matura', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: 'Matura · Halbjahreskurs' },
+  { audienceId: 'matura', kurstyp: 'halbjahreskurs', slug: 'halbjahreskurs', label: 'Matura · Vorkurs' },
   { audienceId: 'matura', kurstyp: 'intensivkurs', slug: 'intensivwoche', label: 'Matura · Intensivwoche' },
 ] as const
 
 export const KURSTYP_LABELS: Record<Kurstyp, string> = {
-  halbjahreskurs: 'Halbjahreskurs',
+  halbjahreskurs: 'Vorkurs',
   intensivkurs: 'Intensivkurs',
   pruefungssimulation: 'Prüfungssimulation',
   selbststudium: 'Selbststudium',

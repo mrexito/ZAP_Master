@@ -92,6 +92,30 @@ for (const route of audienceOverviewRoutes) {
   })
 }
 
+test('Zusatzangebote haben eigene Markenfarben auf den Kursübersichten', async ({ page }) => {
+  await page.goto('/de/kurse/6-klasse')
+
+  const examSimulation = page.locator('[data-offer-kind="pruefungssimulation"]')
+  const selfStudy = page.locator('[data-offer-kind="selbststudium"]')
+
+  await expect(examSimulation).toHaveCount(1)
+  await expect(selfStudy).toHaveCount(1)
+  await expect(examSimulation.locator('.bg-gradient-to-br')).toHaveClass(/from-steel/)
+  await expect(examSimulation.locator('.bg-gradient-to-br')).toHaveClass(/to-tertiary/)
+  await expect(selfStudy.locator('.bg-gradient-to-br')).toHaveClass(/from-rust/)
+  await expect(selfStudy.locator('.bg-gradient-to-br')).toHaveClass(/to-subject-fr/)
+  await expect(
+    selfStudy.getByText('Flexible Vorbereitung im eigenen Tempo', { exact: true })
+  ).toBeVisible()
+
+  await page.goto('/de/kurse/2-3-sek')
+  await expect(
+    page
+      .locator('[data-offer-kind="selbststudium"]')
+      .getByText('Flexible Vorbereitung im eigenen Tempo', { exact: true })
+  ).toBeVisible()
+})
+
 const courseDetailRoutes = [
   '/de/kurse/4-klasse/halbjahreskurs',
   '/de/kurse/4-klasse/lerncamp-sportferien',
@@ -119,6 +143,26 @@ for (const route of courseDetailRoutes) {
   test(`Kursdetailseite ${route} lädt erfolgreich`, async ({ page }) => {
     const response = await page.goto(route)
     expect(response?.status(), `${route} sollte 200 liefern`).toBe(200)
+  })
+}
+
+for (const { route, audience } of [
+  { route: '/de/kurse/6-klasse/selbststudium', audience: '6. Klasse' },
+  { route: '/de/kurse/2-3-sek/selbststudium', audience: '2./3. Sek' },
+  { route: '/de/kurse/bms/selbststudium', audience: 'BMS' },
+]) {
+  test(`Selbststudium-Vorlage wird für ${audience} vollständig gerendert`, async ({ page }) => {
+    await page.goto(route)
+
+    await expect(page.getByText(`Selbststudium · ${audience}`, { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Alle Materialien an einem Ort' })).toBeVisible()
+    await expect(page.getByText('3 Aufsätze mit Feedback', { exact: true })).toBeVisible()
+    await expect(page.getByText('CHF 190', { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Häufige Fragen' })).toBeVisible()
+    await expect(page.getByRole('link', { name: `Zurück zur Übersicht ${audience}` })).toHaveAttribute(
+      'href',
+      route.replace('/selbststudium', '')
+    )
   })
 }
 
@@ -334,8 +378,27 @@ test('SiteNav rendert genau einmal auf der Startseite mit Login-Link zu /login',
   await page.goto('/de')
   const nav = page.locator('nav')
   await expect(nav).toHaveCount(1)
+  const serviceNav = page.getByRole('list', { name: 'Service-Navigation' })
+  await expect(serviceNav).toContainText('EN')
+  await expect(serviceNav.getByRole('link', { name: 'Kontakt' })).toHaveAttribute('href', '/de/kontakt')
   const loginLink = page.getByRole('link', { name: /login/i })
   await expect(loginLink).toHaveAttribute('href', '/login')
+
+  const serviceText = await serviceNav.innerText()
+  expect(serviceText.indexOf('EN')).toBeLessThan(serviceText.indexOf('Kontakt'))
+  expect(serviceText.indexOf('Kontakt')).toBeLessThan(serviceText.indexOf('Login'))
+})
+
+test('mobiler Login-CTA übernimmt das Marketing-Theme', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/de')
+  await page.getByRole('button', { name: 'Menü öffnen' }).click()
+
+  const navigationSheet = page.getByRole('dialog')
+  await expect(navigationSheet).toHaveClass(/brand-marketing/)
+  await expect(navigationSheet.getByText('EN', { exact: true })).toBeVisible()
+  await expect(navigationSheet.getByRole('link', { name: 'Kontakt' })).toHaveAttribute('href', '/de/kontakt')
+  await expect(navigationSheet.getByRole('link', { name: 'Login' })).toHaveAttribute('href', '/login')
 })
 
 test('SiteNav erscheint nicht auf /login', async ({ page }) => {
@@ -412,6 +475,20 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     await expect(page.locator('[name="child_class_level"]')).toHaveCount(0)
     await expect(page.getByText('Klassenstufe *', { exact: true })).toHaveCount(0)
     await expect(page.getByText('Samstag, 13:15–15:00')).toBeVisible()
+  })
+
+  test('Kursinhalt startet mit eingeklappten Fachabschnitten', async ({ page }) => {
+    await page.goto('/de/kurse/6-klasse/halbjahreskurs')
+
+    const mathematik = page.locator('details').filter({
+      has: page.getByRole('heading', { name: 'Mathematik', exact: true }),
+    })
+    const deutsch = page.locator('details').filter({
+      has: page.getByRole('heading', { name: 'Deutsch', exact: true }),
+    })
+
+    await expect(mathematik).not.toHaveAttribute('open', '')
+    await expect(deutsch).not.toHaveAttribute('open', '')
   })
 
   test('Buchung reduziert die sichtbare Verfügbarkeit sofort, ohne Wartezeit oder manuellen Reload', async ({ page }) => {
@@ -509,12 +586,12 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD)
     await page.goto('/dashboard/kurse/angebote')
 
-    // "6. Klasse"-Gruppe finden, darin die "Halbjahreskurs"-Karte -- Gruppen sind nach Zielgruppe
+    // "6. Klasse"-Gruppe finden, darin die "Vorkurs"-Karte -- Gruppen sind nach Zielgruppe
     // geordnete Geschwister-<div>s, kein direktes Eltern-Kind-Verhältnis zur Überschrift.
     const sechsKlasseHeading = page.getByRole('heading', { name: '6. Klasse', exact: true })
     await expect(sechsKlasseHeading).toBeVisible()
     const sechsKlasseGroup = sechsKlasseHeading.locator('xpath=following-sibling::div[1]')
-    await sechsKlasseGroup.getByRole('link', { name: /Halbjahreskurs/ }).click()
+    await sechsKlasseGroup.getByRole('link', { name: /Vorkurs/ }).click()
 
     await expect(page.locator('input[name="regularPriceChf"]')).toHaveValue('3490')
     await page.locator('input[name="regularPriceChf"]').fill('4001')

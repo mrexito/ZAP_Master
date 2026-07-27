@@ -378,7 +378,7 @@ export const sechsKlasseHalbjahreskurs = {
   audienceId: '6',
   slug: 'halbjahreskurs',
   href: '/kurse/6-klasse/halbjahreskurs',
-  displayName: 'Halbjahreskurs',
+  displayName: 'Vorkurs',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   categoryLabel: 'Deutsch & Mathematik',
   lede: 'Umfassende und optimale Vorbereitung auf die Aufnahmeprüfung ins Langzeitgymnasium — gezielte, individuelle Förderung in Deutsch und Mathematik.',
@@ -970,7 +970,7 @@ export const lerncoachingPageModel = {
           id: 'bereits-inbegriffen',
           subhead: 'Bereits inbegriffen',
           items: [
-            'Lerncoaching ist fester Bestandteil unserer Vor- und Halbjahreskurse — ohne Aufpreis, in regelmässigen Zusatzlektionen.',
+            'Lerncoaching ist fester Bestandteil unserer Vorkurse — ohne Aufpreis, in regelmässigen Zusatzlektionen.',
           ],
         },
         {
@@ -1000,7 +1000,7 @@ export const lerncoachingPageModel = {
     {
       id: 'zusatzkosten',
       question: 'Kostet Lerncoaching zusätzlich zum Kurs?',
-      answer: 'Nein — Lerncoaching ist fester Bestandteil unserer Vor- und Halbjahreskurse, ohne Aufpreis.',
+      answer: 'Nein — Lerncoaching ist fester Bestandteil unserer Vorkurse, ohne Aufpreis.',
     },
   ],
   relatedActions: [
@@ -1053,7 +1053,7 @@ export const distanceLearningPageModel = {
         {
           id: 'ausschluss',
           items: [
-            'Bei allen anderen Kursen (Wochenkurse, Halbjahreskurse, Lerncamp der 4./5. Klasse und 1. Sek) ist Distance Learning aktuell nicht verfügbar — dort findet der Unterricht ausschliesslich vor Ort statt.',
+            'Bei allen anderen Kursen (Wochenkurse, Vorkurse, Lerncamp der 4./5. Klasse und 1. Sek) ist Distance Learning aktuell nicht verfügbar — dort findet der Unterricht ausschliesslich vor Ort statt.',
           ],
         },
       ],
@@ -1075,7 +1075,7 @@ export const distanceLearningPageModel = {
       id: 'warum-nicht-ueberall',
       question: 'Warum gibt es Distance Learning nicht bei allen Kursen?',
       answer:
-        'Der Intensivkurs in den Sportferien fällt oft mit Familienferien zusammen — deshalb bieten wir hier gezielt die Möglichkeit, von unterwegs teilzunehmen. Bei den länger laufenden Wochen- und Halbjahreskursen ist die Präsenz vor Ort Teil des Konzepts.',
+        'Der Intensivkurs in den Sportferien fällt oft mit Familienferien zusammen — deshalb bieten wir hier gezielt die Möglichkeit, von unterwegs teilzunehmen. Bei den länger laufenden Wochen- und Vorkursen ist die Präsenz vor Ort Teil des Konzepts.',
     },
   ],
 } as const satisfies TargetedServicePageModel
@@ -1419,7 +1419,7 @@ export const vierKlasseHalbjahreskurs = {
   audienceId: '4',
   slug: 'halbjahreskurs',
   href: '/kurse/4-klasse/halbjahreskurs',
-  displayName: 'Halbjahreskurs',
+  displayName: 'Vorkurs',
   categoryLabel: 'Deutsch, Mathematik & Lerncoaching',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Lücken in Deutsch und Mathematik frühzeitig erkennen und schliessen, dazu erste Lernstrategien fürs Lerncoaching mitgeben — alles in einem wöchentlichen Termin, damit ein stabiles Fundament für die weiteren Schuljahre entsteht.',
@@ -1893,7 +1893,7 @@ export const fuenfKlasseHalbjahreskurs = {
   audienceId: '5',
   slug: 'halbjahreskurs',
   href: '/kurse/5-klasse/halbjahreskurs',
-  displayName: 'Halbjahreskurs',
+  displayName: 'Vorkurs',
   categoryLabel: 'Deutsch, Mathematik & Lerncoaching',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Bereits in der 5. Klasse starten und einen Vorsprung für die 6. Klasse erarbeiten: Grundlagen in Deutsch und Mathematik festigen, dazu gezieltes Lerncoaching für Selbstorganisation und Lernstrategien — alles in einem wöchentlichen Termin.',
@@ -2375,7 +2375,7 @@ export const einsSekVorkurs = {
     {
       id: 'abschlussgespraech-empfehlung',
       title: 'Abschlussgespräch & Empfehlung',
-      body: 'Nach dem letzten Kurstag besprechen wir den aktuellen Lernstand und empfehlen, wie es bis zur Prüfung optimal weitergeht — z. B. mit dem Halbjahreskurs in der 2./3. Sek.',
+      body: 'Nach dem letzten Kurstag besprechen wir den aktuellen Lernstand und empfehlen, wie es bis zur Prüfung optimal weitergeht — z. B. mit dem Vorkurs in der 2./3. Sek.',
     },
   ],
   contentSections: [
@@ -2619,7 +2619,7 @@ export const einsSekAudiencePageModel = {
   hero: {
     title: 'Vorbereitungskurse für Gymiprüfung 2028',
     description:
-      'Zwei Wege zur Vorbereitung auf die Aufnahmeprüfung ins Kurzzeitgymnasium — der ganzheitliche Halbjahreskurs oder ein kompaktes Ferien-Lerncamp.',
+      'Zwei Wege zur Vorbereitung auf die Aufnahmeprüfung ins Kurzzeitgymnasium — der ganzheitliche Vorkurs oder ein kompaktes Ferien-Lerncamp.',
   },
   offers: [einsSekVorkurs, einsSekLerncampSportferien],
   addOnOffers: [],
@@ -2716,7 +2716,7 @@ export const zweiDreiSekHalbjahreskurs = {
   audienceId: '2-3-sek',
   slug: 'halbjahreskurs',
   href: '/kurse/2-3-sek/halbjahreskurs',
-  displayName: 'Halbjahreskurs',
+  displayName: 'Vorkurs',
   categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Umfassende Vorbereitung auf die Aufnahmeprüfung ins Kurzzeitgymnasium: fachliches Training in Deutsch und Mathematik, dazu gezielte Unterstützung beim Umgang mit Prüfungsdruck — begleitet über das ganze Semester.',
@@ -2771,17 +2771,17 @@ export const zweiDreiSekHalbjahreskurs = {
     {
       id: 'testi-1',
       quote: 'Über das ganze Semester hinweg habe ich richtig gemerkt, wie ich in Mathe sicherer wurde.',
-      author: 'Teilnehmerin, Halbjahreskurs 2./3. Sek',
+      author: 'Teilnehmerin, Vorkurs 2./3. Sek',
     },
     {
       id: 'testi-2',
       quote: 'Die Prüfungssimulation hat mir die Nervosität genommen — ich wusste danach, was mich erwartet.',
-      author: 'Teilnehmer, Halbjahreskurs 2./3. Sek',
+      author: 'Teilnehmer, Vorkurs 2./3. Sek',
     },
     {
       id: 'testi-3',
       quote: 'Auch bei Prüfungsangst habe ich konkrete Tipps bekommen, die wirklich geholfen haben.',
-      author: 'Teilnehmerin, Halbjahreskurs 2./3. Sek',
+      author: 'Teilnehmerin, Vorkurs 2./3. Sek',
     },
   ],
   kurstyp: 'halbjahreskurs',
@@ -3155,7 +3155,7 @@ export const bmsHalbjahreskurs = {
   audienceId: 'bms',
   slug: 'halbjahreskurs',
   href: '/kurse/bms/halbjahreskurs',
-  displayName: 'Halbjahreskurs',
+  displayName: 'Vorkurs',
   categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Umfassende Vorbereitung auf die BM1- oder BM2-Aufnahmeprüfung: fachliches Training in Deutsch und Mathematik, dazu gezielte Unterstützung beim Umgang mit Prüfungsdruck — begleitet über das ganze Semester.',
@@ -3209,17 +3209,17 @@ export const bmsHalbjahreskurs = {
     {
       id: 'testi-1',
       quote: 'Über das ganze Semester hinweg habe ich richtig gemerkt, wie ich in Mathe sicherer wurde.',
-      author: 'Teilnehmerin, Halbjahreskurs BM2',
+      author: 'Teilnehmerin, Vorkurs BM2',
     },
     {
       id: 'testi-2',
       quote: 'Die Prüfungssimulation hat mir die Nervosität genommen — ich wusste danach, was mich erwartet.',
-      author: 'Teilnehmer, Halbjahreskurs BM1',
+      author: 'Teilnehmer, Vorkurs BM1',
     },
     {
       id: 'testi-3',
       quote: 'Auch bei Prüfungsangst habe ich konkrete Tipps bekommen, die wirklich geholfen haben.',
-      author: 'Teilnehmerin, Halbjahreskurs BM2',
+      author: 'Teilnehmerin, Vorkurs BM2',
     },
   ],
   kurstyp: 'halbjahreskurs',
@@ -3694,7 +3694,7 @@ export const maturaHalbjahreskurs = {
   audienceId: 'matura',
   slug: 'halbjahreskurs',
   href: '/kurse/matura/halbjahreskurs',
-  displayName: 'Halbjahreskurs',
+  displayName: 'Vorkurs',
   categoryLabel: 'Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Kontinuierliche Vorbereitung auf die Mathematik-Matura: fachliches Training in den prüfungsrelevanten Themengebieten, begleitet über das ganze letzte Gymnasialjahr mit einem festen Wochentermin.',
@@ -3749,17 +3749,17 @@ export const maturaHalbjahreskurs = {
     {
       id: 'testi-1',
       quote: 'Vektorgeometrie war mein Angstgegner — nach dem Kurs habe ich die Aufgaben endlich verstanden.',
-      author: 'Maturandin, Halbjahreskurs',
+      author: 'Maturandin, Vorkurs',
     },
     {
       id: 'testi-2',
       quote: 'Die Prüfungssimulation hat mir gezeigt, wo ich noch üben muss — genau rechtzeitig vor der Matura.',
-      author: 'Maturand, Halbjahreskurs',
+      author: 'Maturand, Vorkurs',
     },
     {
       id: 'testi-3',
       quote: 'Der wöchentliche Rhythmus hat mir geholfen, neben der Matura auch die anderen Fächer nicht zu vernachlässigen.',
-      author: 'Maturandin, Halbjahreskurs',
+      author: 'Maturandin, Vorkurs',
     },
   ],
   kurstyp: 'halbjahreskurs',
@@ -4009,7 +4009,7 @@ export const sechsKlasseSelbststudium = {
   slug: 'selbststudium',
   href: '/kurse/6-klasse/selbststudium',
   displayName: 'Selbststudium',
-  tagline: 'Selbststudium · 6. Klasse',
+  tagline: 'Flexible Vorbereitung im eigenen Tempo',
   lede: 'Zugriff auf Übungsaufgaben, alte Prüfungen mit Lösungen und persönliches Feedback zu deinen eigenen Aufsätzen — flexibel von zu Hause aus, im eigenen Tempo.',
   description:
     'Zugriff auf Übungsaufgaben, alte Prüfungen mit Lösungen und persönliches Feedback zu deinen eigenen Aufsätzen — flexibel von zu Hause aus, im eigenen Tempo.',
@@ -4072,7 +4072,7 @@ export const zweiDreiSekSelbststudium = {
   slug: 'selbststudium',
   href: '/kurse/2-3-sek/selbststudium',
   displayName: 'Selbststudium',
-  tagline: 'Selbststudium · 2./3. Sek',
+  tagline: 'Flexible Vorbereitung im eigenen Tempo',
   lede: 'Zugriff auf Übungsaufgaben, alte Prüfungen mit Lösungen und persönliches Feedback zu deinen eigenen Aufsätzen — flexibel von zu Hause aus, im eigenen Tempo.',
   description:
     'Zugriff auf Übungsaufgaben, alte Prüfungen mit Lösungen und persönliches Feedback zu deinen eigenen Aufsätzen — flexibel von zu Hause aus, im eigenen Tempo.',

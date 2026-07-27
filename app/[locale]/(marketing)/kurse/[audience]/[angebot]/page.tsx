@@ -18,8 +18,7 @@ import { WhyUsGrid } from '@/app/components/kurse/why-us-grid'
 import { Testimonials } from '@/app/components/kurse/testimonials'
 import { ExamSimTimeline } from '@/app/components/kurse/exam-sim-timeline'
 import { FaqAccordion } from '@/app/components/marketing/faq-accordion'
-import { AudienceHero } from '@/app/components/kurse/audience-hero'
-import { SelfStudyAccess } from '@/app/components/kurse/self-study-access'
+import { SelfStudyDetail } from '@/app/components/kurse/self-study-detail'
 import { BookingSectionWithModal } from '@/app/components/kurse/booking-section-with-modal'
 import { ExamSimulationDetail } from '@/app/components/kurse/exam-simulation-detail'
 import { getOfferBySlug, getSessionsForOffer } from '@/lib/kurse/catalog'
@@ -129,18 +128,14 @@ function SelfStudyOfferPage({ offer, audienceLabel, audienceHref }: { offer: Sel
         items={[{ label: 'Startseite', href: '/' }, { label: audienceLabel, href: audienceHref }, { label: offer.displayName }]}
       />
 
-      <Section spacing="default">
-        <AudienceHero content={hero} />
-      </Section>
-
-      {offer.whyUs.length > 0 ? (
-        <Section spacing="sm" variant="muted">
-          <WhyUsGrid features={offer.whyUs} />
-        </Section>
-      ) : null}
-
       <Section spacing="sm">
-        <SelfStudyAccess offer={offer} accessAction={accessAction} />
+        <SelfStudyDetail
+          offer={offer}
+          hero={hero}
+          accessAction={accessAction}
+          audienceLabel={audienceLabel}
+          audienceHref={audienceHref}
+        />
       </Section>
     </>
   )
@@ -226,7 +221,7 @@ export default async function CourseOfferDetailPage({
       {!isExamSimulation && offer.contentSections.length > 0 ? (
         <Section spacing="sm">
           <SectionNumberLabel number={2} label="Kursinhalt" />
-          <CourseContent sections={offer.contentSections} />
+          <CourseContent sections={offer.contentSections} openFirstSection={false} />
         </Section>
       ) : null}
 

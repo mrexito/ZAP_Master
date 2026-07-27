@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import NextLink from 'next/link'
-import { Menu } from 'lucide-react'
+import { LogIn, Menu } from 'lucide-react'
 import type { SiteNavModel } from '@/types/marketing'
 import { Link } from '@/i18n/navigation'
 import { Button } from '@/app/components/ui/button'
@@ -19,11 +19,14 @@ interface SiteNavProps {
 }
 
 // Genau einmal in app/[locale]/(marketing)/layout.tsx gerendert (Abschnitt 1b). Flache
-// Direktlinks, kein Dropdown, kein EN-Schalter beim Deutsch-only-Launch. /login bleibt bewusst
-// unlokalisiert (next/link statt der i18n-Link-Variante) -- alle übrigen Ziele liegen innerhalb
-// des lokalisierten Marketing-Baums und nutzen @/i18n/navigation.
+// Direktlinks, kein Dropdown. /login bleibt bewusst unlokalisiert (next/link statt der
+// i18n-Link-Variante) -- alle übrigen Ziele liegen innerhalb des lokalisierten Marketing-Baums
+// und nutzen @/i18n/navigation. Der sichtbare EN-Platzhalter erhält erst mit einer vollständig
+// aktivierten englischen Locale ein href.
 function SiteNav({ model }: SiteNavProps) {
   const [open, setOpen] = useState(false)
+  const contactItems = model.primaryItems.filter((item) => item.id === 'kontakt')
+  const mainItems = model.primaryItems.filter((item) => item.id !== 'kontakt')
 
   return (
     <header className="sticky top-0 z-40 bg-primary">
@@ -53,7 +56,7 @@ function SiteNav({ model }: SiteNavProps) {
               </Link>
             </li>
           ))}
-          {model.primaryItems.map((item) => (
+          {mainItems.map((item) => (
             <li key={item.id}>
               <Link
                 href={item.href}
@@ -65,15 +68,50 @@ function SiteNav({ model }: SiteNavProps) {
           ))}
         </ul>
 
-        <div className="hidden md:block">
-          <Button
-            asChild
-            size="sm"
-            className="min-h-[44px] rounded-full bg-accent px-6 text-accent-foreground hover:bg-accent/90"
-          >
-            <NextLink href={model.login.href}>{model.login.label}</NextLink>
-          </Button>
-        </div>
+        <ul aria-label="Service-Navigation" className="hidden items-center gap-4 md:flex">
+          {model.localeSwitch?.map((item) => (
+            <li key={item.locale}>
+              {item.href ? (
+                <NextLink
+                  href={item.href}
+                  className="text-sm font-medium text-primary-foreground/85 transition-colors hover:text-primary-foreground"
+                >
+                  {item.label}
+                </NextLink>
+              ) : (
+                <span
+                  aria-label="Englische Version in Vorbereitung"
+                  title="Englische Version in Vorbereitung"
+                  className="text-sm font-medium text-primary-foreground/85"
+                >
+                  {item.label}
+                </span>
+              )}
+            </li>
+          ))}
+          {contactItems.map((item) => (
+            <li key={item.id}>
+              <Link
+                href={item.href}
+                className="text-sm font-medium text-primary-foreground/85 transition-colors hover:text-primary-foreground"
+              >
+                {item.label}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <Button
+              asChild
+              size="sm"
+              className="min-h-[44px] rounded-md bg-accent px-5 font-semibold text-accent-foreground shadow-sm hover:bg-accent/90 hover:shadow-md focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+            >
+              <NextLink href={model.login.href}>
+                <LogIn aria-hidden="true" />
+                {model.login.label}
+              </NextLink>
+            </Button>
+          </li>
+        </ul>
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild className="md:hidden">
@@ -86,7 +124,7 @@ function SiteNav({ model }: SiteNavProps) {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right">
+          <SheetContent side="right" className="brand-marketing">
             <SheetHeader>
               <SheetTitle>Navigation</SheetTitle>
             </SheetHeader>
@@ -101,7 +139,7 @@ function SiteNav({ model }: SiteNavProps) {
                   {audience.displayLabel}
                 </Link>
               ))}
-              {model.primaryItems.map((item) => (
+              {mainItems.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
@@ -111,8 +149,42 @@ function SiteNav({ model }: SiteNavProps) {
                   {item.label}
                 </Link>
               ))}
-              <Button asChild className="mt-3 min-h-[44px] w-full rounded-full">
+              <div className="mt-3 flex min-h-[44px] items-center gap-5 border-t border-border pt-3">
+                {model.localeSwitch?.map((item) =>
+                  item.href ? (
+                    <NextLink
+                      key={item.locale}
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className="text-base font-medium text-foreground"
+                    >
+                      {item.label}
+                    </NextLink>
+                  ) : (
+                    <span
+                      key={item.locale}
+                      aria-label="Englische Version in Vorbereitung"
+                      title="Englische Version in Vorbereitung"
+                      className="text-base font-medium text-foreground"
+                    >
+                      {item.label}
+                    </span>
+                  )
+                )}
+                {contactItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="text-base font-medium text-foreground"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+              <Button asChild className="mt-1 min-h-[44px] w-full rounded-md font-semibold">
                 <NextLink href={model.login.href} onClick={() => setOpen(false)}>
+                  <LogIn aria-hidden="true" />
                   {model.login.label}
                 </NextLink>
               </Button>

@@ -3,16 +3,17 @@ import type { ContentSection } from '@/types/marketing'
 
 interface CourseContentProps {
   sections: ContentSection[]
+  openFirstSection?: boolean
 }
 
 // Natives <details>/<summary> statt shadcn Collapsible (Abschnitt 1b: kein gesteuerter Zustand
 // nötig, jeder Abschnitt klappt unabhängig auf/zu) -- wie im design-reference-Markup, wo nur der
 // erste Fachabschnitt per Default offen ist.
-function CourseContent({ sections }: CourseContentProps) {
+function CourseContent({ sections, openFirstSection = true }: CourseContentProps) {
   return (
     <div className="divide-y divide-border rounded-xl border border-border bg-card">
       {sections.map((section, index) => (
-        <details key={section.id} className="group" open={index === 0}>
+        <details key={section.id} className="group" open={openFirstSection && index === 0}>
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 marker:hidden">
             <h3 className="font-serif text-lg font-semibold text-foreground group-hover:text-secondary">
               {section.title}

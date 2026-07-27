@@ -249,7 +249,7 @@ export function OfferEditionForm({
             <span>
               <strong className="block text-sm text-foreground">Frühbucherpreis aktivieren</strong>
               <small className="text-xs text-muted-foreground">
-                Für Halbjahreskurse und Intensivkurse/Lerncamps empfohlen; für Prüfungssimulation und
+                Für Vorkurse und Intensivkurse/Lerncamps empfohlen; für Prüfungssimulation und
                 Selbststudium standardmässig deaktiviert.
               </small>
             </span>

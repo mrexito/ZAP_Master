@@ -234,6 +234,9 @@ export const siteNav = {
     { id: 'ueber-uns', label: 'Über uns', href: '/ueber-uns' },
     { id: 'kontakt', label: 'Kontakt', href: '/kontakt' },
   ],
+  // Sichtbarer Sprachplatzhalter wie in der früheren Startseiten-Navigation. Noch ohne href:
+  // Englisch bleibt bis zur vollständigen Übersetzung ausserhalb von i18n/routing.ts.
+  localeSwitch: [{ locale: 'en', label: 'EN' }],
   login: { label: 'Login', href: '/login' },
 } satisfies SiteNavModel
 
