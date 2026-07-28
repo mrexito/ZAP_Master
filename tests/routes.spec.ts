@@ -327,6 +327,22 @@ for (const route of protectedRoutesForAnonymousRedirect) {
 test.describe('authentifiziert als E2E-Nutzer (Rolle "user")', () => {
   test.use({ storageState: undefined })
 
+  test('Simulationsprüfung zeigt Mathematik und die geplante Deutschprüfung', async ({ page }) => {
+    await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD, '/pruefung')
+
+    await expect(
+      page.getByRole('heading', { name: 'Welches Fach möchtest du simulieren?' })
+    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Mathematik', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Deutsch', exact: true })).toBeVisible()
+    await expect(
+      page.getByRole('button', {
+        name: 'Deutsche Simulationsprüfung – bald verfügbar',
+        exact: true,
+      })
+    ).toBeDisabled()
+  })
+
   test('/login ohne Rücksprungziel führt nach erfolgreichem Login zu /dashboard', async ({ page }) => {
     await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD)
     expect(new URL(page.url()).pathname).toBe('/dashboard')
@@ -461,6 +477,7 @@ test.describe('authentifiziert als E2E-Admin', () => {
     expect(coursesBox!.y).toBeGreaterThan(administrationBox!.y)
 
     await coursesButton.click()
+    await expect(page.getByRole('link', { name: 'Kursverwaltung', exact: true })).toBeVisible()
     await page.getByRole('link', { name: 'Intensivkurse', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Intensivkurse', exact: true })).toBeVisible()
     await expect(page.getByRole('row')).toHaveCount(8)

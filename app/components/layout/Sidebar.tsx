@@ -50,8 +50,15 @@ const kurseNavigation = [
 
 // Admin-Kursübersichten auf Basis des zentralen Angebotskatalogs
 const adminKurseNavigation = [
+  { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar, exact: true },
   { name: 'Intensivkurse', href: '/dashboard/kurse/intensivkurse', icon: Calendar },
   { name: 'Vorkurse', href: '/dashboard/kurse/vorkurse', icon: GraduationCap },
+]
+
+// Lehrpersonen verwalten ihre Kurse im Kursabschnitt nach der Administration.
+const lehrpersonKurseNavigation = [
+  { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar, exact: true },
+  ...kurseNavigation,
 ]
 
 // Mentoring-System (Mentorship)
@@ -63,7 +70,6 @@ const mentoringNavigation = [
 
 // Navigation für Lehrpersonen (Content-Management)
 const lehrpersonNavigation = [
-  { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar, exact: true },
   { name: 'Tagesfreigaben', href: '/dashboard/kurse/tagesfreigaben', icon: CalendarCheck2 },
   { name: 'Übungen verwalten', href: '/dashboard/uebungen', icon: ClipboardList },
   { name: 'Lernmaterialien', href: '/dashboard/materialien', icon: BookOpen },
@@ -321,13 +327,19 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Kurse stehen bewusst nach der Administration. Admins erhalten die
-          vollständigen Angebotsübersichten, andere Rollen den Buchungsbereich. */}
+      {/* Kurse stehen bewusst nach der Administration. Admins und Lehrpersonen
+          erhalten zusätzlich die Kursverwaltung. */}
       <div className="mt-6 pt-4 border-t border-border">
         <NavGroup
           title="Kurse"
           icon={Calendar}
-          items={isAdmin ? adminKurseNavigation : kurseNavigation}
+          items={
+            isAdmin
+              ? adminKurseNavigation
+              : isContentManager
+                ? lehrpersonKurseNavigation
+                : kurseNavigation
+          }
           isCollapsed={isCollapsed}
           onExpandSidebar={expandSidebar}
         />
