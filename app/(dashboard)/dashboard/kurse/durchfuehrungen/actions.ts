@@ -19,11 +19,14 @@ import { zurichLocalToUtcIso } from '@/lib/utils/zurich-time'
 import {
   offerEditionFormSchema,
   courseSessionFormSchema,
+  schoolHolidayWeeksFormSchema,
   type OfferEditionFormInput,
   type CourseSessionFormInput,
+  type SchoolHolidayWeeksFormInput,
   type OfferDB,
   type OfferEditionDB,
   type CourseSessionWithKursDB,
+  type SchoolHolidayWeekDB,
   type EditionActionResult,
 } from '@/types/kurs-edition'
 import { ADMIN_OFFER_CATALOG, findAdminOfferCatalogEntry, type AdminOfferCatalogEntry } from '@/lib/kurse/offer-admin-catalog'
@@ -569,4 +572,88 @@ export async function cancelSessionAction(
   await writeAuditLog(supabase, authCheck.userId, 'course_session', String(kursId), 'cancel', null, { edition_id: editionId })
   revalidatePath(`/dashboard/kurse/angebote/${offerId}/durchfuehrungen/${editionId}`)
   return { success: true, message: 'Termin abgesagt.' }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Ferienwochen-Verwaltung (school_holiday_weeks, Migration 20260728090000): ersetzt die vormals
+// hart codierten Konstanten in lib/kurse/fixed-school-schedule.ts durch admin-pflegbare Daten
+// (siehe "Ferienwochen verwalten" in session-editor.tsx). Lesezugriff wie die übrigen Katalog-/
+// Durchführungsabfragen auch für Lehrpersonen (requireContentManagerAuth); Schreiben bleibt
+// admin-only (requireAdminAuth) -- RLS erzwingt das ohnehin serverseitig.
+// ---------------------------------------------------------------------------------------------
+
+export async function getSchoolHolidayWeeks(): Promise<EditionActionResult<SchoolHolidayWeekDB[]>> {
+  const authCheck = await requireContentManagerAuth()
+  if (!authCheck.authorized) return authCheck.error
+
+  const supabase = createAuthenticatedSupabaseClient(authCheck.supabaseAccessToken)
+  const { data, error } = await supabase
+    .from('school_holiday_weeks')
+    .select('*')
+    .order('school_year', { ascending: false })
+    .order('schedule_group', { ascending: true })
+    .order('holiday_type', { ascending: true })
+    .order('location', { ascending: true })
+
+  if (error) {
+    console.error('Supabase Error:', error)
+    return { success: false, error: 'Ferienwochen konnten nicht geladen werden.' }
+  }
+
+  return { success: true, data: data as SchoolHolidayWeekDB[], message: 'Ferienwochen geladen' }
+}
+
+export async function saveSchoolHolidayWeeksAction(
+  input: SchoolHolidayWeeksFormInput
+): Promise<EditionActionResult<SchoolHolidayWeekDB>> {
+  const authCheck = await requireAdminAuth()
+  if (!authCheck.authorized) return authCheck.error
+
+  const parsed = schoolHolidayWeeksFormSchema.safeParse(input)
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string[]> = {}
+    parsed.error.issues.forEach((issue) => {
+      const field = issue.path[0] as string
+      if (!fieldErrors[field]) fieldErrors[field] = []
+      fieldErrors[field].push(issue.message)
+    })
+    return { success: false, error: 'Bitte überprüfe deine Eingaben.', fieldErrors }
+  }
+
+  const data = parsed.data
+  const calendarWeeks = data.calendarWeeksInput
+    .split(',')
+    .map((part) => Number(part.trim()))
+    .filter((week) => Number.isInteger(week))
+
+  const supabase = createAuthenticatedSupabaseClient(authCheck.supabaseAccessToken)
+  const { data: saved, error } = await supabase
+    .from('school_holiday_weeks')
+    .upsert(
+      {
+        school_year: data.schoolYear,
+        schedule_group: data.scheduleGroup,
+        holiday_type: data.holidayType,
+        location: data.location,
+        calendar_weeks: calendarWeeks,
+        updated_by: authCheck.userId,
+      },
+      { onConflict: 'school_year,schedule_group,holiday_type,location' }
+    )
+    .select()
+    .single()
+
+  if (error || !saved) {
+    console.error('Supabase Error:', error)
+    return { success: false, error: 'Ferienwochen konnten nicht gespeichert werden.' }
+  }
+
+  await writeAuditLog(supabase, authCheck.userId, 'school_holiday_weeks', saved.id, 'upsert', null, saved)
+  // Abschnitt 7: Katalogänderungen müssen sofort sichtbar sein -- dieselben Tags wie
+  // getOfferCatalogForAudience()/getSessionsForOffer() in lib/kurse/catalog.ts.
+  updateTag('courses')
+  updateTag('offers')
+  revalidatePath('/dashboard/kurse')
+
+  return { success: true, data: saved as SchoolHolidayWeekDB, message: 'Ferienwochen gespeichert.' }
 }

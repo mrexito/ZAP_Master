@@ -1817,6 +1817,39 @@ export type Database = {
           },
         ]
       }
+      school_holiday_weeks: {
+        Row: {
+          calendar_weeks: number[]
+          holiday_type: string
+          id: string
+          location: string
+          schedule_group: string
+          school_year: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          calendar_weeks: number[]
+          holiday_type: string
+          id?: string
+          location?: string
+          schedule_group: string
+          school_year: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          calendar_weeks?: number[]
+          holiday_type?: string
+          id?: string
+          location?: string
+          schedule_group?: string
+          school_year?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       self_study_enrollments: {
         Row: {
           access_until: string | null

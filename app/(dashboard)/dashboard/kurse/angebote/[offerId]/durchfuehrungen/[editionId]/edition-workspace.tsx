@@ -15,7 +15,7 @@ import { SessionEditor } from '@/app/components/kurse-admin/session-editor'
 import { EditionPreview } from '@/app/components/kurse-admin/edition-preview'
 import { PublicationChecklist } from '@/app/components/kurse-admin/publication-checklist'
 import type { AdminOfferListEntry } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
-import type { OfferEditionDB, OfferEditionFormInput, CourseSessionWithKursDB } from '@/types/kurs-edition'
+import type { OfferEditionDB, OfferEditionFormInput, CourseSessionWithKursDB, SchoolHolidayWeekDB } from '@/types/kurs-edition'
 
 // Kein "Vorjahr duplizieren" mehr -- eine neue Durchführung schlägt stattdessen automatisch das
 // Jahr nach der zuletzt vorhandenen Durchführung dieses Angebots vor (im Formular unten unter
@@ -39,6 +39,7 @@ export function EditionWorkspace({
   edition,
   editionIdParam,
   sessions,
+  holidayWeeks,
 }: {
   offerList: AdminOfferListEntry[]
   offerId: number
@@ -47,6 +48,7 @@ export function EditionWorkspace({
   edition: OfferEditionDB | null
   editionIdParam: string
   sessions: CourseSessionWithKursDB[]
+  holidayWeeks: SchoolHolidayWeekDB[]
 }) {
   const router = useRouter()
   const [liveValues, setLiveValues] = useState<OfferEditionFormInput | null>(null)
@@ -189,6 +191,7 @@ export function EditionWorkspace({
               audienceId={catalogEntry.audienceId}
               schoolYear={schoolYear}
               offerType={catalogEntry.kurstyp}
+              holidayWeeks={holidayWeeks}
             />
           )}
         </div>

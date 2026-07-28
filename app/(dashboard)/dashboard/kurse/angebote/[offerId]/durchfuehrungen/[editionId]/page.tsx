@@ -4,6 +4,7 @@ import {
   getAdminOfferList,
   getEditionsForOffer,
   getEditionDetail,
+  getSchoolHolidayWeeks,
   type AdminOfferListEntry,
 } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
 import { EditionWorkspace } from './edition-workspace'
@@ -32,6 +33,9 @@ export default async function OfferEditionPage({
   const editionsResult = await getEditionsForOffer(offerId)
   const editions = editionsResult.success && editionsResult.data ? editionsResult.data : []
 
+  const holidayWeeksResult = await getSchoolHolidayWeeks()
+  const holidayWeeks = holidayWeeksResult.success && holidayWeeksResult.data ? holidayWeeksResult.data : []
+
   if (editionIdParam === 'neu') {
     return (
       <EditionWorkspace
@@ -43,6 +47,7 @@ export default async function OfferEditionPage({
         edition={null}
         editionIdParam="neu"
         sessions={[]}
+        holidayWeeks={holidayWeeks}
       />
     )
   }
@@ -61,6 +66,7 @@ export default async function OfferEditionPage({
       edition={detailResult.data.edition}
       editionIdParam={editionIdParam}
       sessions={detailResult.data.sessions}
+      holidayWeeks={holidayWeeks}
     />
   )
 }

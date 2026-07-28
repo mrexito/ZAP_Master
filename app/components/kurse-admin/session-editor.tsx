@@ -21,19 +21,35 @@ import {
   type CourseSessionFormInput,
   type CourseSessionWithKursDB,
   type OfferEditionDB,
+  type SchoolHolidayWeekDB,
 } from '@/types/kurs-edition'
-import { saveSessionAction, cancelSessionAction } from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
+import {
+  saveSessionAction,
+  cancelSessionAction,
+  saveSchoolHolidayWeeksAction,
+} from '@/app/(dashboard)/dashboard/kurse/durchfuehrungen/actions'
 import {
   buildFixedIntensiveAudienceSchedule,
   buildFixedIntensiveSchedule,
   buildFixedVorkursSchedule,
+  buildHolidayWeeksLookup,
   getFixScheduleGroup,
   getRepresentativeAudienceForGroup,
+  getScheduleCalendarYear,
   hasFixedIntensiveSchedule,
   hasFixedSchoolSchedule,
+  suggestOstermontagAdjacentWeeks,
   FIX_SCHEDULE_GROUPS,
   FIX_SCHEDULE_GROUP_LABELS,
+  HOLIDAY_WEEKS_ROW_DEFINITIONS,
+  VORKURS_AUDIENCES_BY_GROUP,
+  VORKURS_AUDIENCE_LABELS,
   type FixScheduleGroup,
+  type HolidayType,
+  type HolidayWeeksLocation,
+  type HolidayWeeksLookup,
+  type ScheduleGroupKey,
+  type VorkursAudienceKey,
 } from '@/lib/kurse/fixed-school-schedule'
 
 const inputClass =
@@ -229,44 +245,53 @@ function MissingScheduleYear() {
   )
 }
 
-function FixedVorkursSchedule({
+// Eine Klassenstufe = eine eigenständige KW-Liste (unterschiedliche Länge/Wochen je Stufe, siehe
+// VORKURS_AUDIENCES_BY_GROUP) -- deshalb ein eigenständiges Tabellenfragment pro Stufe statt einer
+// gemeinsamen Zeile-je-KW-Tabelle mit Spalten wie bei FixedIntensiveSchedule (dort teilen sich alle
+// Spalten dieselben Kalenderwochen, hier nicht).
+function FixedVorkursAudienceTable({
+  weeksLookup,
   schoolYear,
-  group,
+  audienceKey,
 }: {
+  weeksLookup: HolidayWeeksLookup
   schoolYear: string
-  group: 'langzeitgymi' | 'kurzzeitgymi'
+  audienceKey: VorkursAudienceKey
 }) {
-  const schedule = buildFixedVorkursSchedule(schoolYear, group)
+  const schedule = buildFixedVorkursSchedule(weeksLookup, schoolYear, audienceKey)
 
   if (schedule.length === 0) {
-    return <MissingScheduleYear />
+    return (
+      <div className="rounded-lg border border-accent/40 bg-accent/10 p-3 text-xs text-foreground">
+        Keine Ferienwochen für {VORKURS_AUDIENCE_LABELS[audienceKey]} hinterlegt.
+      </div>
+    )
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
-      <div className="border-b border-border bg-muted/30 px-4 py-3">
-        <h3 className="text-sm font-semibold text-foreground">Vorkurs · Fixtermine</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Wöchentliche Termine am Samstag und Mittwoch, automatisch aus den festen KW berechnet.
-        </p>
+    <div className="overflow-hidden rounded-lg border border-border">
+      <div className="border-b border-border bg-muted/30 px-3 py-2">
+        <h4 className="font-mono-marketing text-[11px] font-semibold uppercase tracking-wide text-foreground">
+          {VORKURS_AUDIENCE_LABELS[audienceKey]}
+        </h4>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-[#F7F8F3] text-left text-xs text-muted-foreground">
-              <th scope="col" className="w-24 px-4 py-2.5 font-semibold">KW</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Samstag</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Mittwoch</th>
+              <th scope="col" className="w-20 px-3 py-2 font-semibold">KW</th>
+              <th scope="col" className="px-3 py-2 font-semibold">Samstag</th>
+              <th scope="col" className="px-3 py-2 font-semibold">Mittwoch</th>
             </tr>
           </thead>
           <tbody>
             {schedule.map((row) => (
               <tr key={row.calendarWeek} className="border-t border-border first:border-t-0">
-                <th scope="row" className="px-4 py-2.5 text-left font-mono-marketing text-xs font-semibold text-foreground">
+                <th scope="row" className="px-3 py-2 text-left font-mono-marketing text-xs font-semibold text-foreground">
                   {row.calendarWeek}
                 </th>
-                <td className="px-4 py-2.5 text-foreground">{row.saturday}</td>
-                <td className="px-4 py-2.5 text-foreground">{row.wednesday}</td>
+                <td className="px-3 py-2 text-foreground">{row.saturday}</td>
+                <td className="px-3 py-2 text-foreground">{row.wednesday}</td>
               </tr>
             ))}
           </tbody>
@@ -276,7 +301,49 @@ function FixedVorkursSchedule({
   )
 }
 
-function FixedIntensiveSchedule({ schoolYear, group }: { schoolYear: string; group: FixScheduleGroup }) {
+function FixedVorkursSchedule({
+  weeksLookup,
+  schoolYear,
+  group,
+}: {
+  weeksLookup: HolidayWeeksLookup
+  schoolYear: string
+  group: 'langzeitgymi' | 'kurzzeitgymi'
+}) {
+  const audiences = VORKURS_AUDIENCES_BY_GROUP[group]
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <div className="border-b border-border bg-muted/30 px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground">Vorkurs · Fixtermine</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Wöchentliche Termine am Samstag und Mittwoch, automatisch aus den festen KW je
+          Klassenstufe berechnet.
+        </p>
+      </div>
+      <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3">
+        {audiences.map((audienceKey) => (
+          <FixedVorkursAudienceTable
+            key={audienceKey}
+            weeksLookup={weeksLookup}
+            schoolYear={schoolYear}
+            audienceKey={audienceKey}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FixedIntensiveSchedule({
+  weeksLookup,
+  schoolYear,
+  group,
+}: {
+  weeksLookup: HolidayWeeksLookup
+  schoolYear: string
+  group: FixScheduleGroup
+}) {
   // BMS wird wie Langzeitgymi/Kurzzeitgymi nach Standort in zwei eigene Spalten aufgeteilt
   // (Zürich/Winterthur), statt in einer gemeinsamen "BMS"-Spalte mit Standort-Anmerkung pro
   // Kalenderwoche. Matura kennt nur Zürich HB und bleibt eine eigene Einzelspalte.
@@ -285,25 +352,25 @@ function FixedIntensiveSchedule({ schoolYear, group }: { schoolYear: string; gro
       ? ([
           {
             label: 'Zürich',
-            schedule: buildFixedIntensiveSchedule(schoolYear, 'bms', 'Zürich HB'),
+            schedule: buildFixedIntensiveSchedule(weeksLookup, schoolYear, 'bms', 'Zürich HB'),
           },
           {
             label: 'Winterthur',
-            schedule: buildFixedIntensiveSchedule(schoolYear, 'bms', 'Winterthur'),
+            schedule: buildFixedIntensiveSchedule(weeksLookup, schoolYear, 'bms', 'Winterthur'),
           },
           {
             label: 'Matura',
-            schedule: buildFixedIntensiveAudienceSchedule(schoolYear, 'matura'),
+            schedule: buildFixedIntensiveAudienceSchedule(weeksLookup, schoolYear, 'matura'),
           },
         ] as const)
       : ([
           {
             label: 'Zürich',
-            schedule: buildFixedIntensiveSchedule(schoolYear, getRepresentativeAudienceForGroup(group), 'Zürich HB'),
+            schedule: buildFixedIntensiveSchedule(weeksLookup, schoolYear, getRepresentativeAudienceForGroup(group), 'Zürich HB'),
           },
           {
             label: 'Winterthur',
-            schedule: buildFixedIntensiveSchedule(schoolYear, getRepresentativeAudienceForGroup(group), 'Winterthur'),
+            schedule: buildFixedIntensiveSchedule(weeksLookup, schoolYear, getRepresentativeAudienceForGroup(group), 'Winterthur'),
           },
         ] as const)
   const weekdays = [
@@ -368,6 +435,119 @@ function FixedIntensiveSchedule({ schoolYear, group }: { schoolYear: string; gro
   )
 }
 
+// Ein Formularfeld je (schedule_group, holiday_type, location)-Kombination aus
+// HOLIDAY_WEEKS_ROW_DEFINITIONS. Existiert für das aktuelle Schuljahr noch keine Zeile (z.B. ein
+// neues Schuljahr, das der Admin gerade erstmals befüllt), startet das Feld leer -- Speichern legt
+// die Zeile per UPSERT neu an.
+function HolidayWeeksRow({
+  schoolYear,
+  scheduleGroup,
+  holidayType,
+  location,
+  label,
+  existingWeeks,
+}: {
+  schoolYear: string
+  scheduleGroup: ScheduleGroupKey
+  holidayType: HolidayType
+  location: HolidayWeeksLocation
+  label: string
+  existingWeeks: readonly number[] | undefined
+}) {
+  const router = useRouter()
+  const [weeksInput, setWeeksInput] = useState((existingWeeks ?? []).join(', '))
+  const [submitState, setSubmitState] = useState<'idle' | 'saving' | 'error'>('idle')
+  const [serverMessage, setServerMessage] = useState('')
+
+  const calendarYear = getScheduleCalendarYear(schoolYear)
+  // Ostermontag-Hinweis nur bei Vorkurs zeigen: dort steckt die Frühlingsferien-Lücke innerhalb der
+  // Wochenliste, die der Admin manuell nachführt (siehe Kommentar in fixed-school-schedule.ts).
+  const suggestion = holidayType === 'vorkurs' && calendarYear ? suggestOstermontagAdjacentWeeks(calendarYear) : null
+
+  const onSave = async () => {
+    setSubmitState('saving')
+    setServerMessage('')
+    const result = await saveSchoolHolidayWeeksAction({
+      schoolYear,
+      scheduleGroup,
+      holidayType,
+      location,
+      calendarWeeksInput: weeksInput,
+    })
+    if (result.success) {
+      setSubmitState('idle')
+      router.refresh()
+    } else {
+      setSubmitState('error')
+      setServerMessage(result.error)
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border p-3">
+      <div className="min-w-[220px] flex-1">
+        <label className={labelClass}>{label}</label>
+        <input
+          type="text"
+          value={weeksInput}
+          onChange={(event) => setWeeksInput(event.target.value)}
+          placeholder="z.B. 7, 8"
+          className={inputClass}
+        />
+        {suggestion && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Ostermontag-Vorschlag {calendarYear}: KW {suggestion.standardWeeks.join('/')}
+            {suggestion.isExceptionYear ? ` (Ausnahmejahr → KW ${suggestion.exceptionWeeks.join('/')})` : ''}
+            {' — nur ein Hinweis, bitte die offiziellen kantonalen Ferientermine bestätigen.'}
+          </p>
+        )}
+        {submitState === 'error' && <p className={errorClass}>{serverMessage}</p>}
+      </div>
+      <Button type="button" size="sm" disabled={submitState === 'saving'} onClick={onSave}>
+        {submitState === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Speichern'}
+      </Button>
+    </div>
+  )
+}
+
+function HolidayWeeksManager({
+  schoolYear,
+  holidayWeeks,
+}: {
+  schoolYear: string
+  holidayWeeks: SchoolHolidayWeekDB[]
+}) {
+  const rowsForYear = new Map(
+    holidayWeeks
+      .filter((row) => row.school_year === schoolYear)
+      .map((row) => [`${row.schedule_group}|${row.holiday_type}|${row.location}`, row.calendar_weeks])
+  )
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <h3 className="text-sm font-semibold text-foreground">Ferienwochen verwalten ({schoolYear})</h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Diese Kalenderwochen speisen die Fixtermin-Referenztabellen oben und die öffentliche
+        Terminanzeige (WeekFilter/SessionTable). Änderungen sind nach dem Speichern sofort für alle
+        Angebote dieser Gruppe sichtbar.
+      </p>
+      <div className="mt-3 space-y-2">
+        {HOLIDAY_WEEKS_ROW_DEFINITIONS.map((def) => (
+          <HolidayWeeksRow
+            key={`${def.scheduleGroup}|${def.holidayType}|${def.location}`}
+            schoolYear={schoolYear}
+            scheduleGroup={def.scheduleGroup}
+            holidayType={def.holidayType}
+            location={def.location}
+            label={def.label}
+            existingWeeks={rowsForYear.get(`${def.scheduleGroup}|${def.holidayType}|${def.location}`)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function SessionEditor({
   offerId,
   edition,
@@ -375,6 +555,7 @@ export function SessionEditor({
   audienceId,
   schoolYear,
   offerType,
+  holidayWeeks,
 }: {
   offerId: number
   edition: OfferEditionDB | null
@@ -382,7 +563,16 @@ export function SessionEditor({
   audienceId: string
   schoolYear: string
   offerType: string
+  holidayWeeks: SchoolHolidayWeekDB[]
 }) {
+  const weeksLookup = buildHolidayWeeksLookup(
+    holidayWeeks.map((row) => ({
+      scheduleGroup: row.schedule_group,
+      holidayType: row.holiday_type,
+      location: row.location,
+      calendarWeeks: row.calendar_weeks,
+    }))
+  )
   const [drafts, setDrafts] = useState<number[]>([])
   // Default: Gruppe des aktuell bearbeiteten Angebots -- der Admin kann trotzdem zu anderen
   // Gruppen wechseln, um deren Fixtermine als Referenz einzusehen.
@@ -421,10 +611,14 @@ export function SessionEditor({
         Für BMS &amp; Matura gibt es keinen Vorkurs-Fixplan.
       </p>
     ) : (
-      <FixedVorkursSchedule schoolYear={schoolYear} group={scheduleGroup} />
+      <FixedVorkursSchedule weeksLookup={weeksLookup} schoolYear={schoolYear} group={scheduleGroup} />
     )
   ) : showIntensiveSchedule ? (
-    <FixedIntensiveSchedule schoolYear={schoolYear} group={scheduleGroup} />
+    <FixedIntensiveSchedule weeksLookup={weeksLookup} schoolYear={schoolYear} group={scheduleGroup} />
+  ) : null
+
+  const holidayWeeksManager = showAutomaticSchedule ? (
+    <HolidayWeeksManager schoolYear={schoolYear} holidayWeeks={holidayWeeks} />
   ) : null
 
   if (!edition) {
@@ -437,6 +631,7 @@ export function SessionEditor({
             {automaticSchedule}
           </div>
         )}
+        {holidayWeeksManager && <div className="mt-4">{holidayWeeksManager}</div>}
         <p className="text-sm text-muted-foreground mt-2">
           Speichere zuerst einen Entwurf, um buchbare Kursgruppen hinzuzufügen.
         </p>
@@ -461,6 +656,7 @@ export function SessionEditor({
       <div className="space-y-4 p-[22px]">
       {scheduleGroupFilter}
       {automaticSchedule}
+      {holidayWeeksManager}
       {showAutomaticSchedule && (
         <div className="border-t border-border pt-4">
           <h3 className="text-sm font-semibold text-foreground">Buchbare Kursgruppen</h3>

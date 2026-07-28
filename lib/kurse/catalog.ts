@@ -29,6 +29,11 @@ import { AUDIENCE_HERO_TRANSLATIONS, OFFER_TRANSLATIONS, SESSION_TRANSLATIONS } 
 import {
   applyFixedIntensiveScheduleToSessions,
   buildFixedIntensiveWeekOptions,
+  buildHolidayWeeksLookup,
+  type HolidayType,
+  type HolidayWeeksLocation,
+  type HolidayWeeksLookup,
+  type ScheduleGroupKey,
 } from '@/lib/kurse/fixed-school-schedule'
 
 // Cookie-freier anon-Client -- innerhalb von 'use cache' ist cookies()/headers() nicht erlaubt.
@@ -38,6 +43,30 @@ function createCatalogSupabaseClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
+// Ferienwochen (school_holiday_weeks, Migration 20260728090000) sind seit der Admin-Maske
+// "Ferienwochen verwalten" die einzige Quelle für die automatische Intensivkurs-/
+// Vorkurs-Terminierung -- ersetzt die vormals hart codierten Konstanten in
+// lib/kurse/fixed-school-schedule.ts. Wird innerhalb bereits bestehender 'use cache'-Funktionen
+// aufgerufen (kein neuer Cache-Layer nötig, dieselben cacheTag()-Aufrufe gelten weiterhin).
+async function getHolidayWeeksLookup(
+  supabase: ReturnType<typeof createCatalogSupabaseClient>
+): Promise<HolidayWeeksLookup> {
+  const { data, error } = await supabase
+    .from('school_holiday_weeks')
+    .select('schedule_group, holiday_type, location, calendar_weeks')
+
+  if (error || !data) return buildHolidayWeeksLookup([])
+
+  return buildHolidayWeeksLookup(
+    data.map((row) => ({
+      scheduleGroup: row.schedule_group as ScheduleGroupKey,
+      holidayType: row.holiday_type as HolidayType,
+      location: row.location as HolidayWeeksLocation,
+      calendarWeeks: row.calendar_weeks,
+    }))
   )
 }
 
@@ -77,6 +106,7 @@ async function applyLivePriceOverrides<T extends CourseOffer | ExamSimulationOff
 
   const supabase = createCatalogSupabaseClient()
   const audienceIds = [...new Set(offers.map((o) => o.audienceId))]
+  const weeksLookup = await getHolidayWeeksLookup(supabase)
 
   // Zwei einfache Abfragen statt eines PostgREST-Embeds: robuster gegen die generische
   // Typinferenz der generierten Supabase-Typen bei verschachtelten Selects (bereits an anderer
@@ -118,7 +148,7 @@ async function applyLivePriceOverrides<T extends CourseOffer | ExamSimulationOff
     return offer.kurstyp === 'intensivkurs'
       ? {
           ...withLivePrice,
-          weekOptions: buildFixedIntensiveWeekOptions(liveEdition.school_year, offer.audienceId),
+          weekOptions: buildFixedIntensiveWeekOptions(weeksLookup, liveEdition.school_year, offer.audienceId),
         }
       : withLivePrice
   })
@@ -224,6 +254,7 @@ export async function getSessionsForOffer(offerId: string, locale: string): Prom
   const sessions =
     offer?.kurstyp === 'intensivkurs'
       ? applyFixedIntensiveScheduleToSessions(
+          await getHolidayWeeksLookup(createCatalogSupabaseClient()),
           fixtureSessions,
           (await getPublishedSchoolYear(offer)) ?? '2026/27',
           offer.audienceId

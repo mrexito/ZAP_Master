@@ -90,3 +90,9 @@ design-reference/_writetest.tmp
 
 # graphify-generierter Knowledge Graph (lokal, nicht Teil des Repos)
 graphify-out/
+
+# Excel-Arbeitsdateien (Kursdaten/Kurspläne/Termine) -- bleiben lokal, nicht Teil des Repos
+*.xlsx
+
+# Office-Sperrdateien (temporäre Lock-Files bei geöffneten Word-/Excel-Dokumenten)
+~$*

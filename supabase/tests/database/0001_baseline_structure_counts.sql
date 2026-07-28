@@ -132,6 +132,23 @@
 -- SECURITY-DEFINER-Zaehler je +1), +1 RLS-Policy (mail_outbox_admin_select), +1 Trigger
 -- (intensivwoche_anmeldungen_enqueue_mail), +5 Constraints (PK, 2x CHECK, UNIQUE, FK), +2 Indizes
 -- (PK- und UNIQUE-Index). Keine neue Sequenz (uuid-PK per gen_random_uuid(), kein serial/identity).
+--
+-- Zwischen 20260722092503_mail_outbox_schema.sql und 20260728090000_school_holiday_weeks_schema.sql
+-- liegen mehrere Migrationen (u.a. 20260724170000_expand_learning_material_class_levels.sql,
+-- 20260727140000_add_exercise_class_levels.sql), die Tabellen-/Policy-/Constraint-Zaehler
+-- veraendert haben, ohne hier dokumentiert worden zu sein -- sichtbar an den zuvor fehlschlagenden
+-- Policy-/Constraint-Zaehlungen dieser Datei sowie an separat fehlschlagenden NOT-NULL-Fixtures in
+-- 0007_material_access_schema.sql/0011_daily_releases_schema.sql (dort, nicht hier, zu beheben).
+-- Diese Datei wird deshalb ausnahmsweise nicht als Summe einzelner Deltas fortgeschrieben, sondern
+-- per psql gegen `supabase db reset --local` auf den tatsaechlichen Stand resynchronisiert.
+--
+-- Angepasst durch 20260728090000_school_holiday_weeks_schema.sql (admin-editierbare
+-- Ferienwochen-Kalenderwochen, ersetzt hart codierte TS-Konstanten in
+-- lib/kurse/fixed-school-schedule.ts): +1 Tabelle school_holiday_weeks (RLS aktiviert -- Tabellen-
+-- UND RLS-Tabellen-Zaehler je +1), +3 RLS-Policies (school_holiday_weeks_public_read/_admin_insert/
+-- _admin_update), +7 Constraints (PK, UNIQUE, FK auf auth.users, 4x CHECK fuer schedule_group/
+-- holiday_type/location/calendar_weeks-cardinality), +2 Indizes (PK- und UNIQUE-Index). Keine neue
+-- Sequenz (uuid-PK per gen_random_uuid()), keine neue Funktion/Trigger/View.
 -- Alle Werte empirisch per psql gegen die lokale Instanz nach `supabase db reset --local`
 -- verifiziert, nicht nur rechnerisch hergeleitet.
 
@@ -141,14 +158,14 @@ select plan(10);
 
 select is(
     (select count(*)::int from pg_tables where schemaname = 'public'),
-    50,
-    '50 Tabellen im public-Schema'
+    51,
+    '51 Tabellen im public-Schema'
 );
 
 select is(
     (select count(*)::int from pg_tables where schemaname = 'public' and rowsecurity),
-    50,
-    'alle 50 public-Tabellen haben RLS aktiviert'
+    51,
+    'alle 51 public-Tabellen haben RLS aktiviert'
 );
 
 select is(
@@ -178,8 +195,8 @@ select is(
 
 select is(
     (select count(*)::int from pg_policies where schemaname = 'public'),
-    171,
-    '171 RLS-Policies im public-Schema'
+    174,
+    '174 RLS-Policies im public-Schema'
 );
 
 select is(
@@ -194,14 +211,14 @@ select is(
        join pg_class c on c.oid = con.conrelid
        join pg_namespace n on n.oid = c.relnamespace
       where n.nspname = 'public'),
-    216,
-    '216 Constraints (PK/UNIQUE/FK/CHECK) im public-Schema'
+    227,
+    '227 Constraints (PK/UNIQUE/FK/CHECK) im public-Schema'
 );
 
 select is(
     (select count(*)::int from pg_indexes where schemaname = 'public'),
-    138,
-    '138 Indizes im public-Schema'
+    142,
+    '142 Indizes im public-Schema'
 );
 
 select is(

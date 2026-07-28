@@ -154,3 +154,73 @@ export interface CourseSessionWithKursDB extends CourseSessionDB {
 export type EditionActionResult<T = void> =
   | { success: true; data?: T; message: string }
   | { success: false; error: string; fieldErrors?: Record<string, string[]>; conflict?: boolean }
+
+// ---------------------------------------------------------------------------------------------
+// Ferienwochen-Verwaltung (school_holiday_weeks, Migration 20260728090000). Ersetzt die vormals
+// hart codierten Konstanten in lib/kurse/fixed-school-schedule.ts durch admin-pflegbare Daten --
+// siehe "Ferienwochen verwalten" in session-editor.tsx.
+// ---------------------------------------------------------------------------------------------
+
+// 'langzeitgymi'/'kurzzeitgymi'/'bms'/'matura' fuer holiday_type='intensiv' (mehrere Klassenstufen
+// teilen sich denselben Sportferien-Fixplan); '4'/'5'/'6'/'1-sek'/'2-3-sek' fuer holiday_type=
+// 'vorkurs' (jede Klassenstufe hat eigene, real bestätigte Wochen -- siehe Kommentar in
+// lib/kurse/fixed-school-schedule.ts).
+export const SCHEDULE_GROUP_KEY_OPTIONEN = [
+  'langzeitgymi',
+  'kurzzeitgymi',
+  'bms',
+  'matura',
+  '4',
+  '5',
+  '6',
+  '1-sek',
+  '2-3-sek',
+] as const
+export type ScheduleGroupKeyOption = (typeof SCHEDULE_GROUP_KEY_OPTIONEN)[number]
+
+export const HOLIDAY_TYPE_OPTIONEN = ['vorkurs', 'intensiv'] as const
+export type HolidayTypeOption = (typeof HOLIDAY_TYPE_OPTIONEN)[number]
+
+export const HOLIDAY_WEEKS_LOCATION_OPTIONEN = ['Zürich HB', 'Winterthur', 'ALL'] as const
+export type HolidayWeeksLocationOption = (typeof HOLIDAY_WEEKS_LOCATION_OPTIONEN)[number]
+
+// calendarWeeksInput bleibt im Formular ein einzelnes komma-getrenntes Textfeld (z.B. "7, 8") --
+// einfacher zu bedienen als ein dynamisches Array-Input-Feld für typischerweise 1-11 Werte.
+export const schoolHolidayWeeksFormSchema = z
+  .object({
+    schoolYear: z
+      .string()
+      .trim()
+      .min(4, 'Schul-/Prüfungsjahr ist erforderlich')
+      .max(20, 'Schul-/Prüfungsjahr darf maximal 20 Zeichen haben'),
+    scheduleGroup: z.enum(SCHEDULE_GROUP_KEY_OPTIONEN, { message: 'Bitte eine Gruppe wählen' }),
+    holidayType: z.enum(HOLIDAY_TYPE_OPTIONEN, { message: 'Bitte Vorkurs oder Intensiv wählen' }),
+    location: z.enum(HOLIDAY_WEEKS_LOCATION_OPTIONEN, { message: 'Bitte einen Standort wählen' }),
+    calendarWeeksInput: z
+      .string()
+      .trim()
+      .min(1, 'Mindestens eine Kalenderwoche ist erforderlich')
+      .refine((value) => {
+        const weeks = value.split(',').map((part) => part.trim()).filter(Boolean)
+        return weeks.length > 0 && weeks.every((week) => /^\d{1,2}$/.test(week) && Number(week) >= 1 && Number(week) <= 53)
+      }, 'Kalenderwochen als kommagetrennte Liste von 1–53 angeben, z.B. "7, 8"'),
+  })
+  // 'vorkurs' ist standortunabhängig (nutzt den Sentinel 'ALL'), 'intensiv' braucht immer einen
+  // echten Standort -- vermeidet doppelte Zeilen für denselben Vorkurs unter zwei Standorten.
+  .refine((data) => (data.holidayType === 'vorkurs' ? data.location === 'ALL' : data.location !== 'ALL'), {
+    message: 'Vorkurs verwendet immer "ALL", Intensiv braucht Zürich HB oder Winterthur.',
+    path: ['location'],
+  })
+
+export type SchoolHolidayWeeksFormInput = z.infer<typeof schoolHolidayWeeksFormSchema>
+
+export interface SchoolHolidayWeekDB {
+  id: string
+  school_year: string
+  schedule_group: ScheduleGroupKeyOption
+  holiday_type: HolidayTypeOption
+  location: HolidayWeeksLocationOption
+  calendar_weeks: number[]
+  updated_by: string | null
+  updated_at: string
+}
