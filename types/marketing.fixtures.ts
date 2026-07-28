@@ -395,7 +395,6 @@ export const sechsKlasseHalbjahreskurs = {
   href: '/kurse/6-klasse/halbjahreskurs',
   displayName: 'Vorkurs',
   tagline: 'Breite Vorbereitung über das ganze Semester',
-  categoryLabel: 'Deutsch & Mathematik',
   lede: 'Umfassende und optimale Vorbereitung auf die Aufnahmeprüfung ins Langzeitgymnasium — gezielte, individuelle Förderung in Deutsch und Mathematik.',
   description:
     'Umfassende und optimale Vorbereitung auf die Aufnahmeprüfung ins Langzeitgymnasium — gezielte, individuelle Förderung in Deutsch und Mathematik.',
@@ -2325,7 +2324,6 @@ export const einsSekVorkurs = {
   slug: 'vorkurs',
   href: '/kurse/1-sek/vorkurs',
   displayName: 'Vorkurs',
-  categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Beste Voraussetzungen für die Gymivorbereitung auf die Kurzzeit-Prüfung 2028 schaffen: Grundlagen in Deutsch und Mathematik festigen, dazu eine umfassende Standortbestimmung zum Einstieg und Lerncoaching für die Selbstorganisation.',
   description:
@@ -2720,7 +2718,6 @@ export const zweiDreiSekHalbjahreskurs = {
   slug: 'halbjahreskurs',
   href: '/kurse/2-3-sek/halbjahreskurs',
   displayName: 'Vorkurs',
-  categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Umfassende Vorbereitung auf die Aufnahmeprüfung ins Kurzzeitgymnasium: fachliches Training in Deutsch und Mathematik, dazu gezielte Unterstützung beim Umgang mit Prüfungsdruck — begleitet über das ganze Semester.',
   description:
@@ -3161,7 +3158,6 @@ export const bmsHalbjahreskurs = {
   slug: 'halbjahreskurs',
   href: '/kurse/bms/halbjahreskurs',
   displayName: 'Vorkurs',
-  categoryLabel: 'Deutsch & Mathematik',
   tagline: 'Breite Vorbereitung über das ganze Semester',
   lede: 'Umfassende Vorbereitung auf die BM1- oder BM2-Aufnahmeprüfung: fachliches Training in Deutsch und Mathematik, dazu gezielte Unterstützung beim Umgang mit Prüfungsdruck — begleitet über das ganze Semester.',
   description:

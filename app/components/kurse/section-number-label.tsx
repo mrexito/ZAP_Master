@@ -8,10 +8,10 @@ interface SectionNumberLabelProps {
 function SectionNumberLabel({ number, label }: SectionNumberLabelProps) {
   return (
     <div className="mb-4 flex items-center gap-3">
-      <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border border-border font-mono text-[13px] text-muted-foreground">
+      <span className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-border font-mono text-sm text-muted-foreground">
         {number}
       </span>
-      <span className="font-mono text-[15px] font-medium tracking-wide text-foreground uppercase">
+      <span className="font-mono text-lg font-medium tracking-wide text-foreground uppercase">
         {label}
       </span>
     </div>

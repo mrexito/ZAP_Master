@@ -219,7 +219,10 @@ export default async function CourseOfferDetailPage({
       ) : null}
 
       {!isExamSimulation && offer.contentSections.length > 0 ? (
-        <Section spacing="sm">
+        // bg-ink-pale statt variant="muted" -- eigener, kühlerer Farbton, damit sich diese
+        // Sektion sowohl von "Kursaufbau" darüber als auch von "Überblick & Preis" darunter
+        // (beide ohne variant, also default) unterscheidet, statt optisch zu verschmelzen.
+        <Section spacing="sm" className="bg-ink-pale/50">
           <SectionNumberLabel number={2} label="Kursinhalt" />
           <CourseContent sections={offer.contentSections} openFirstSection={false} />
         </Section>
