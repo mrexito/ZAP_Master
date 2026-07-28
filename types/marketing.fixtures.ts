@@ -181,6 +181,56 @@ export const sechsKlasseIntensivkursSessions = [
   deliveryModes: ['onsite' as const],
 })) satisfies SessionDefinition[]
 
+// Phasen-Termine analog zu zweiDreiSekHalbjahreskursAblauf -- beide Halbjahreskurse laufen im
+// selben Schuljahreskalender (Sept. 2026 - März 2027), daher dieselbe Kadenz. Eigenständige
+// Konstante statt gemeinsamer Referenz, da zweiDreiSekHalbjahreskursAblauf weiter unten in dieser
+// Datei deklariert ist (const-TDZ) und beide Angebote unabhängig voneinander gepflegt werden.
+const sechsKlasseHalbjahreskursAblauf = {
+  kind: 'phased',
+  phases: [
+    {
+      id: 'phase-1-basis',
+      label: 'Phase 1 — Basis',
+      note: 'Standortbestimmung vor dem ersten Kurstag',
+      dates: [
+        { id: 'p1-1', date: '29.08.2026' },
+        { id: 'p1-2', date: '05.09.2026' },
+        { id: 'p1-3', date: '12.09.2026' },
+        { id: 'p1-4', date: '19.09.2026' },
+        { id: 'p1-5', date: '26.09.2026' },
+        { id: 'p1-6', date: '03.10.2026' },
+      ],
+    },
+    {
+      id: 'phase-2-aufbau',
+      label: 'Phase 2 — Aufbau',
+      dates: [
+        { id: 'p2-1', date: '24.10.2026' },
+        { id: 'p2-2', date: '31.10.2026' },
+        { id: 'p2-3', date: '07.11.2026' },
+        { id: 'p2-4', date: '14.11.2026' },
+        { id: 'p2-5', date: '21.11.2026' },
+        { id: 'p2-6', date: '28.11.2026' },
+        { id: 'p2-7', date: '05.12.2026' },
+        { id: 'p2-8', date: '12.12.2026' },
+      ],
+    },
+    {
+      id: 'phase-3-repetition',
+      label: 'Phase 3 — Repetition',
+      dates: [
+        { id: 'p3-1', date: '09.01.2027 (Probeprüfung)', highlight: true },
+        { id: 'p3-2', date: '16.01.2027' },
+        { id: 'p3-3', date: '23.01.2027' },
+        { id: 'p3-4', date: '30.01.2027' },
+        { id: 'p3-5', date: '06.02.2027' },
+        { id: 'p3-6', date: '13.02.2027' },
+        { id: 'p3-7', date: '06.03.2027' },
+      ],
+    },
+  ],
+} satisfies { kind: 'phased'; phases: unknown[] }
+
 export const sechsKlasseHalbjahreskursSessions = [
   {
     id: 9201,
@@ -192,14 +242,7 @@ export const sechsKlasseHalbjahreskursSessions = [
     timeLabel: '09:00–10:30',
     standort: 'Zürich HB',
     deliveryModes: ['onsite'],
-    ablauf: {
-      kind: 'simple',
-      items: [
-        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
-        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
-        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
-      ],
-    },
+    ablauf: sechsKlasseHalbjahreskursAblauf,
   },
   {
     id: 9202,
@@ -211,14 +254,7 @@ export const sechsKlasseHalbjahreskursSessions = [
     timeLabel: '11:00–12:30',
     standort: 'Winterthur',
     deliveryModes: ['onsite'],
-    ablauf: {
-      kind: 'simple',
-      items: [
-        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
-        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
-        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
-      ],
-    },
+    ablauf: sechsKlasseHalbjahreskursAblauf,
   },
   {
     id: 9203,
@@ -230,14 +266,7 @@ export const sechsKlasseHalbjahreskursSessions = [
     timeLabel: '14:00–15:30',
     standort: 'Zürich HB',
     deliveryModes: ['onsite'],
-    ablauf: {
-      kind: 'simple',
-      items: [
-        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
-        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
-        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
-      ],
-    },
+    ablauf: sechsKlasseHalbjahreskursAblauf,
   },
   {
     id: 9204,
@@ -249,14 +278,7 @@ export const sechsKlasseHalbjahreskursSessions = [
     timeLabel: '16:00–17:30',
     standort: 'Winterthur',
     deliveryModes: ['onsite'],
-    ablauf: {
-      kind: 'simple',
-      items: [
-        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
-        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
-        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
-      ],
-    },
+    ablauf: sechsKlasseHalbjahreskursAblauf,
   },
   {
     id: 9205,
@@ -268,14 +290,7 @@ export const sechsKlasseHalbjahreskursSessions = [
     timeLabel: '18:00–19:30',
     standort: 'Winterthur',
     deliveryModes: ['onsite'],
-    ablauf: {
-      kind: 'simple',
-      items: [
-        { id: 'deutsch', label: 'Deutsch', value: '45 Min.' },
-        { id: 'mathematik', label: 'Mathematik', value: '30 Min.' },
-        { id: 'mentale-vorbereitung', label: 'Mentale Vorbereitung', value: '15 Min.' },
-      ],
-    },
+    ablauf: sechsKlasseHalbjahreskursAblauf,
   },
 ] satisfies SessionDefinition[]
 
@@ -427,17 +442,22 @@ export const sechsKlasseHalbjahreskurs = {
     {
       id: 'standortbestimmung',
       title: 'Standortbestimmung',
-      body: 'Vor dem ersten Kurstag stellen wir fest, wo Ihr Kind aktuell steht, um die Kurszeit von Beginn an gezielt zu nutzen.',
+      body: 'Vor dem ersten Kurstag stellen wir fest, wo Ihr Kind aktuell steht, um die folgenden Phasen gezielt darauf abzustimmen.',
     },
     {
-      id: 'semestertraining',
-      title: 'Semestertraining',
-      body: 'Von September bis März wird wöchentlich an Deutsch, Mathematik und den mentalen Prüfungskompetenzen gearbeitet.',
+      id: 'basis',
+      title: 'Basis',
+      body: 'Von September bis Oktober werden die Grundlagen der 5. Klasse im Schnelldurchgang wiederholt und je nach Bedarf vertieft — bestehende Lücken werden geschlossen, bevor der Prüfungsstoff folgt.',
     },
     {
-      id: 'pruefungssimulation-feedback',
-      title: 'Prüfungssimulation & Feedback',
-      body: 'Eine echte Prüfungssimulation zeigt den aktuellen Stand — inklusive individueller Besprechung und Empfehlungen für die letzten Wochen vor der Prüfung.',
+      id: 'aufbau',
+      title: 'Aufbau',
+      body: 'Von November bis Dezember eignet sich Ihr Kind den prüfungsrelevanten Stoff der 6. Klasse in Deutsch und Mathematik an und vertieft ihn — inklusive Themen, die im Schulunterricht noch nicht abschliessend behandelt wurden.',
+    },
+    {
+      id: 'repetition',
+      title: 'Repetition',
+      body: 'Von Januar bis März wird der gelernte Stoff anhand konkreter Prüfungsaufgaben trainiert. Eine Prüfungssimulation im Januar zeigt den aktuellen Stand, gefolgt von individuellem Feedback für die letzten Wochen vor der Prüfung.',
     },
   ],
   contentSections: [
@@ -2769,17 +2789,22 @@ export const zweiDreiSekHalbjahreskurs = {
     {
       id: 'standortbestimmung',
       title: 'Standortbestimmung',
-      body: 'Vor dem ersten Kurstag stellen wir fest, wo Ihr Kind aktuell steht, um die Kurszeit von Beginn an gezielt zu nutzen.',
+      body: 'Vor dem ersten Kurstag stellen wir fest, wo Ihr Kind aktuell steht, um die folgenden Phasen gezielt darauf abzustimmen.',
     },
     {
-      id: 'semestertraining',
-      title: 'Semestertraining',
-      body: 'Von September bis März wird wöchentlich an Deutsch, Mathematik und den mentalen Prüfungskompetenzen gearbeitet.',
+      id: 'basis',
+      title: 'Basis',
+      body: 'Von September bis Oktober werden die bisherigen Grundlagen im Schnelldurchgang wiederholt und je nach Bedarf vertieft — bestehende Lücken werden geschlossen, bevor der Prüfungsstoff folgt.',
     },
     {
-      id: 'pruefungssimulation-feedback',
-      title: 'Prüfungssimulation & Feedback',
-      body: 'Eine echte Prüfungssimulation zeigt den aktuellen Stand — inklusive individueller Besprechung und Empfehlungen für die letzten Wochen vor der Prüfung.',
+      id: 'aufbau',
+      title: 'Aufbau',
+      body: 'Von November bis Dezember eignet sich Ihr Kind den prüfungsrelevanten Stoff in Deutsch und Mathematik an und vertieft ihn — inklusive Themen, die im Schulunterricht noch nicht abschliessend behandelt wurden.',
+    },
+    {
+      id: 'repetition',
+      title: 'Repetition',
+      body: 'Von Januar bis März wird der gelernte Stoff anhand konkreter Prüfungsaufgaben trainiert. Eine Prüfungssimulation im Januar zeigt den aktuellen Stand, gefolgt von individuellem Feedback für die letzten Wochen vor der Prüfung.',
     },
   ],
   contentSections: [

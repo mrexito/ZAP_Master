@@ -2080,7 +2080,7 @@ vorhandene Anmeldelogik wird geprüft und wiederverwendet bzw. erweitert, nicht 
 | `Layout_1_Sek_Halbjahesrkurs_Unterseite.html` **(korrigiert — siehe Hinweis unten)** | `/kurse/1-sek/vorkurs` | Kursdetail, Wochen-/Semesterkurs | Vorkurs Deutsch & Mathematik | 3 Ablaufphasen (korrigiert, siehe Hinweis unten), ausführliche Inhaltsblöcke, 4 Terminzeilen |
 | `Layout_1_Sek_Intensivkurs_Unterseite.html` | `/kurse/1-sek/lerncamp-sportferien` | Kursdetail, Ferienkurs | Lerncamp Sportferien | 3 Ablaufphasen, 3 Terminzeilen mit aufklappbarem Tagesplan |
 | `Layout_2_Sek__Hauptseite.html` | `/kurse/2-3-sek` | Zielgruppen-Hauptseite | Vorbereitung Gymiprüfung 2027 | 4 Karten; Halbjahreskurs empfohlen; Zusatzangebote Prüfungssimulation und Selbststudium |
-| `Layout_2_Sek_Halbjahreskurs_Unterseite.html` | `/kurse/2-3-sek/halbjahreskurs` | Kursdetail, Halbjahreskurs | Deutsch & Mathematik | Umfangreichste Detailseite; 3 Ablaufphasen im Kursaufbau (korrigiert, siehe Hinweis unten), zusätzlich 3 Phasen *innerhalb* des Ablauf-Popovers (`AblaufPhased`, Abschnitt 2.4 — nicht zu verwechseln), Inhalte, Testimonials, 6 Terminzeilen |
+| `Layout_2_Sek_Halbjahreskurs_Unterseite.html` | `/kurse/2-3-sek/halbjahreskurs` | Kursdetail, Halbjahreskurs | Deutsch & Mathematik | Umfangreichste Detailseite; **4 Kursaufbau-Schritte** (Standortbestimmung/Basis/Aufbau/Repetition, Ausnahme neben 6. Klasse, siehe Hinweis unten), zusätzlich 3 Phasen *innerhalb* des Ablauf-Popovers (`AblaufPhased`, Abschnitt 2.4 — nicht zu verwechseln), Inhalte, Testimonials, 6 Terminzeilen |
 | `Layout_2_Sek_Intensivkurs_Unterseite.html` | `/kurse/2-3-sek/intensivkurs-sportferien` | Kursdetail, Ferienkurs | Prüfungsaufgaben trainieren | 3 Phasen, Testimonials, 5 Terminzeilen, **interaktiver Wochenfilter** (funktionierendes Vanilla-JS, filtert Zeilen per `data-week`) — als React-State (`useState`) neu zu bauen, nicht als DOM-`style.display`; Tabelle hat hier keine eigene Zeit-Spalte (steckt im Tagesplan-Popover) |
 | `Layout_2_Sek_Pruefungssimulation.html` | `/kurse/2-3-sek/pruefungssimulation` | Eigenständiges Zusatzangebot | Prüfungssimulation | **Neu aufzubauen** — Quelldatei nutzt fremdes Design-System (siehe Abschnitt 4), nicht direkt migrierbar |
 | `Layout_4_Klasse_Hauptseite.html` | `/kurse/4-klasse` | Zielgruppen-Hauptseite | Grundlagen stärken | 2 Karten: Wochenkurs und Lerncamp Sportferien |
@@ -2090,7 +2090,7 @@ vorhandene Anmeldelogik wird geprüft und wiederverwendet bzw. erweitert, nicht 
 | `Layout_5_Klasse_Halbjahreskurs_Unterseite.html` | `/kurse/5-klasse/halbjahreskurs` | Kursdetail, Halbjahreskurs (Detailmockup nennt noch „Wochenkurs") | Deutsch, Mathematik & Lerncoaching | 3 Phasen, Fach-/Coaching-Inhalte, 5 Terminzeilen; zentraler Offer-Datensatz hält Karten- und Detailtitel konsistent |
 | `Layout_5_Klasse_Intensivkurs_Unterseite.html` | `/kurse/5-klasse/lerncamp-sportferien` | Kursdetail, Ferienkurs | Ferien-Lerncamp | Strukturell praktisch identisch mit 4. Klasse, 4 Terminzeilen |
 | `Layout_6_Klasse_Hauptseite.html` | `/kurse/6-klasse` | Zielgruppen-Hauptseite | Vorbereitung Gymiprüfung 2027 | 4 Karten; Halbjahreskurs empfohlen; Zusatzangebote Prüfungssimulation und Selbststudium |
-| `Layout_6_Klasse_Halbjahreskurs_Unterseite.html` | `/kurse/6-klasse/halbjahreskurs` | Kursdetail, Halbjahreskurs | Deutsch & Mathematik | 3 Phasen im Kursaufbau (korrigiert, siehe Hinweis unten), Fachinhalte, Testimonials, 5 Terminzeilen |
+| `Layout_6_Klasse_Halbjahreskurs_Unterseite.html` | `/kurse/6-klasse/halbjahreskurs` | Kursdetail, Halbjahreskurs | Deutsch & Mathematik | **4 Kursaufbau-Schritte** (Standortbestimmung/Basis/Aufbau/Repetition, Ausnahme neben 2./3. Sek, siehe Hinweis unten), Fachinhalte, Testimonials, 5 Terminzeilen |
 | `Layout_6_Klasse_Intensivkurs_Unterseite.html` | `/kurse/6-klasse/intensivkurs-sportferien` | Kursdetail, Ferienkurs | Prüfungsaufgaben trainieren | 3 Phasen, Testimonials, 8 Terminzeilen an den zwei verbindlichen Standorten Zürich HB und Winterthur, Tagesplan mit hervorgehobenem Prüfungssimulations-Tag |
 | `Layout_6_Klasse_Pruefungssimulation.html` | `/kurse/6-klasse/pruefungssimulation` | Eigenständiges Zusatzangebot | Prüfungssimulation | **Neu aufzubauen** — Quelldatei nutzt fremdes Design-System (siehe Abschnitt 4), nicht direkt migrierbar |
 | `Layout_6_Klasse_Selbststudium_Unterseite.html` | `/kurse/6-klasse/selbststudium` | Eigenständiges Zusatzangebot | Selbststudium 6. Klasse | Vorhandenes Mockup über `SelfStudyPageModel`; Checkout/Zugang nur mit realem Ziel |
@@ -2099,11 +2099,19 @@ vorhandene Anmeldelogik wird geprüft und wiederverwendet bzw. erweitert, nicht 
 **Korrekturen gegenüber einer früheren Fassung dieses Dokuments (Abgleich mit dem aktuellen
 Mockup-Stand):**
 
-- **Kursaufbau hat bei allen fünf Halbjahreskurs-/Vorkurs-Unterseiten (4./5./6. Klasse, 1. Sek,
-  2./3. Sek) durchgängig 3 Schritte, nicht 4.** Frühere Fassungen dieser Tabelle nannten „4 Phasen"
-  — der `CourseFlow`-Baustein sollte für `steps` daher generisch bleiben (Länge aus den Daten,
-  nicht fest auf 4 auslegen). Bei den Intensivkurs-Unterseiten war die Angabe „3 Phasen" bereits
-  korrekt.
+- **Kursaufbau hat bei drei der fünf Halbjahreskurs-/Vorkurs-Unterseiten (4./5. Klasse, 1. Sek)
+  durchgängig 3 Schritte, nicht 4.** Frühere Fassungen dieser Tabelle nannten „4 Phasen" — der
+  `CourseFlow`-Baustein bleibt für `steps` generisch (Länge aus den Daten, nicht fest ausgelegt),
+  gerade damit er beide Fälle abbilden kann. Bei den Intensivkurs-Unterseiten war die Angabe
+  „3 Phasen" bereits korrekt.
+- **Betreiberentscheid 28.07.2026 — 6. Klasse und 2./3. Sek sind bewusste Ausnahmen mit 4
+  Kursaufbau-Schritten, nicht 3.** Für `sechsKlasseHalbjahreskurs` und `zweiDreiSekHalbjahreskurs`
+  (`types/marketing.fixtures.ts`) gilt verbindlich: **Standortbestimmung → Basis (Sept.–Okt.) →
+  Aufbau (Nov.–Dez.) → Repetition (Jan.–März)**, inhaltlich angelehnt an
+  `gymivorbereitung-zuerich.ch/langzeit/halbjahreskurs`. Alle anderen Halbjahreskurs-/Vorkurs-
+  Unterseiten (4./5. Klasse, 1. Sek) behalten die 3-Schritte-Struktur aus dem Punkt oben. `CourseFlow`
+  (`app/components/kurse/course-flow.tsx`) unterstützt beide Längen generisch (2–4 Spalten, vier statt
+  drei Akzentfarben) — es gibt keine zweite, 6.-Klasse-spezifische Variante der Komponente.
 - **6. Klasse Intensivkurs hat 8 Terminzeilen, nicht 7** (Kurs A–H, verteilt auf die zwei
   verbindlichen Standorte Zürich HB und Winterthur).
 - **Dateiname-Korrektur 1. Sek:** Die tatsächlich hochgeladene Datei heisst
