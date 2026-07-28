@@ -5,13 +5,13 @@ import { signOut } from 'next-auth/react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/useAuthStore'
-import { Menu, X, LogOut, User, ChevronDown } from 'lucide-react'
+import { Menu, X, LogOut, User, ChevronDown, PenLine } from 'lucide-react'
 import { useClassFilter } from '@/context/ClassFilterContext'
 import { CLASS_LEVEL_NAV_ITEMS, type ClassLevel } from '@/lib/class-levels'
 
 export default function DashboardNavbar() {
   const router = useRouter()
-  const { name, email, isAuthenticated, isContentManager } = useAuthStore()
+  const { name, email, isAuthenticated, isContentManager, isStudent } = useAuthStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { selectedClass, setSelectedClass, userDefaultClass, isLoading } = useClassFilter()
@@ -159,7 +159,18 @@ export default function DashboardNavbar() {
                 ))}
               </div>
             </div>
-            
+
+            {isStudent && (
+              <Link
+                href="/aufsaetze"
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <PenLine className="w-5 h-5" />
+                Aufsätze
+              </Link>
+            )}
+
             <Link
               href="/profil"
               className="flex items-center gap-3 px-4 py-3 text-base font-medium text-white hover:bg-white/10 rounded-lg transition-colors"

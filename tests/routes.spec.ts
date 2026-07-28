@@ -348,6 +348,21 @@ test.describe('authentifiziert als E2E-Nutzer (Rolle "user")', () => {
     expect(new URL(page.url()).pathname).toBe('/dashboard')
   })
 
+  test('Schüler erreicht den Aufsatz-Upload direkt vom Dashboard und über das mobile Menü', async ({ page }) => {
+    await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD)
+
+    await page.getByRole('link', { name: 'Neuer Aufsatz', exact: true }).click()
+    await page.waitForURL((url) => url.pathname === '/aufsaetze' && url.searchParams.get('neu') === '1')
+    await expect(page.getByRole('heading', { name: 'Neuen Aufsatz hochladen' })).toBeVisible()
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/dashboard')
+    await page.getByRole('button', { name: 'Menü öffnen' }).click()
+    await expect(
+      page.locator('nav').first().getByRole('link', { name: 'Aufsätze', exact: true })
+    ).toBeVisible()
+  })
+
   test('gültiger interner callbackUrl wird nach Login exakt übernommen', async ({ page }) => {
     await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD, '/profil')
     expect(new URL(page.url()).pathname).toBe('/profil')

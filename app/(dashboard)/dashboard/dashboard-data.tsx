@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Calculator,
   BookOpen,
+  PenLine,
 } from 'lucide-react'
 import { BadgesSection } from './badges-section'
 
@@ -15,9 +16,10 @@ interface Props {
   userId: string
   token: string
   firstName: string
+  isStudent: boolean
 }
 
-export async function DashboardData({ userId, token, firstName }: Props) {
+export async function DashboardData({ userId, token, firstName, isStudent }: Props) {
   const supabase = createAuthenticatedSupabaseClient(token)
 
   const [{ data: progressData }, { data: examsData }] = await Promise.all([
@@ -35,13 +37,24 @@ export async function DashboardData({ userId, token, firstName }: Props) {
   return (
     <>
       {/* Welcome Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">
-          Hallo, {firstName}! 👋
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Willkommen zurück zu deinem ZAP-Training.
-        </p>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            Hallo, {firstName}! 👋
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Willkommen zurück zu deinem ZAP-Training.
+          </p>
+        </div>
+        {isStudent && (
+          <Link
+            href="/aufsaetze?neu=1"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
+          >
+            <PenLine className="h-4 w-4" />
+            Neuer Aufsatz
+          </Link>
+        )}
       </div>
 
       {/* Stats Grid — jede Kachel verlinkt auf den Prüfungstrainer, da sich alle vier Werte

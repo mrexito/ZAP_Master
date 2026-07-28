@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { formatFileSize, formatDateTime as formatDate } from '@/lib/utils/format'
 import {
   Upload, FileText, Clock, CheckCircle2, AlertCircle,
@@ -34,11 +35,14 @@ const STATUS_CONFIG = {
 }
 
 export function AufsaetzeClient() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const openedFromDashboard = searchParams.get('neu') === '1'
   const [essays, setEssays] = useState<Essay[]>([])
   const [aiCorrections, setAiCorrections] = useState<Record<string, string>>({})
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [showUploadForm, setShowUploadForm] = useState(false)
+  const [showUploadForm, setShowUploadForm] = useState(openedFromDashboard)
   
   // Upload State
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -52,6 +56,15 @@ export function AufsaetzeClient() {
   
   // Action States
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  const closeUploadForm = () => {
+    setShowUploadForm(false)
+    setUploadFile(null)
+    setUploadError('')
+    if (openedFromDashboard) {
+      router.replace('/aufsaetze', { scroll: false })
+    }
+  }
 
   const loadEssays = useCallback(async () => {
     const [essayResult, aiResult] = await Promise.all([
@@ -158,7 +171,7 @@ export function AufsaetzeClient() {
       setSubject('')
       setDescription('')
       setSubmitImmediately(false)
-      setShowUploadForm(false)
+      closeUploadForm()
       
       // Refresh Liste
       await loadEssays()
@@ -253,11 +266,8 @@ export function AufsaetzeClient() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold">Neuen Aufsatz hochladen</h2>
             <button
-              onClick={() => {
-                setShowUploadForm(false)
-                setUploadFile(null)
-                setUploadError('')
-              }}
+              onClick={closeUploadForm}
+              aria-label="Uploadformular schliessen"
               className="p-1 hover:bg-muted rounded-md transition-colors"
             >
               <X className="w-5 h-5" />
@@ -411,11 +421,7 @@ export function AufsaetzeClient() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setShowUploadForm(false)
-                  setUploadFile(null)
-                  setUploadError('')
-                }}
+                onClick={closeUploadForm}
                 disabled={isUploading}
                 className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
               >

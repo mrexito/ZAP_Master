@@ -21,6 +21,7 @@ export default async function DashboardPage() {
           userId={session.user.id}
           token={session.supabaseAccessToken}
           firstName={firstName}
+          isStudent={session.user.role === 'user'}
         />
       </Suspense>
     </div>
