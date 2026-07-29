@@ -2,6 +2,12 @@ Set-StrictMode -Version Latest
 
 . "$PSScriptRoot\approved-postgres-tools.ps1"
 
+# Aktualisiert am 29.07.2026 auf das seit dem Kontowechsel produktive Projekt
+# notaqfguhhjpvmagvcic ("Lernecke"); vorheriger Stand prüfte noch ybzdibifgqjsbohtztmy (ZAP_25),
+# siehe docs/migration-evidence/2026-07-29-baseline-adoption-decision.md. Rollenname
+# zap_baseline_reader_lernecke statt zap_baseline_reader, da Letztere als abgelaufener,
+# nicht änderbarer Datensatz aus dem alten Projekt mitübernommen wurde (PostgreSQL-16+
+# CREATEROLE-ohne-ADMIN-OPTION-Einschränkung).
 # Diese Konfiguration enthält ausdrücklich kein Kennwort.
 $WorkspaceRoot = Split-Path -Parent $PSScriptRoot
 $ApprovedPgServiceName = 'zap_baseline_readonly'
@@ -25,10 +31,10 @@ if ($actualCaHash -ne $ApprovedSupabaseCaSha256) {
 $serviceContent = Get-Content -LiteralPath $ApprovedPgServiceFile -Raw
 $requiredServiceEntries = @(
     '[zap_baseline_readonly]',
-    'host=aws-0-eu-central-2.pooler.supabase.com',
+    'host=aws-0-eu-west-1.pooler.supabase.com',
     'port=5432',
     'dbname=postgres',
-    'user=zap_baseline_reader.ybzdibifgqjsbohtztmy',
+    'user=zap_baseline_reader_lernecke.notaqfguhhjpvmagvcic',
     'sslmode=verify-full'
 )
 

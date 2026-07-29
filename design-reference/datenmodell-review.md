@@ -227,6 +227,13 @@ Ausführungsplans für dieses Projekt fortgesetzt wird, muss geklärt werden, ob
 Dies ist eine Architekturentscheidung, keine reine Doku-Korrektur — nicht im Rahmen dieses
 Live-Abgleichs vorweggenommen.
 
+**Entschieden am 29.07.2026:** Option 1 (einziger frischer Baseline-Dump statt granularer
+Rekonstruktion der 56 lokalen Dateien). Vollständige Begründung, gefundener Blocker (die read-only
+Verbindungskette `supabase/pg_service.conf`/`scripts/approved-db-connection.ps1` zeigt noch auf das
+alte Projekt `ybzdibifgqjsbohtztmy`) und das Runbook für den menschlichen Operator stehen in
+`docs/migration-evidence/2026-07-29-baseline-adoption-decision.md`. Bis das dortige Runbook
+(Abschnitt 3) durchlaufen ist, bleibt Schritt 0 des Ausführungsplans für dieses Projekt offen.
+
 ## 8. Security-Advisor — Kurzfassung (Detailprüfung auf Wunsch zurückgestellt)
 
 Read-only `get_advisors(type=security)` liefert zusätzlich zu den in Abschnitt 5 bereits als
@@ -261,10 +268,12 @@ Vertiefte Bewertung (welche `SECURITY DEFINER`-Freigaben tatsächlich gewollt si
    Migration nachgezogen, Funktion berechnet jetzt korrekt, Spalten gedroppt, verifiziert.
 2. ~~`school_holiday_weeks` fehlte live~~ **Erledigt (29.07.2026):** siehe Abschnitt 6.1 —
    nachgezogen und verifiziert (12 Zeilen).
-3. Migrationshistorie-Lücke (Abschnitt 7) als eigene Entscheidung mit dem Nutzer klären, bevor
-   Schritt 0 des Ausführungsplans für dieses Projekt fortgesetzt wird. Punkt 1 und 2 waren beide
-   Symptome derselben Ursache (einzelne Migrationsdateien nie angewendet) — ohne Tracking bleibt
-   das Risiko, dass weitere, noch nicht entdeckte Lücken existieren.
+3. ~~Migrationshistorie-Lücke (Abschnitt 7) als eigene Entscheidung mit dem Nutzer klären~~
+   **Entschieden (29.07.2026):** einziger frischer Baseline-Dump, siehe Abschnitt 7 und
+   `docs/migration-evidence/2026-07-29-baseline-adoption-decision.md`. Offen bleibt die
+   Durchführung des dortigen Runbooks (neue read-only Rolle auf `notaqfguhhjpvmagvcic`,
+   aktualisierte Verbindungskette, Dump, lokales Gate, `migration repair`) durch den menschlichen
+   Operator.
 4. `learning_materials`-Bestand (Abschnitt 4) klären — bewusst klein oder Datenverlust beim
    Kontowechsel?
 5. Bei Bedarf: Security-Advisor-Befunde aus Abschnitt 8 in einer eigenen, fokussierten Runde

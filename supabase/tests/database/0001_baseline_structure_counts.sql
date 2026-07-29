@@ -151,6 +151,17 @@
 -- Sequenz (uuid-PK per gen_random_uuid()), keine neue Funktion/Trigger/View.
 -- Alle Werte empirisch per psql gegen die lokale Instanz nach `supabase db reset --local`
 -- verifiziert, nicht nur rechnerisch hergeleitet.
+--
+-- Baseline-Adoption 29.07.2026 (docs/migration-evidence/2026-07-29-baseline-adoption-decision.md):
+-- Ab hier ersetzt ein einziger schema-only pg_dump von notaqfguhhjpvmagvcic ("Lernecke") die
+-- bisherige 56-Datei-Kette (siehe supabase/migrations/20260729180000_live_schema_baseline_2026_07_29.sql,
+-- Datei nach supabase/legacy-migrations/ verschoben). Constraints/Indizes weichen dadurch von den
+-- oben zuletzt gegen den LOKALEN Dateiverlauf resynchronisierten 227/142 auf 225/141 ab -- nicht
+-- durch einen Fehler in dieser Baseline, sondern weil ein unabhaengiger Live-Katalogabgleich
+-- (datenmodell-review.md, Abschnitt 1) exakt 225 Constraints/141 Indizes auf notaqfguhhjpvmagvcic
+-- misst. Der lokale 56-Dateien-Verlauf und die tatsaechliche Live-DB waren also bereits vor dieser
+-- Baseline um 2 Constraints/1 Index auseinandergelaufen -- genau die Art von Drift, die diese
+-- Baseline-Umstellung beheben soll.
 
 begin;
 
@@ -211,14 +222,14 @@ select is(
        join pg_class c on c.oid = con.conrelid
        join pg_namespace n on n.oid = c.relnamespace
       where n.nspname = 'public'),
-    227,
-    '227 Constraints (PK/UNIQUE/FK/CHECK) im public-Schema'
+    225,
+    '225 Constraints (PK/UNIQUE/FK/CHECK) im public-Schema'
 );
 
 select is(
     (select count(*)::int from pg_indexes where schemaname = 'public'),
-    142,
-    '142 Indizes im public-Schema'
+    141,
+    '141 Indizes im public-Schema'
 );
 
 select is(
