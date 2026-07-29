@@ -92,18 +92,21 @@ for (const route of audienceOverviewRoutes) {
   })
 }
 
-for (const { overviewRoute, detailRoute } of [
+for (const { overviewRoute, detailRoute, price } of [
   {
     overviewRoute: '/de/kurse/5-klasse',
     detailRoute: '/de/kurse/5-klasse/halbjahreskurs',
+    price: /CHF\s*3['’]490/,
   },
   {
     overviewRoute: '/de/kurse/1-sek',
     detailRoute: '/de/kurse/1-sek/vorkurs',
+    price: /CHF\s*990/,
   },
   {
     overviewRoute: '/de/kurse/2-3-sek',
     detailRoute: '/de/kurse/2-3-sek/halbjahreskurs',
+    price: /CHF\s*3['’]490/,
   },
 ]) {
   // Betreiberentscheid 27.07.2026: kein manuell gepflegter Frühbucherpreis/-Stichtag mehr (siehe
@@ -112,13 +115,21 @@ for (const { overviewRoute, detailRoute } of [
   // eines fest hinterlegten Frühbucher-Stichtags/-Preises (lib/pricing.ts#formatOfferPrice).
   test(`Regulärpreis + Frühbucher-Hinweistext erscheinen konsistent auf ${overviewRoute} und der Unterseite`, async ({ page }) => {
     await page.goto(overviewRoute)
-    await expect(page.getByText(/CHF\s*3['’]190/)).toBeVisible()
-    await expect(page.getByText('10% Rabatt bei Anmeldung mindestens 6 Wochen vor Kursstart')).toBeVisible()
+    // .first(): auf der Detailseite wiederholt sich derselbe Preis pro Terminzeile.
+    await expect(page.getByText(price).first()).toBeVisible()
+    // .first(): derselbe Hinweistext wiederholt sich pro Terminzeile in der SessionTable.
+    await expect(
+      page.getByText('10% Rabatt bei Anmeldung mindestens 6 Wochen vor Kursstart').first()
+    ).toBeVisible()
     await expect(page.getByText('Frühbucherrabatt bis 31. Juli', { exact: true })).not.toBeVisible()
 
     await page.goto(detailRoute)
-    await expect(page.getByText(/CHF\s*3['’]190/)).toBeVisible()
-    await expect(page.getByText('10% Rabatt bei Anmeldung mindestens 6 Wochen vor Kursstart')).toBeVisible()
+    // .first(): auf der Detailseite wiederholt sich derselbe Preis pro Terminzeile.
+    await expect(page.getByText(price).first()).toBeVisible()
+    // .first(): derselbe Hinweistext wiederholt sich pro Terminzeile in der SessionTable.
+    await expect(
+      page.getByText('10% Rabatt bei Anmeldung mindestens 6 Wochen vor Kursstart').first()
+    ).toBeVisible()
   })
 }
 
@@ -154,17 +165,17 @@ test('BMS übernimmt die Standortbelegung der Fixwochen aus den Kursangeboten', 
   const booking = page.locator('#buchung')
   const table = booking.locator('table')
 
-  await booking.getByRole('button', { name: /^KW 6 ·/ }).click()
+  await booking.getByRole('radio', { name: /^KW 6 ·/ }).click()
   await expect(table.locator('tbody tr')).toHaveCount(1)
   await expect(table.getByText('Winterthur', { exact: true })).toHaveCount(1)
   await expect(table.getByText('Zürich HB', { exact: true })).toHaveCount(0)
 
-  await booking.getByRole('button', { name: /^KW 7 ·/ }).click()
+  await booking.getByRole('radio', { name: /^KW 7 ·/ }).click()
   await expect(table.locator('tbody tr')).toHaveCount(2)
   await expect(table.getByText('Winterthur', { exact: true })).toHaveCount(1)
   await expect(table.getByText('Zürich HB', { exact: true })).toHaveCount(1)
 
-  await booking.getByRole('button', { name: /^KW 8 ·/ }).click()
+  await booking.getByRole('radio', { name: /^KW 8 ·/ }).click()
   await expect(table.locator('tbody tr')).toHaveCount(1)
   await expect(table.getByText('Zürich HB', { exact: true })).toHaveCount(1)
   await expect(table.getByText('Winterthur', { exact: true })).toHaveCount(0)
@@ -333,8 +344,10 @@ test.describe('authentifiziert als E2E-Nutzer (Rolle "user")', () => {
     await expect(
       page.getByRole('heading', { name: 'Welches Fach möchtest du simulieren?' })
     ).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Mathematik', exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Deutsch', exact: true })).toBeVisible()
+    // CardTitle rendert als <div>, nicht als Heading-Element (shadcn-Konvention) -- getByText statt
+    // getByRole('heading') matcht deshalb den tatsächlichen Kartentitel.
+    await expect(page.getByText('Mathematik', { exact: true })).toBeVisible()
+    await expect(page.getByText('Deutsch', { exact: true })).toBeVisible()
     await expect(
       page.getByRole('button', {
         name: 'Deutsche Simulationsprüfung – bald verfügbar',
@@ -346,6 +359,13 @@ test.describe('authentifiziert als E2E-Nutzer (Rolle "user")', () => {
   test('/login ohne Rücksprungziel führt nach erfolgreichem Login zu /dashboard', async ({ page }) => {
     await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD)
     expect(new URL(page.url()).pathname).toBe('/dashboard')
+  })
+
+  test('Schüler sieht weder den Kursabschnitt noch den Intensivkurs-Link in der Sidebar', async ({ page }) => {
+    await loginAs(page, E2E_USER_EMAIL, E2E_USER_PASSWORD)
+
+    await expect(page.getByRole('button', { name: 'Kurse', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Intensivkurse', exact: true })).toHaveCount(0)
   })
 
   test('Schüler erreicht den Aufsatz-Upload direkt vom Dashboard und über das mobile Menü', async ({ page }) => {
@@ -596,15 +616,22 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
   test('Lerncamp der 1. Sek lässt sich nach Kurswoche filtern', async ({ page }) => {
     await page.goto('/de/kurse/1-sek/lerncamp-sportferien')
 
+    // Label-Format seit den administrativen Fixwochen (school_holiday_weeks): "KW <Nr> ·
+    // <Mo>–<Fr>", nicht mehr das alte "<Tag>.–<Tag>. Februar".
     await expect(page.getByRole('radio', { name: 'Alle Kurswochen' })).toBeVisible()
-    await expect(page.getByRole('radio', { name: '8.–12. Februar' })).toBeVisible()
-    await expect(page.getByRole('radio', { name: '15.–19. Februar' })).toBeVisible()
-    await expect(page.getByRole('radio', { name: '22.–26. Februar' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'KW 6 · 08.02.27–12.02.27' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'KW 7 · 15.02.27–19.02.27' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'KW 8 · 22.02.27–26.02.27' })).toBeVisible()
 
-    await page.getByRole('radio', { name: '15.–19. Februar' }).click()
-    await expect(page.locator('table tbody tr')).toHaveCount(1)
-    await expect(page.locator('table tbody tr')).toContainText('15.–19. Feb.')
-    await expect(page.locator('table tbody tr')).not.toContainText('08.–12. Feb.')
+    await page.getByRole('radio', { name: 'KW 7 · 15.02.27–19.02.27' }).click()
+    // 3 parallele Kursgruppen pro Kurswoche (Kurs A/B/C, verschiedene Standorte/Zeiten) --
+    // die Filterung schliesst KW 6/8 korrekt aus, reduziert aber nicht auf eine einzelne Zeile.
+    await expect(page.locator('table tbody tr')).toHaveCount(3)
+    // "table tbody" statt "table tbody tr": Mehrere Zeilen widersprechen sonst toContainText's
+    // Ein-Element-Anforderung (Strict-Mode-Fehler bei 3 tr-Elementen).
+    const tbody = page.locator('table tbody')
+    await expect(tbody).toContainText('15.02.27 – 19.02.27')
+    await expect(tbody).not.toContainText('08.02.27 – 12.02.27')
   })
 
   test('konkret gewählte Session öffnet ohne Umweg ihr Anmeldeformular', async ({ page }) => {
@@ -727,17 +754,17 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     // zugehörigen offer_editions-Datensatz; app/(dashboard)/dashboard/kurse/durchfuehrungen/actions.ts
     // ruft dafür jetzt updateTag('offers') auf (vorher: gar keine Invalidierung, siehe Kommentar dort).
     await page.goto('/de/kurse/6-klasse/halbjahreskurs')
-    await expect(page.getByText(/CHF\s*3['’]?490/)).toBeVisible()
+    // .first(): derselbe Preis erscheint zusätzlich pro Terminzeile in der SessionTable -- der
+    // Locator matcht deshalb mehrere Elemente, nicht nur den einen Überblicks-Preis.
+    await expect(page.getByText(/CHF\s*3['’]?490/).first()).toBeVisible()
 
     await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD)
     await page.goto('/dashboard/kurse/angebote')
 
-    // "6. Klasse"-Gruppe finden, darin die "Vorkurs"-Karte -- Gruppen sind nach Zielgruppe
-    // geordnete Geschwister-<div>s, kein direktes Eltern-Kind-Verhältnis zur Überschrift.
-    const sechsKlasseHeading = page.getByRole('heading', { name: '6. Klasse', exact: true })
-    await expect(sechsKlasseHeading).toBeVisible()
-    const sechsKlasseGroup = sechsKlasseHeading.locator('xpath=following-sibling::div[1]')
-    await sechsKlasseGroup.getByRole('link', { name: /Vorkurs/ }).click()
+    // Die Admin-Maske ist ein einzelnes kombiniertes Formular (edition-workspace.tsx) mit einem
+    // "Kursangebot"-<select>, dessen onChange direkt zur gewählten Durchführung navigiert -- keine
+    // separaten Zielgruppen-Gruppen mit Geschwister-Links mehr.
+    await page.getByLabel('Kursangebot').selectOption({ label: '6. Klasse · Vorkurs' })
 
     await expect(page.locator('input[name="regularPriceChf"]')).toHaveValue('3490')
     await page.locator('input[name="regularPriceChf"]').fill('4001')
@@ -747,7 +774,7 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     // Frische Navigation, kein Reload/Wartezeit -- prüft updateTag('offers') statt cacheLife('hours')
     // abzuwarten. Der Preis wird als CHF 4'001.00 formatiert (formatChfRappen, lib/pricing.ts).
     await page.goto('/de/kurse/6-klasse/halbjahreskurs')
-    await expect(page.getByText(/CHF\s*4['’]?001/)).toBeVisible()
+    await expect(page.getByText(/CHF\s*4['’]?001/).first()).toBeVisible()
     await expect(page.getByText(/CHF\s*3['’]?490/)).toHaveCount(0)
   })
 })

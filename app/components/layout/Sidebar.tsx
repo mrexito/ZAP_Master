@@ -43,11 +43,6 @@ const lernenNavigation = [
   { name: 'Aufsätze', href: '/aufsaetze', icon: PenLine },
 ]
 
-// Kurse-Gruppe
-const kurseNavigation = [
-  { name: 'Intensivkurse', href: '/intensivkurse', icon: Calendar },
-]
-
 // Admin-Kursübersichten auf Basis des zentralen Angebotskatalogs
 const adminKurseNavigation = [
   { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar, exact: true },
@@ -55,10 +50,10 @@ const adminKurseNavigation = [
   { name: 'Vorkurse', href: '/dashboard/kurse/vorkurse', icon: GraduationCap },
 ]
 
-// Lehrpersonen verwalten ihre Kurse im Kursabschnitt nach der Administration.
+// Lehrpersonen erhalten nur die Kursverwaltung. Die Angebotsübersichten für
+// Intensivkurse und Vorkurse sind ausschließlich für Administratoren sichtbar.
 const lehrpersonKurseNavigation = [
   { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar, exact: true },
-  ...kurseNavigation,
 ]
 
 // Mentoring-System (Mentorship)
@@ -327,23 +322,19 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Kurse stehen bewusst nach der Administration. Admins und Lehrpersonen
-          erhalten zusätzlich die Kursverwaltung. */}
-      <div className="mt-6 pt-4 border-t border-border">
-        <NavGroup
-          title="Kurse"
-          icon={Calendar}
-          items={
-            isAdmin
-              ? adminKurseNavigation
-              : isContentManager
-                ? lehrpersonKurseNavigation
-                : kurseNavigation
-          }
-          isCollapsed={isCollapsed}
-          onExpandSidebar={expandSidebar}
-        />
-      </div>
+      {/* Der Kursabschnitt ist nur für Mitarbeitende sichtbar. Admins sehen
+          zusätzlich die administrativen Angebotsübersichten. */}
+      {(isAdmin || isContentManager) && (
+        <div className="mt-6 pt-4 border-t border-border">
+          <NavGroup
+            title="Kurse"
+            icon={Calendar}
+            items={isAdmin ? adminKurseNavigation : lehrpersonKurseNavigation}
+            isCollapsed={isCollapsed}
+            onExpandSidebar={expandSidebar}
+          />
+        </div>
+      )}
     </aside>
   )
 }

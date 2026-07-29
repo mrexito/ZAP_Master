@@ -121,8 +121,9 @@ export function EditionWorkspace({
           </span>
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-foreground">Kursangebot</label>
+          <label htmlFor="offer-select" className="mb-1.5 block text-xs font-semibold text-foreground">Kursangebot</label>
           <select
+            id="offer-select"
             className="h-[42px] w-full rounded-[9px] border border-border bg-white px-3 text-sm outline-none focus:border-secondary focus:ring-3 focus:ring-secondary/15"
             value={offerId}
             onChange={(event) => router.push(`/dashboard/kurse/angebote/${event.target.value}/durchfuehrungen/neu`)}
@@ -135,8 +136,9 @@ export function EditionWorkspace({
           </select>
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-foreground">Durchführung</label>
+          <label htmlFor="edition-select" className="mb-1.5 block text-xs font-semibold text-foreground">Durchführung</label>
           <select
+            id="edition-select"
             className="h-[42px] w-full rounded-[9px] border border-border bg-white px-3 text-sm outline-none focus:border-secondary focus:ring-3 focus:ring-secondary/15"
             value={editionIdParam}
             onChange={(event) => router.push(`/dashboard/kurse/angebote/${offerId}/durchfuehrungen/${event.target.value}`)}
