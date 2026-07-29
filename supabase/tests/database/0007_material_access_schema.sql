@@ -32,17 +32,20 @@ select is(
 -- 2) area_id ist nutzbar: akzeptiert einen gültigen material_areas-Verweis und bleibt NULL-fähig
 --    (für needs_review-Zeilen wie die echte id=10). Eigene Fixture-Kurszeile als FK-Ziel für
 --    intensivwoche-fremde Testdaten ist hier nicht nötig; learning_materials braucht keinen Kurs.
+--    class_levels wird seit dem 29.07.2026-Baseline-Dump explizit benoetigt (live NOT NULL ohne
+--    DEFAULT, vorher DEFAULT ARRAY['5. Klasse','6. Klasse']); die needs_review-Zeile bekommt
+--    bewusst die alte mehrdeutige Default-Kombination als Wert.
 with fixture_area as (
     select id from public.material_areas where key = 'langzeitgymi'
 ),
 ins_zugeordnet as (
-    insert into public.learning_materials (name, area_id)
-    select 'pgTAP Fixture: zugeordnetes Material', fixture_area.id from fixture_area
+    insert into public.learning_materials (name, area_id, class_levels)
+    select 'pgTAP Fixture: zugeordnetes Material', fixture_area.id, ARRAY['6. Klasse'] from fixture_area
     returning id, area_id
 ),
 ins_unzugeordnet as (
-    insert into public.learning_materials (name, area_id)
-    values ('pgTAP Fixture: needs_review Material', null)
+    insert into public.learning_materials (name, area_id, class_levels)
+    values ('pgTAP Fixture: needs_review Material', null, ARRAY['5. Klasse', '6. Klasse'])
     returning id, area_id
 )
 select

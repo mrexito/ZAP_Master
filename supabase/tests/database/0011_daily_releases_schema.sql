@@ -61,9 +61,10 @@ with fixture_day as (
 )
 select set_config('pgtap.day_id', (select id::text from fixture_day), true);
 
--- 3) release_content_catalog: XOR-CHECK.
+-- 3) release_content_catalog: XOR-CHECK. class_levels ist seit dem 29.07.2026-Baseline-Dump
+--    NOT NULL auf exercises (Spalte existierte im 19.07.-Baseline-Strang noch gar nicht).
 with fixture_exercise as (
-    insert into public.exercises (title, type) values ('pgTAP Uebung Tagesfreigaben', 'uebung')
+    insert into public.exercises (title, type, class_levels) values ('pgTAP Uebung Tagesfreigaben', 'uebung', ARRAY['6. Klasse'])
     returning id
 )
 select set_config('pgtap.exercise_id', (select id::text from fixture_exercise), true);

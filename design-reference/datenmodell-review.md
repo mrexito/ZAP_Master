@@ -264,6 +264,19 @@ Vertiefte Bewertung (welche `SECURITY DEFINER`-Freigaben tatsächlich gewollt si
 
 ## 10. Empfohlene nächste Schritte
 
+0. ~~Zu weite Live-Grants auf mehreren Tabellen~~ **Erledigt (29.07.2026):** `anon`/`authenticated`
+   hatten live `GRANT ALL` statt der von den jeweiligen Härtungsmigrationen vorgesehenen minimalen
+   Rechte auf `intensivwoche_anmeldungen`, `intensivwoche_buchungsversuche`,
+   `material_areas`/`self_study_enrollments`/`material_access_grants`, `offers`/`offer_editions`,
+   den vier Tagesfreigaben-Tabellen, den sechs Arbeitszeit-/Lohn-Tabellen und fünf
+   Finanz-Tabellen inkl. `financial_events` — gefunden über einen vollständigen,
+   GRANT/REVOKE-erhaltenden Schema-Dump. Fix als additive Migration
+   (`supabase/migrations/20260729200000_restore_intended_table_grants.sql`) erstellt, lokal
+   (199/199 pgTAP-Tests) und per `supabase db push --linked` live angewendet und anschliessend über
+   den Supabase-MCP-Connector read-only gegen Live verifiziert (u. a. `anon` hat jetzt kein
+   `INSERT` mehr auf `intensivwoche_anmeldungen`, `authenticated` kein `UPDATE` mehr auf das
+   append-only-Ledger `financial_events`). Details:
+   `docs/migration-evidence/2026-07-29-baseline-adoption-decision.md`, Abschnitt 6.
 1. ~~Early-Bird-Preis-Bug und tote Spalten beheben~~ **Erledigt (29.07.2026):** siehe Abschnitt 3 —
    Migration nachgezogen, Funktion berechnet jetzt korrekt, Spalten gedroppt, verifiziert.
 2. ~~`school_holiday_weeks` fehlte live~~ **Erledigt (29.07.2026):** siehe Abschnitt 6.1 —
