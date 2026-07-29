@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { useAuthStore } from '@/store/useAuthStore'
-import { 
+import {
   ArrowLeft, 
   Upload, 
   FileText, 
@@ -18,10 +17,10 @@ import {
   ExternalLink
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
-import { createAuthenticatedBrowserClient } from '@/lib/supabase/client'
-import { createMaterial, getSubjects } from '../actions'
+import { createMaterial, createMaterialUploadUrl, getSubjects } from '../actions'
 import { useClassFilter } from '@/context/ClassFilterContext'
 import { CLASS_LEVELS } from '@/lib/class-levels'
+import type { MaterialAreaId } from '@/types/kurs-materialien'
 
 const materialTypes = [
   { value: 'document', label: 'Dokument (PDF, Word)' },
@@ -33,6 +32,16 @@ const materialTypes = [
   { value: 'video', label: 'Video' },
   { value: 'link', label: 'Link / Lesezeichen' },
   { value: 'other', label: 'Sonstiges' },
+]
+
+// Abschnitt 2.11: vier geschützte Materialbereiche. Kein Bereich (Wert '') bedeutet frei
+// zugänglich -- der bestehende öffentliche Katalog auf /materialien.
+const AREA_OPTIONS: { value: MaterialAreaId | ''; label: string }[] = [
+  { value: '', label: 'Öffentlich (für alle sichtbar)' },
+  { value: 'langzeitgymi', label: 'Langzeitgymi (Selbststudium 6. Klasse)' },
+  { value: 'kurzgymi', label: 'Kurzgymi (Selbststudium 2./3. Sek)' },
+  { value: 'bms', label: 'BMS (Selbststudium)' },
+  { value: 'matura', label: 'Matura (Selbststudium)' },
 ]
 
 type UploadMode = 'file' | 'link'
@@ -148,27 +157,22 @@ function LinkPreview({ url, onRemove }: { url: string; onRemove: () => void }) {
 
 export default function NeuMaterialPage() {
   const router = useRouter()
-  const { supabaseAccessToken } = useAuthStore()
   const { selectedClass } = useClassFilter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const supabase = useMemo(
-    () => supabaseAccessToken ? createAuthenticatedBrowserClient(supabaseAccessToken) : null,
-    [supabaseAccessToken]
-  )
-  
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
-  
+
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [subjectId, setSubjectId] = useState<string>('')
   const [type, setType] = useState('document')
   const [selectedClassLevels, setSelectedClassLevels] = useState<string[]>([])
-  
+  const [areaId, setAreaId] = useState<MaterialAreaId | ''>('')
+
   const [file, setFile] = useState<File | null>(null)
-  const [fileUrl, setFileUrl] = useState<string | null>(null)
+  const [downloadPath, setDownloadPath] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   
   // Link mode states
@@ -233,32 +237,36 @@ export default function NeuMaterialPage() {
   }
 
   async function uploadFile() {
-    if (!file || !supabase) return null
-    
+    if (!file) return null
+
     setUploading(true)
-    setUploadProgress(0)
-    
+    setUploadProgress(10)
+
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      const filePath = `materials/${fileName}`
-      
-      const { error } = await supabase.storage
-        .from('lernmaterialien')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        })
-      
-      if (error) throw error
-      
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('lernmaterialien')
-        .getPublicUrl(filePath)
-      
+      // Signed-Upload-URL vom Server holen -- der lernmaterialien-Bucket ist privat, ein
+      // direkter Browser-Upload mit dem authentifizierten Client hätte keine INSERT-Policy
+      // (Abschnitt 2.11). Gleiches Muster wie beim Aufsatz-/Rubriken-Upload.
+      const urlResult = await createMaterialUploadUrl(file.name)
+      if (!urlResult.success || !urlResult.data) {
+        toast.error(('error' in urlResult && urlResult.error) || 'Konnte Upload-URL nicht erstellen.')
+        return null
+      }
+
+      setUploadProgress(30)
+
+      const uploadResponse = await fetch(urlResult.data.signedUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      })
+
+      if (!uploadResponse.ok) {
+        toast.error('Fehler beim Hochladen der Datei')
+        return null
+      }
+
       setUploadProgress(100)
-      return urlData.publicUrl
+      return urlResult.data.path
     } catch (err) {
       console.error('Upload error:', err)
       toast.error('Fehler beim Hochladen der Datei')
@@ -271,19 +279,19 @@ export default function NeuMaterialPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    
+
     try {
       // Upload file first
-      let uploadedUrl = fileUrl
-      if (file && !fileUrl) {
-        uploadedUrl = await uploadFile()
-        if (!uploadedUrl) {
+      let uploadedPath = downloadPath
+      if (file && !downloadPath) {
+        uploadedPath = await uploadFile()
+        if (!uploadedPath) {
           setLoading(false)
           return
         }
-        setFileUrl(uploadedUrl)
+        setDownloadPath(uploadedPath)
       }
-      
+
       // Create material
       const formData = new FormData()
       formData.append('name', name)
@@ -291,20 +299,21 @@ export default function NeuMaterialPage() {
       formData.append('subject_id', subjectId)
       formData.append('type', type)
       selectedClassLevels.forEach(level => formData.append('class_levels', level))
-      
+      if (areaId) formData.append('area_id', areaId)
+
       // Handle file upload or link
       if (uploadMode === 'link' && linkUrlValid) {
         formData.append('file_url', linkUrl)
         formData.append('is_link', 'true')
-      } else if (uploadedUrl) {
-        formData.append('file_url', uploadedUrl)
+      } else if (uploadedPath) {
+        formData.append('download_path', uploadedPath)
       }
-      
+
       if (file) {
         formData.append('file_size', file.size.toString())
         formData.append('file_type', file.type)
       }
-      
+
       const result = await createMaterial(formData)
       
       if (!result.success) {
@@ -425,7 +434,7 @@ export default function NeuMaterialPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setFile(null)
-                          setFileUrl(null)
+                          setDownloadPath(null)
                         }}
                         className="p-1 hover:bg-muted rounded-lg"
                       >
@@ -574,6 +583,26 @@ export default function NeuMaterialPage() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Materialbereich */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Materialbereich
+              </label>
+              <select
+                value={areaId}
+                onChange={(e) => setAreaId(e.target.value as MaterialAreaId | '')}
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {AREA_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Ein gewählter Bereich macht das Material ausschliesslich für Nutzende mit aktivem
+                Zugang zu diesem Selbststudium sichtbar, statt es öffentlich zu veröffentlichen.
+              </p>
             </div>
 
             {/* Class Levels */}
