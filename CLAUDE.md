@@ -24,6 +24,23 @@ workflow" below.
 
 ## Database workflow — read this before touching `supabase/`
 
+> **Kontowechsel-Hinweis (29.07.2026, aufgelöst):** Der Nutzer hat ein neues Supabase-Konto
+> eröffnet und eine Migration vom alten zum neuen Konto durchgeführt. Die produktiv genutzte App
+> (`.env.local` → `NEXT_PUBLIC_SUPABASE_URL`) spricht seither mit dem Projekt
+> `notaqfguhhjpvmagvcic` ("Lernecke"), **nicht mehr** mit `ybzdibifgqjsbohtztmy` ("ZAP_25", altes
+> Konto). Der Supabase-MCP-Connector war zwischenzeitlich noch mit dem alten Konto verbunden und
+> lieferte dadurch veraltete Live-Daten; er wurde am 29.07.2026 auf das neue Konto umgehängt und
+> zeigt seither korrekt `notaqfguhhjpvmagvcic` (plus `epiekraadwkxbtadzhnp`,
+> "Gymivergleich_Portal", ohne Bezug zu dieser App). Ein frischer, verifizierter Live-Abgleich
+> gegen `notaqfguhhjpvmagvcic` steht in `design-reference/datenmodell-review.md` (Stand
+> 29.07.2026) — der dortige Stand ersetzt alle älteren „Live-Datenbank-Abgleich"-Aussagen in
+> diesem Dokument und in `design-reference/architektur-briefing-kursseiten.md`, die weiterhin auf
+> das alte Projekt datiert sind. Wichtigster Fund: Das Zielschema ist praktisch vollständig
+> bereits umgesetzt (alle 27 Tabellen vorhanden), es gibt aber keine über die Supabase-CLI
+> nachverfolgte Migrationshistorie auf diesem Projekt und einen ungeklärten Widerspruch bei den
+> Frühbucher-Preis-Spalten auf `offer_editions` — siehe dortige Abschnitte 3 und 7, bevor an
+> Preislogik oder der Baseline-Strategie weitergearbeitet wird.
+
 The historical migration files `001`–`014` under `supabase/migrations/` are **not** a reproducible
 or approved migration chain (duplicate `002` versions, missing base tables, one file with local
 auth/test data). They do not reflect the real live migration history. **Do not run them manually,
