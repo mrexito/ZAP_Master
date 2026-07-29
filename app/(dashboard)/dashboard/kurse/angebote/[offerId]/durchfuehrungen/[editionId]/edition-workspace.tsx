@@ -33,6 +33,7 @@ function suggestNextSchoolYear(editions: OfferEditionDB[]): string {
 
 export function EditionWorkspace({
   offerList,
+  latestEditionByOffer,
   offerId,
   catalogEntry,
   editions,
@@ -42,6 +43,7 @@ export function EditionWorkspace({
   holidayWeeks,
 }: {
   offerList: AdminOfferListEntry[]
+  latestEditionByOffer: Record<number, string>
   offerId: number
   catalogEntry: AdminOfferListEntry
   editions: OfferEditionDB[]
@@ -126,7 +128,15 @@ export function EditionWorkspace({
             id="offer-select"
             className="h-[42px] w-full rounded-[9px] border border-border bg-white px-3 text-sm outline-none focus:border-secondary focus:ring-3 focus:ring-secondary/15"
             value={offerId}
-            onChange={(event) => router.push(`/dashboard/kurse/angebote/${event.target.value}/durchfuehrungen/neu`)}
+            onChange={(event) => {
+              // Landet auf der neuesten Durchführung des neu gewählten Angebots (analog zum
+              // Redirect in /dashboard/kurse/angebote/page.tsx), nicht unconditional auf einer
+              // leeren "neu"-Durchführung -- sonst würde jeder Angebotswechsel bestehende Preise/
+              // Termine verstecken, obwohl bereits eine Durchführung existiert.
+              const targetOfferId = Number(event.target.value)
+              const targetEditionId = latestEditionByOffer[targetOfferId] ?? 'neu'
+              router.push(`/dashboard/kurse/angebote/${targetOfferId}/durchfuehrungen/${targetEditionId}`)
+            }}
           >
             {offerList.map((entry) => (
               <option key={entry.offerId} value={entry.offerId}>

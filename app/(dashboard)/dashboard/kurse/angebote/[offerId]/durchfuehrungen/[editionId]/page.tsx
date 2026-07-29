@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { requireAdmin } from '@/lib/auth/guards'
 import {
   getAdminOfferList,
+  getAdminEditionSummaries,
   getEditionsForOffer,
   getEditionDetail,
   getSchoolHolidayWeeks,
@@ -23,12 +24,24 @@ export default async function OfferEditionPage({
   const offerId = Number(offerIdParam)
   if (!Number.isInteger(offerId)) notFound()
 
-  const offerListResult = await getAdminOfferList()
+  const [offerListResult, summariesResult] = await Promise.all([
+    getAdminOfferList(),
+    getAdminEditionSummaries(),
+  ])
   if (!offerListResult.success || !offerListResult.data) notFound()
   const offerList = offerListResult.data
 
   const catalogEntry = offerList.find((entry: AdminOfferListEntry) => entry.offerId === offerId)
   if (!catalogEntry) notFound()
+
+  // Für den "Kursangebot"-Wechsel im Bearbeitungskontext: navigiert auf die neueste Durchführung
+  // des NEU gewählten Angebots (wie /dashboard/kurse/angebote/page.tsx beim initialen Redirect),
+  // statt immer auf eine leere "neu"-Durchführung -- sonst würde jeder Angebotswechsel den
+  // bestehenden Preis/Termine verstecken, obwohl bereits eine Durchführung existiert.
+  const summaries = summariesResult.success && summariesResult.data ? summariesResult.data : []
+  const latestEditionByOffer = Object.fromEntries(
+    summaries.map((summary) => [summary.offerId, summary.latestEditionId])
+  )
 
   const editionsResult = await getEditionsForOffer(offerId)
   const editions = editionsResult.success && editionsResult.data ? editionsResult.data : []
@@ -41,6 +54,7 @@ export default async function OfferEditionPage({
       <EditionWorkspace
         key={`${offerId}:neu`}
         offerList={offerList}
+        latestEditionByOffer={latestEditionByOffer}
         offerId={offerId}
         catalogEntry={catalogEntry}
         editions={editions}
@@ -60,6 +74,7 @@ export default async function OfferEditionPage({
     <EditionWorkspace
       key={`${offerId}:${editionIdParam}`}
       offerList={offerList}
+      latestEditionByOffer={latestEditionByOffer}
       offerId={offerId}
       catalogEntry={catalogEntry}
       editions={editions}
