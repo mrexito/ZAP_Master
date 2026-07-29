@@ -48,7 +48,7 @@ ist damit überholt:
 | Bounded Context | Tabellen (alle vorhanden) | Zeilen |
 |---|---|---|
 | Identität | `profiles`, `subjects` | 24, 10 |
-| Marketing-Katalog | `offers`, `offer_editions`, `course_sessions` | 20, 20, 0 |
+| Marketing-Katalog | `offers`, `offer_editions`, `course_sessions`, `school_holiday_weeks` | 20, 20, 0, 12 |
 | Buchung | `intensivwoche_kurse`, `intensivwoche_anmeldungen` | 72, 49 |
 | Materialzugriff | `material_areas`, `self_study_enrollments`, `material_access_grants` | 4, 0, 0 |
 | Tagesfreigaben | `course_days`, `daily_releases`, `daily_release_items`, `release_content_catalog` | 0, 0, 0, 0 |
@@ -179,6 +179,23 @@ Die Bounded-Context-Trennung aus dem alten Review (Abschnitt 4 dort) ist damit s
 so umgesetzt, wie sie beschrieben war — `course_sessions` ist tatsächlich nur eine 1:1-Erweiterung,
 kein zweites Buchungssystem.
 
+### 6.1 Nachgezogene Migration: `school_holiday_weeks` (29.07.2026, erledigt)
+
+Ein systematischer Abgleich aller `CREATE TABLE`-Anweisungen in `supabase/migrations/*.sql` gegen
+die Live-Tabellenliste ergab genau eine Abweichung: `school_holiday_weeks` aus der jüngsten lokalen
+Migration (`20260728090000_school_holiday_weeks_schema.sql` +
+`20260728091000_seed_school_holiday_weeks.sql`) fehlte live, obwohl der zugehörige Code
+(`app/(dashboard)/dashboard/kurse/durchfuehrungen/actions.ts`, `lib/kurse/catalog.ts`,
+`lib/kurse/fixed-school-schedule.ts`) bereits committed ist (Commit `d4efe25`) — das
+Admin-Ferienwochen-Feature war dadurch potenziell defekt. Der Nutzer hat beide Dateien am
+29.07.2026 manuell über den Dashboard-SQL-Editor nachgezogen; verifiziert: 12 Zeilen, 9
+`schedule_group`-Werte, 2 `holiday_type`-Werte — exakt wie im Seed vorgesehen.
+
+Alle übrigen 53 lokalen Migrationsdateien (inkl. `20260719133741_live_schema_baseline.sql`) sind
+auf Ebene der `CREATE TABLE`-Anweisungen jetzt vollständig deckungsgleich mit dem Live-Schema.
+Das bedeutet **nicht**, dass jede einzelne `ALTER`/`CREATE POLICY`/`CREATE FUNCTION`-Anweisung
+darin geprüft wurde — nur die Tabellenebene wurde systematisch abgeglichen.
+
 ## 7. Migrationshistorie: keine — Konsequenz für die Baseline-Strategie
 
 `list_migrations` liefert eine leere Liste. Ein direkter Check bestätigt: Das Schema
@@ -235,11 +252,13 @@ Vertiefte Bewertung (welche `SECURITY DEFINER`-Freigaben tatsächlich gewollt si
 
 1. ~~Widerspruch zu den Early-Bird-Spalten klären~~ **Erledigt (29.07.2026):** siehe Abschnitt 3 —
    Code nutzt ausschliesslich die automatische Regel, Spalten sind bestätigt totes Altmaterial.
-2. Migrationshistorie-Lücke (Abschnitt 7) als eigene Entscheidung mit dem Nutzer klären, bevor
+2. ~~`school_holiday_weeks` fehlte live~~ **Erledigt (29.07.2026):** siehe Abschnitt 6.1 —
+   nachgezogen und verifiziert (12 Zeilen).
+3. Migrationshistorie-Lücke (Abschnitt 7) als eigene Entscheidung mit dem Nutzer klären, bevor
    Schritt 0 des Ausführungsplans für dieses Projekt fortgesetzt wird. Die Early-Bird-Spalten aus
    Punkt 1 sollten im selben Aufwasch bereinigt werden (dropbar, aber Teil derselben
    Baseline-Entscheidung, nicht isoliert vorab).
-3. `learning_materials`-Bestand (Abschnitt 4) klären — bewusst klein oder Datenverlust beim
+4. `learning_materials`-Bestand (Abschnitt 4) klären — bewusst klein oder Datenverlust beim
    Kontowechsel?
-4. Bei Bedarf: Security-Advisor-Befunde aus Abschnitt 8 in einer eigenen, fokussierten Runde
+5. Bei Bedarf: Security-Advisor-Befunde aus Abschnitt 8 in einer eigenen, fokussierten Runde
    vertiefen.
