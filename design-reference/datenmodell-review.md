@@ -18,10 +18,14 @@ lieferte dadurch veraltete Daten gegen ein Projekt, mit dem die App nicht mehr s
 dokumentierte Zwischenstand vermuten liess. Praktisch das gesamte in
 `architektur-briefing-kursseiten.md` beschriebene Zielschema (alle 27 dort genannten Tabellen)
 existiert bereits, inklusive der Server-Actions/RPCs aus den Schritten 5 und 10a–10d des
-Ausführungsplans. Gleichzeitig gibt es keine über die Supabase-CLI nachverfolgte
-Migrationshistorie und einen konkreten Widerspruch zu einer dokumentierten Preis-Entscheidung
-(siehe Abschnitt 3). Dieses Dokument beschreibt den verifizierten Ist-Zustand; es ersetzt nicht
-die in Abschnitt 5/6 weiterhin offenen Verifikations- und Freigabeschritte.
+Ausführungsplans. Der Live-Abgleich deckte ausserdem zwei konkrete, mittlerweile behobene Lücken
+auf: eine fehlende Tabelle (`school_holiday_weeks`, Abschnitt 6.1) und einen aktiven Preis-Bug in
+`book_intensivwoche_kurs()` (Abschnitt 3) — beide entstanden dadurch, dass einzelne lokale
+Migrationsdateien nie gegen dieses Projekt ausgeführt wurden. Es gibt weiterhin keine über die
+Supabase-CLI nachverfolgte Migrationshistorie (Abschnitt 7) — das grundsätzliche Risiko, dass
+weitere, noch nicht entdeckte Migrationsdateien ebenfalls nie angewendet wurden, bleibt bestehen.
+Dieses Dokument beschreibt den verifizierten Ist-Zustand; es ersetzt nicht die in Abschnitt 5/6
+weiterhin offenen Verifikations- und Freigabeschritte.
 
 ## 1. Verbindlicher Live-Snapshot
 
@@ -78,31 +82,34 @@ Diese Tabellen sind für die Kursseiten-/Startseiten-Migration nur insoweit rele
 `release_content_catalog` (Tagesfreigaben-Feature) per FK auf `exercises` und `trainer_exams`
 verweist (siehe Abschnitt 5).
 
-## 3. Widerspruch zu einer dokumentierten Preis-Entscheidung — geklärt (29.07.2026)
+## 3. Widerspruch zu einer dokumentierten Preis-Entscheidung — behoben (29.07.2026)
 
-**Fund:** `offer_editions` besitzt live weiterhin die Spalten `early_bird_enabled` (boolean),
+**Fund:** `offer_editions` besass live weiterhin die Spalten `early_bird_enabled` (boolean),
 `early_bird_price_rappen` (integer) und `early_bird_deadline` (date), obwohl der
-„Betreiberentscheid 27.07.2026" ihre Entfernung dokumentiert.
+„Betreiberentscheid 27.07.2026" ihre Entfernung dokumentiert. Codesuche über `.ts`/`.tsx` ergab
+keinen einzigen Treffer für diese Spalten (auch nicht camelCase) — `lib/pricing.ts` und das
+Admin-Formular implementieren bereits ausschliesslich die automatische 10%/42-Tage-Regel.
 
-**Klärung:** Eine Codesuche über `.ts`/`.tsx` nach `early_bird_enabled`, `early_bird_price_rappen`,
-`early_bird_deadline` (und den camelCase-Entsprechungen) ergibt **keinen einzigen Treffer**. Weder
-`book_intensivwoche_kurs()` noch `lib/pricing.ts` noch das Admin-Formular
-(`app/components/kurse-admin/offer-edition-form.tsx`) lesen oder schreiben diese Spalten — beide
-implementieren bereits ausschliesslich die automatische 10%/42-Tage-Regel
-(bestätigt durch die vom Nutzer zitierte Hinweiszeile im Admin-Formular: „Automatischer
-Frühbucherrabatt: 10% auf den Preis oben, wenn die Anmeldung mindestens 6 Wochen vor dem unter
-„3 · Termine" hinterlegten Kursstart der jeweiligen Durchführung erfolgt").
+**Weiterführender Fund — aktiver Preis-Bug:** Die Live-Funktion `book_intensivwoche_kurs()` hatte
+ebenfalls noch den alten Stand: `booked_price_rappen` wurde ausnahmslos als
+`round(v_kurs.preis * 100)` berechnet, **ohne** die 42-Tage/10%-Prüfung. Das bedeutete eine aktive
+Diskrepanz zwischen Anzeigepreis (Terminliste zeigt bereits den Rabatt über
+`computeSessionPricing()`) und tatsächlich belastetem/gespeichertem Preis für **jede neue
+Buchung** ab dem 27.07.2026. Eine Prüfung aller 49 bestehenden, nicht stornierten Anmeldungen ergab
+jedoch: **keine davon ist retroaktiv betroffen** — alle wurden vor dem 27.07.2026 erstellt, also
+bevor die automatische Regel überhaupt beschlossen wurde (der alte manuelle Frühbucherpreis wirkte
+sich laut Migrationskommentar nie auf den belasteten Preis aus, das war schon vorher so gewollt).
+Kein rückwirkender Korrekturbedarf bei bestehenden Buchungen.
 
-Damit ist **Ursache 1** bestätigt: Die Migration `20260727170000_automatic_early_bird_discount.sql`
-(enthält `ALTER TABLE offer_editions DROP COLUMN early_bird_enabled, DROP COLUMN
-early_bird_price_rappen, DROP COLUMN early_bird_deadline`) wurde nie gegen `notaqfguhhjpvmagvcic`
-ausgeführt. Die drei Spalten sind totes, ungenutztes Altmaterial — kein aktiver Bug, aber ein
-weiterer Beleg dafür, dass dieses Live-Projekt nicht durch lückenloses Abspielen der lokalen
-`supabase/migrations/*.sql` in Reihenfolge entstanden ist (siehe Abschnitt 7).
+**Ursache (beide Funde):** Die Migration `20260727170000_automatic_early_bird_discount.sql` —
+enthält sowohl den Spalten-Drop als auch das `CREATE OR REPLACE FUNCTION
+book_intensivwoche_kurs(...)` mit der Rabattlogik — wurde nie gegen `notaqfguhhjpvmagvcic`
+ausgeführt. Weiterer Beleg dafür, dass dieses Live-Projekt nicht durch lückenloses Abspielen der
+lokalen `supabase/migrations/*.sql` in Reihenfolge entstanden ist (siehe Abschnitt 7).
 
-**Empfehlung:** Spalten können gefahrlos gedroppt werden (kein Code-Pfad betroffen), aber erst im
-Rahmen der in Abschnitt 7 zu klärenden grundsätzlichen Frage, wie mit der fehlenden
-Migrationshistorie auf diesem Projekt umgegangen wird — nicht isoliert vorab.
+**Behoben:** Der Nutzer hat die komplette Migrationsdatei am 29.07.2026 über den
+Dashboard-SQL-Editor nachgezogen. Verifiziert read-only: `book_intensivwoche_kurs()` enthält jetzt
+`v_early_bird`/die Rabattberechnung, `offer_editions` hat 0 verbleibende `early_bird_*`-Spalten.
 
 ## 4. Weitere auffällige Punkte
 
@@ -250,14 +257,14 @@ Vertiefte Bewertung (welche `SECURITY DEFINER`-Freigaben tatsächlich gewollt si
 
 ## 10. Empfohlene nächste Schritte
 
-1. ~~Widerspruch zu den Early-Bird-Spalten klären~~ **Erledigt (29.07.2026):** siehe Abschnitt 3 —
-   Code nutzt ausschliesslich die automatische Regel, Spalten sind bestätigt totes Altmaterial.
+1. ~~Early-Bird-Preis-Bug und tote Spalten beheben~~ **Erledigt (29.07.2026):** siehe Abschnitt 3 —
+   Migration nachgezogen, Funktion berechnet jetzt korrekt, Spalten gedroppt, verifiziert.
 2. ~~`school_holiday_weeks` fehlte live~~ **Erledigt (29.07.2026):** siehe Abschnitt 6.1 —
    nachgezogen und verifiziert (12 Zeilen).
 3. Migrationshistorie-Lücke (Abschnitt 7) als eigene Entscheidung mit dem Nutzer klären, bevor
-   Schritt 0 des Ausführungsplans für dieses Projekt fortgesetzt wird. Die Early-Bird-Spalten aus
-   Punkt 1 sollten im selben Aufwasch bereinigt werden (dropbar, aber Teil derselben
-   Baseline-Entscheidung, nicht isoliert vorab).
+   Schritt 0 des Ausführungsplans für dieses Projekt fortgesetzt wird. Punkt 1 und 2 waren beide
+   Symptome derselben Ursache (einzelne Migrationsdateien nie angewendet) — ohne Tracking bleibt
+   das Risiko, dass weitere, noch nicht entdeckte Lücken existieren.
 4. `learning_materials`-Bestand (Abschnitt 4) klären — bewusst klein oder Datenverlust beim
    Kontowechsel?
 5. Bei Bedarf: Security-Advisor-Befunde aus Abschnitt 8 in einer eigenen, fokussierten Runde
