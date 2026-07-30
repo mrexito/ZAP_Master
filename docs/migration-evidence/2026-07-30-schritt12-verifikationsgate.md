@@ -2,9 +2,14 @@
 
 Vollständiger Durchlauf des in `architektur-briefing-kursseiten.md` Abschnitt 10.2 geforderten
 Zwölf-Befehle-Gates, inklusive vertiefter Root-Cause-Analyse aller `test:routes`-Fehlschläge (auf
-ausdrücklichen Nutzerwunsch nach dem ersten Lauf). **Ergebnis: VERIFIKATION NICHT BESTANDEN** —
-2 von 108 Playwright-Routentests schlagen weiterhin auf, mit einer konkret identifizierten,
-umweltbedingten Ursache statt eines Funktionsfehlers. Alle anderen elf Befehle sind grün.
+ausdrücklichen Nutzerwunsch nach dem ersten Lauf).
+
+**Nachtrag (30.07.2026, zweite Untersuchungsrunde):** Der zunächst als umgebungsbedingt vermutete
+Rest-Flake bei „offer_editions-Preisänderung" wurde erneut isoliert beobachtet (genau die unten
+empfohlene Massnahme) und dabei auf einen echten Navigation-Race im Test selbst zurückgeführt,
+nicht auf Last/Timing der Umgebung. Fix verifiziert über drei vollständig saubere Einzelläufe und
+einen kompletten `test:routes`-Lauf: **108/108 bestanden.** Damit gilt: **Ergebnis: VERIFIKATION
+BESTANDEN** für alle zwölf Befehle dieses Gates.
 
 ## Ergebnis je Befehl (letzter offizieller Lauf)
 
@@ -77,31 +82,58 @@ Toast „Entwurf gespeichert." erscheint eindeutig (kein zweiter Treffer), und d
 danach zuverlässig `regular_price_rappen=400100`. Über vier aufeinanderfolgende instrumentierte
 Einzelläufe: 4/4 erfolgreich.
 
-**Verbleibender, nicht vollständig aufgeklärter Rest:** Im vollen `test:routes`-Lauf (dieser Test
-läuft dort als 104. von 108, nach einer langen sequenziellen Kette gegen denselben langlebigen
-`next start`-Prozess) schlägt exakt dieser Test weiterhin gelegentlich fehl — in der
-Stichprobe dieser Session 3 von 6 vollen Läufen, davon einmal mit einem zusätzlichen, unabhängigen
-Fehlschlag eines völlig anderen Tests (Aufsatz-Upload, 30s Timeout) im selben Lauf. Das spricht für
-eine kumulative Last-/Timing-Marginalität des langlebigen, in dieser Session bereits sehr lange
-wiederverwendeten Next.js-Serverprozesses (viele Docker-/Build-/Testprozesse liefen parallel auf
-derselben Maschine über die gesamte Sitzung), nicht für einen deterministischen Anwendungsfehler:
-Der zugrunde liegende Speicher-/Cache-Invalidierungspfad wurde mehrfach isoliert als korrekt
-nachgewiesen. Ein expliziter `{ timeout: 15_000 }` wurde ergänzt (vorher galt der knappe
-5s-Default), reicht aber unter dieser Last nicht immer aus. Empfehlung für einen späteren, neuen
-Lauf: denselben Test mit frisch gestartetem `next start`-Prozess (statt eines über die gesamte
-Sitzung wiederverwendeten) und ohne parallele Docker-/Build-Last erneut beobachten, um zu
-bestätigen, dass die Fehlerursache tatsächlich rein umgebungsbedingt ist.
+**Restursache gefunden und behoben (30.07.2026, zweite Untersuchungsrunde):** Die hier zuvor
+vermutete "umgebungsbedingte Last-/Timing-Marginalität" war **falsch** — auf ausdrücklichen
+Nutzerwunsch nach einer erneuten, isolierten Beobachtung (genau die oben empfohlene Massnahme)
+liess sich die Ursache eindeutig eingrenzen:
+
+- `/dashboard/kurse/angebote` redirectet serverseitig auf das **erste** Angebot (`offerId=1`,
+  "4. Klasse · Vorkurs"). Der anschliessende `selectOption({label: '6. Klasse · Vorkurs'})` löst
+  nur einen **asynchronen clientseitigen** `router.push()` zu `offerId=6` aus
+  (`edition-workspace.tsx`) — der Test wartete danach nicht explizit auf den Abschluss dieser
+  Navigation.
+- Da beide Angebote zufällig denselben Seed-Preis (CHF 3'490, `version=1`) haben, bestand die
+  Zwischenprüfung `expect(priceInput).toHaveValue('3490')` **auch dann**, wenn die Navigation noch
+  nicht abgeschlossen und tatsächlich noch das alte Formular für `offerId=1` sichtbar war. Der Test
+  speicherte dadurch gelegentlich den neuen Preis auf dem **falschen** Angebot; die spätere Prüfung
+  auf `/de/kurse/6-klasse/halbjahreskurs` schlug danach zuverlässig fehl, weil `offerId=6`
+  unverändert blieb.
+- Mit gezielter Diagnose-Instrumentierung (temporäres Logging in `saveEditionAction`, wieder
+  entfernt) direkt nachgewiesen: ein fehlgeschlagener Lauf sendete tatsächlich `offerId: 1`, ein
+  erfolgreicher `offerId: 6` — bei identischem Testcode, reine Timing-Frage.
+- **Kein Anwendungsfehler:** `updateTag('offers')` und der Cache-Invalidierungspfad selbst
+  funktionieren korrekt (in dieser Runde zusätzlich über einen direkten `curl` gegen einen frisch
+  gebauten `next start`-Prozess sowie 3 vollständig saubere Einzelläufe erneut bestätigt).
+- **Nebenfund, kein Bug, aber für künftige Diagnosen relevant:** `supabase db reset --local`
+  invalidiert **nicht** den persistenten Next.js-Daten-Cache unter `.next/cache` — ein DB-Reset
+  ohne begleitenden Cache-Clear/Rebuild kann deshalb einen zuvor über `updateTag()` geschriebenen,
+  inzwischen durch den Reset überholten Cache-Eintrag unverändert weiter ausliefern. Für die reale
+  Gate-Ausführung irrelevant (dort wird die DB genau einmal vor dem einzigen `build:test` +
+  `test:routes`-Lauf zurückgesetzt, nie dazwischen), aber eine Falle für jede manuelle,
+  wiederholte Beobachtung wie in dieser Untersuchung.
+
+**Fix:** `await page.waitForURL(/\/angebote\/6\/durchfuehrungen\//)` nach dem `selectOption()`
+ergänzt (`tests/routes.spec.ts`) — wartet auf den tatsächlichen Abschluss der clientseitigen
+Navigation, statt sich auf die (zufällig identische) Preisanzeige zu verlassen. Verifiziert: 3
+vollständig saubere Einzelläufe (Reset+Rebuild+Test) sowie ein vollständiger `test:routes`-Lauf
+— **108/108 bestanden**, Zieltest in 1.8s statt vorheriger 15s-Timeouts.
 
 ## Geänderte Dateien
 
 - `supabase/migrations/20260730120000_fix_function_search_path.sql` — bereits live angewendet
   (siehe `docs/migration-evidence/2026-07-29-baseline-adoption-decision.md`, Abschnitt 7).
-- `tests/routes.spec.ts` — vier Locator-Robustheitsfixes (`.first()` ×3, `:visible` ×1) plus zwei
-  explizite Timeout-Erhöhungen auf 15s. Keine App-Code-Änderung.
+- `tests/routes.spec.ts` — vier Locator-Robustheitsfixes (`.first()` ×3, `:visible` ×1), zwei
+  explizite Timeout-Erhöhungen auf 15s, sowie (30.07.2026, zweite Runde) ein `waitForURL()` nach
+  der Angebotsauswahl im Preisänderungstest — behebt die tatsächliche Ursache des Rest-Flakes
+  (Navigation-Race, siehe oben). Keine App-Code-Änderung.
 
 ## Nicht erledigt in diesem Lauf
 
-- Der verbleibende, umgebungsbedingt vermutete Rest-Flake bei „offer_editions-Preisänderung" ist
-  nicht zu 100% ausgeschlossen — siehe Empfehlung oben für einen erneuten, isolierten Beobachtungslauf.
+- ~~Der verbleibende, umgebungsbedingt vermutete Rest-Flake bei „offer_editions-Preisänderung"~~
+  **Behoben (30.07.2026):** Ursache war ein Navigation-Race im Test selbst, nicht die Umgebung —
+  siehe Root-Cause-Analyse oben. 108/108 Routentests jetzt grün.
 - §10.4 (Produktions-/Datenschutz-/SEO-/Betriebs-Gate: Staging-Backup, Feature-Flag-Rollback,
-  Consent-Entscheidung, Observability-Runbook, WCAG/Performance-Abnahme) nicht Teil dieses Laufs.
+  Consent-Entscheidung, Observability-Runbook, WCAG/Performance-Abnahme) nicht Teil dieses Laufs —
+  seither aber grossteils separat bearbeitet, siehe die jeweiligen Runbooks
+  (`staging-backup-restore-runbook.md`, `data-retention-runbook.md`, `observability-runbook.md`,
+  `env-separation-audit.md`).

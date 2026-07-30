@@ -776,6 +776,18 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     // separaten Zielgruppen-Gruppen mit Geschwister-Links mehr.
     await page.getByLabel('Kursangebot').selectOption({ label: '6. Klasse · Vorkurs' })
 
+    // Root-Cause-Fund (30.07.2026): /dashboard/kurse/angebote redirectet serverseitig auf das
+    // ERSTE Angebot (offerId=1, "4. Klasse · Vorkurs") -- der obige selectOption() löst nur einen
+    // ASYNCHRONEN clientseitigen router.push() zu offerId=6 aus. Ohne diesen Wait interagierten
+    // die folgenden Zeilen manchmal noch mit dem alten, noch nicht weggenavigierten Formular für
+    // offerId=1 -- unbemerkt, weil beide Angebote zufällig denselben Seed-Preis (CHF 3'490) haben,
+    // sodass die frühere Wert-Prüfung unten selbst dann bestand. Ergebnis: Der Preis wurde auf dem
+    // FALSCHEN Angebot gespeichert, die spätere Prüfung auf /kurse/6-klasse/... schlug deterministisch
+    // fehl (100% reproduzierbar in Isolation, siehe docs/migration-evidence -- keine reine
+    // Lastspitze, wie zuvor vermutet). Explizites Warten auf die tatsächlich abgeschlossene
+    // Navigation behebt das an der Wurzel, statt nur das Timeout zu erhöhen.
+    await page.waitForURL(/\/angebote\/6\/durchfuehrungen\//)
+
     // :visible ist hier nötig, nicht nur .first(): Der vorherige clientseitige
     // router.push()-Wechsel (Auswahl "6. Klasse · Vorkurs" oben) hält das zuvor gerenderte
     // Angebots-/Durchführungs-Segment als verstecktes (nicht entferntes) DOM im Next.js-
