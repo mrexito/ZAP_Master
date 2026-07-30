@@ -68,16 +68,24 @@ Dateien (keine neue Abhängigkeit, kein gitleaks/trufflehog-Download):
 
 Aktueller Stand: **grün**, 501 getrackte Dateien, keine Funde.
 
-## Bewusst NICHT Teil dieses Audits (verbleibende Lücke)
+## CI-Pipeline (ergänzt 30.07.2026)
 
-Es existiert **keine CI-Pipeline** (`.github/workflows` fehlt vollständig). Abschnitt 10.4 verlangt
-wörtlich "CI prüft auf Remote-URLs im Local-only-Gate und auf eingecheckte Secrets" -- das oben
-beschriebene Skript ist dafür die manuell ausführbare Grundlage, ersetzt eine echte
-CI-Durchsetzung (bei jedem Push/PR automatisch, nicht nur bei manuellem Aufruf) aber nicht. Eine
-CI-Einrichtung berührt Entscheidungen, die nicht implizit mitentschieden werden sollten (Runner/
-Provider, ob und wie ein Docker-basierter lokaler Supabase-Stack in CI überhaupt praktikabel läuft,
-Kosten) und ist deshalb bewusst als offener, separat zu vergebender Folgeschritt dokumentiert statt
-selbst eingerichtet.
+`~~Es existiert keine CI-Pipeline~~` **Teilweise behoben:** `.github/workflows/ci.yml` führt
+`npm run typecheck`, `npm run lint` und `npm run check:secrets` (das oben beschriebene Skript) bei
+jedem Push nach `main` und jedem Pull Request automatisch aus -- damit läuft die
+Secret-/Remote-URL-Prüfung jetzt tatsächlich als "CI", nicht mehr nur manuell.
+
+Bewusst **nicht** Teil dieser ersten Pipeline: der volle Zwölf-Befehle-Gate aus Abschnitt 10.2
+(`supabase db reset --local`, `db lint`, pgTAP, `test:data-migration`, `build:test`, alle
+Playwright-Suiten). Dieser Teil setzt die gepinnte, hash-verifizierte Supabase-CLI unter
+`tools/supabase-cli/` voraus (`scripts/approved-supabase-cli.ps1`) -- eine Windows-Binärdatei, die
+bewusst manuell heruntergeladen und gegen die offizielle `checksums.txt` geprüft wurde, ohne
+automatisierten Download-Mechanismus in irgendeinem Skript. Ihn zu automatisieren bräuchte einen
+`windows-latest`-Runner, einen neuen Download-und-Verify-Schritt und laufende Kosten -- eine
+Entscheidung, die weiterhin bewusst nicht unilateral getroffen wurde (dem Betreiber am 30.07.2026
+als eigene Frage vorgelegt, Antwort: vorerst nur die statischen Prüfungen). Bis zu einer separaten
+Freigabe bleibt der volle Gate ein manueller lokaler Lauf, siehe dessen Protokolle unter
+`docs/migration-evidence/`.
 
 Ebenfalls nicht Teil dieses Audits: Mail-Werte (kein Mail-Provider ist im Projekt aktuell verdrahtet,
 siehe fehlender E-Mail-Outbox-Punkt in Abschnitt 10.4), Schlüsselrotation nach einem vermuteten Leak

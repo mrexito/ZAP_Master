@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Lokaler Secret-Scan (Env-Separation-Audit, Abschnitt 10.4: "CI prüft auf ... eingecheckte
-// Secrets"). Es existiert noch keine CI-Pipeline (kein .github/workflows) -- dieses Skript ist der
-// manuell (und optional per Git-Hook) ausführbare Vorläufer dafür, ohne neue Abhängigkeiten
+// Secrets"). Läuft seit 30.07.2026 automatisch in .github/workflows/ci.yml bei jedem Push/PR;
+// bleibt daneben weiterhin manuell (und optional per Git-Hook) ausführbar, ohne neue Abhängigkeiten
 // (kein gitleaks/trufflehog-Download). Prüft ausschliesslich GIT-GETRACKTE Dateien -- der reale
 // Angriffsvektor ist "eingecheckt", nicht "liegt lokal auf der Platte" (.env* selbst ist bereits
 // über .gitignore ausgeschlossen, siehe zweite Prüfung unten als Verteidigung in der Tiefe gegen

@@ -1,0 +1,50 @@
+name: CI
+
+# Abschnitt 10.4 des Architektur-Briefings ("Umgebungswerte"): "CI prüft auf Remote-URLs im
+# Local-only-Gate und auf eingecheckte Secrets." Dies ist die erste CI-Pipeline in diesem Projekt
+# (siehe env-separation-audit.md, Abschnitt "Bewusst NICHT Teil dieses Audits") und deshalb bewusst
+# eng begrenzt auf schnelle, kostenlose statische Prüfungen ohne Docker/Supabase:
+#
+#   - tsc --noEmit (typecheck)
+#   - eslint (lint)
+#   - scripts/check-no-leaked-secrets.mjs (check:secrets)
+#
+# Der volle Zwölf-Befehle-Gate aus Abschnitt 10.2 des Architektur-Briefings (supabase db reset
+# --local, db lint, pgTAP, test:data-migration, build:test, Playwright-Suiten) läuft NICHT hier.
+# Dieser Gate setzt die gepinnte, hash-verifizierte Supabase-CLI unter tools/supabase-cli/
+# voraus (scripts/approved-supabase-cli.ps1) -- eine Windows-Binärdatei, die bewusst manuell
+# heruntergeladen und gegen die offizielle checksums.txt geprüft wurde, nicht automatisiert von
+# irgendeinem Skript nachgezogen wird. Ob und wie dieser Teil des Gates in CI automatisiert wird
+# (windows-latest-Runner, ein neuer Download-und-Verify-Schritt, laufende Kosten) ist eine separate,
+# bewusst noch nicht getroffene Entscheidung -- dieser Workflow greift ihr nicht vor. Bis dahin
+# bleibt der volle Gate ein manueller lokaler Lauf, siehe dessen Protokolle unter
+# docs/migration-evidence/.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    name: Typecheck, Lint, Secret-Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run lint
+
+      - run: npm run check:secrets
