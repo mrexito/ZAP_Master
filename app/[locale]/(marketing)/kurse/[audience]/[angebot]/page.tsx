@@ -25,6 +25,7 @@ import { getOfferBySlug, getSessionsForOffer } from '@/lib/kurse/catalog'
 import { getSessionAvailability } from '@/lib/kurse/availability'
 import { buildSessionRows } from '@/lib/kurse/session-row'
 import { listCatalogedOfferParams, getSelfStudyPageExtras } from '@/lib/kurse/offer-catalog'
+import { buildCourseJsonLd } from '@/lib/kurse/course-jsonld'
 
 type BookableOffer = CourseOffer | ExamSimulationOffer
 
@@ -105,14 +106,28 @@ function SessionTableSkeleton() {
 async function BookingSectionLoader({
   offer,
   sessions,
+  locale,
 }: {
   offer: BookableOffer
   sessions: SessionDefinition[]
+  locale: string
 }) {
   await connection()
   const availability = await getSessionAvailability(sessions.map((session) => session.source.kursId))
   const rows = buildSessionRows(sessions, availability, offer.regularPriceRappen)
-  return <BookingSectionWithModal offer={offer} sessions={rows} />
+  // JSON-LD hängt von derselben ungecachten Verfügbarkeit ab wie die Terminliste selbst und wird
+  // deshalb hier statt in generateMetadata() gebaut (Abschnitt 7: Verfügbarkeit bleibt ausserhalb
+  // des gecachten Katalogpfads). buildCourseJsonLd() liefert null, solange Preis/Termine/
+  // Verfügbarkeit nicht sämtlich kanonisch sind -- siehe lib/kurse/course-jsonld.ts.
+  const jsonLd = buildCourseJsonLd(offer, sessions, availability, locale)
+  return (
+    <>
+      {jsonLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
+      ) : null}
+      <BookingSectionWithModal offer={offer} sessions={rows} />
+    </>
+  )
 }
 
 function SelfStudyOfferPage({ offer, audienceLabel, audienceHref }: { offer: SelfStudyOffer; audienceLabel: string; audienceHref: string }) {
@@ -180,7 +195,7 @@ export default async function CourseOfferDetailPage({
             audience={audience}
             booking={
               <Suspense fallback={<SessionTableSkeleton />}>
-                <BookingSectionLoader offer={offer} sessions={sessions} />
+                <BookingSectionLoader offer={offer} sessions={sessions} locale={locale} />
               </Suspense>
             }
           />
@@ -238,7 +253,7 @@ export default async function CourseOfferDetailPage({
       <Section spacing="sm" variant="muted">
         {!isExamSimulation ? <SectionNumberLabel number={4} label={offer.booking.title} /> : null}
         <Suspense fallback={<SessionTableSkeleton />}>
-          <BookingSectionLoader offer={offer} sessions={sessions} />
+          <BookingSectionLoader offer={offer} sessions={sessions} locale={locale} />
         </Suspense>
       </Section>
 
