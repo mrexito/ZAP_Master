@@ -859,18 +859,18 @@ export type Database = {
       intensivwoche_buchungsversuche: {
         Row: {
           attempted_at: string
+          email_hash: string
           id: number
-          parent_email: string
         }
         Insert: {
           attempted_at?: string
+          email_hash: string
           id?: never
-          parent_email: string
         }
         Update: {
           attempted_at?: string
+          email_hash?: string
           id?: never
-          parent_email?: string
         }
         Relationships: []
       }

@@ -95,24 +95,31 @@ entstehen (z. B. bei Grant-Widerruf), muss diese Aussage neu geprüft werden.
 
 ### Rate-Limit-Daten (`intensivwoche_buchungsversuche`)
 
-**Zweck:** Zähl-Log für den Buchungs-Rate-Limiter (max. 5 Versuche / 10 Minuten je
-`parent_email`, Abschnitt 3.4 in `datenmodell-review.md`).
-**Felder:** `parent_email`, `attempted_at`. Das ist eine Abweichung vom ursprünglich im
-Architektur-Briefing beschriebenen Design ("gehashter, rotierter Netzwerkkennung" als Schlüssel) —
-implementiert wurde stattdessen die normalisierte `parent_email` selbst, im Klartext, ohne Hash.
-Das ist personenbezogen (E-Mail-Adresse) und länger nachvollziehbar als nötig, siehe Lücke unten.
+**Zweck:** Zähl-Log für den Buchungs-Rate-Limiter (max. 5 Versuche / 10 Minuten je E-Mail,
+Abschnitt 3.4 in `datenmodell-review.md`).
+**Felder:** `email_hash`, `attempted_at`. **Behoben (30.07.2026,
+`20260730130000_hash_and_purge_rate_limit_attempts.sql`):** Die Tabelle speicherte bis dahin
+`parent_email` im Klartext — eine Abweichung vom ursprünglich im Architektur-Briefing beschriebenen
+Design ("gehashter, rotierter Netzwerkkennung" als Schlüssel). Jetzt wird nur noch ein SHA-256-Hash
+der kleingeschriebenen/getrimmten E-Mail gespeichert; `book_intensivwoche_kurs()` berechnet und
+vergleicht ausschliesslich diesen Hash. Der Rate-Limiter zählt weiterhin pro E-Mail (nicht pro
+Netzwerkkennung/IP) — eine Umstellung auf IP-basierte Zählung bliebe eine separate, grössere
+Design-Entscheidung mit eigenen Tradeoffs (NAT/Shared-IP-Familien, VPNs) und ist bewusst nicht Teil
+dieser Migration.
 **Zugriffsrollen:** Niemand ausser der SECURITY-DEFINER-Funktion `book_intensivwoche_kurs()` selbst
 — `REVOKE ALL ... FROM PUBLIC, anon, authenticated` gilt auch für `SELECT`. Selbst Admins können
 diese Tabelle nicht über PostgREST/den Dashboard-Client lesen; ein Zugriff wäre nur über eine
 direkte, separat zu autorisierende DB-Verbindung möglich.
-**Aufbewahrungsdauer:** Unbefristet und **ausdrücklich bewusst nicht bereinigt** — Zitat aus dem
-Tabellenkommentar der Migration `20260720090000`: "Wird bewusst nicht automatisch bereinigt (Phase
-B); künftiges Pruning ist ein separater, additiver Schritt." Das ist also eine bereits zum
-Zeitpunkt des Schemabaus dokumentierte, offene Lücke — keine neue Erkenntnis dieses Dokuments,
-hier aber zum ersten Mal im Zusammenhang mit einer Datenschutz-/Aufbewahrungsprüfung aufgeführt.
-**Lösch-/Anonymisierungsablauf:** Keiner vorhanden. Da die Tabelle nur für ein 10-Minuten-Fenster
-fachlich relevant ist, wäre ein Pruning (z. B. Zeilen älter als 24h löschen) sowohl aus Datenschutz-
-als auch aus Tabellenwachstums-Sicht sinnvoll — siehe offene Lücke unten.
+**Aufbewahrungsdauer:** **Behoben (30.07.2026):** War zuvor unbefristet und ausdrücklich bewusst
+nicht bereinigt (Zitat aus dem ursprünglichen Tabellenkommentar der Migration `20260720090000`:
+"Wird bewusst nicht automatisch bereinigt (Phase B); künftiges Pruning ist ein separater, additiver
+Schritt."). `book_intensivwoche_kurs()` löscht jetzt bei jedem Aufruf opportunistisch alle Zeilen
+älter als 1 Tag — kein `pg_cron`/externer Scheduler nötig, da die Funktion ohnehin bei jedem
+Buchungsversuch läuft. Lokal per pgTAP bewiesen
+(`supabase/tests/database/0026_rate_limit_hash_and_purge.sql`): eine 2 Tage alte Zeile wird beim
+nächsten Aufruf entfernt, eine 30 Minuten alte Zeile bleibt erhalten.
+**Lösch-/Anonymisierungsablauf:** Siehe Aufbewahrungsdauer oben — der opportunistische Purge deckt
+diesen Punkt jetzt vollständig ab, kein manueller Ablauf nötig.
 
 ### Mail-Outbox (`mail_outbox`)
 
@@ -175,10 +182,9 @@ Provider-Fehlermeldung.
   ein Löschen des `auth.users`-Datensatzes mit einer FK-Verletzung blockieren, sobald eine
   verknüpfte Zeile existiert. Ein Löschvorgang müsste diese Tabellen also zuerst gezielt bereinigen
   oder anonymisieren — dieser Ablauf ist nicht gebaut.
-- **Rate-Limit-Tabelle wird nie bereinigt** (bereits im Schema-Kommentar von `20260720090000`
-  vermerkt) — mit realem Nutzungsvolumen ein reines Wachstums-/Datensparsamkeits-Thema, kein akuter
-  Sicherheitsbug, aber vor Live-Betrieb ein sinnvoller nächster additiver Schritt (z. B. ein
-  periodisches `DELETE ... WHERE attempted_at < now() - interval '1 day'`).
+- ~~Rate-Limit-Tabelle wird nie bereinigt und speichert die E-Mail im Klartext~~ **Behoben
+  (30.07.2026):** siehe Abschnitt oben — Hash statt Klartext, opportunistischer Purge bei jedem
+  Funktionsaufruf, kein `pg_cron`/Scheduler nötig.
 - ~~`mail_outbox.last_error` kann Empfängerdaten aus Provider-Fehlermeldungen enthalten~~
   **Behoben (30.07.2026):** siehe oben — E-Mail-Adressen werden vor dem Schreiben redigiert.
   Weiterhin nicht dieselbe strukturelle (kompilierzeitliche) Garantie wie `logger.ts`, nur ein
