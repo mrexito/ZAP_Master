@@ -10,8 +10,12 @@
 
   Nutzt dieselbe gepinnte, hash-verifizierte pg_dump-Binary und dieselbe bereits freigegebene,
   read-only Verbindungskonfiguration (scripts/approved-db-connection.ps1,
-  supabase/pg_service.conf: Rolle zap_baseline_reader.ybzdibifgqjsbohtztmy, sslmode=verify-full),
-  die bereits fuer das Schritt-0-Baseline-Inventar verwendet wurde -- keine neue Verbindungsroute.
+  supabase/pg_service.conf: Rolle zap_baseline_reader_lernecke.notaqfguhhjpvmagvcic,
+  sslmode=verify-full -- aktualisiert 30.07.2026, vorher zap_baseline_reader.ybzdibifgqjsbohtztmy
+  auf dem seit dem Kontowechsel nicht mehr live genutzten Projekt), die bereits fuer das
+  Schritt-0-Baseline-Inventar verwendet wurde -- keine neue Verbindungsroute. Die Rolle braucht vor
+  dem Lauf ein frisch erteiltes SELECT auf alle Tabellen in public (siehe
+  staging-backup-restore-runbook.md) -- es wird nach jedem Dump absichtlich wieder entzogen.
 
   Standardmaessig NUR Struktur (--schema-only): enthaelt keine personenbezogenen Daten. Ein
   vollstaendiges Datenbackup (Namen/E-Mails/Telefonnummern aus intensivwoche_anmeldungen) ist ein
@@ -61,26 +65,34 @@ if ($IncludeData) {
 
 $env:PGSERVICEFILE = $ApprovedPgServiceFile
 $env:PGSSLROOTCERT = $ApprovedSupabaseCaPath
-$env:PGPASSWORD = Read-Host 'Live-DB-Passwort (zap_baseline_reader)' -MaskInput
+$env:PGPASSWORD = Read-Host 'Live-DB-Passwort (zap_baseline_reader_lernecke)' -MaskInput
 
 try {
     $pgDumpArgs = @(
         "service=$ApprovedPgServiceName",
         '--no-password',
         '--no-owner',
-        '--no-acl',
-        # zap_baseline_reader hat bewusst keinen Zugriff auf die von Supabase selbst verwalteten
+        # KEIN --no-acl/--no-privileges hier: docs/migration-evidence/2026-07-29-baseline-adoption-decision.md
+        # (Abschnitt 3.3) dokumentiert genau diesen Fehler am eigenen Baseline-Dump -- ein
+        # ACL-unterdrueckendes Flag liess den Dump 0 GRANT/REVOKE-Anweisungen enthalten, obwohl der
+        # Live-Stand 289 GRANT- und 14 REVOKE-Anweisungen hat. Ein Backup ohne Berechtigungen waere
+        # bei einer echten Wiederherstellung unvollstaendig -- derselbe Fehler wird hier bewusst
+        # nicht wiederholt.
+        # zap_baseline_reader_lernecke hat bewusst keinen Zugriff auf die von Supabase selbst verwalteten
         # System-Schemas (auth/storage/realtime/vault/supabase_migrations/extensions) -- ohne
         # Ausschluss versucht pg_dump trotzdem, alle dort sichtbaren Objekte zu sperren/lesen und
         # bricht beim ersten Permission-Fehler die gesamte Sicherung ab, ohne etwas zu schreiben.
         # Diese Schemas werden separat von Supabase selbst gesichert/verwaltet; relevant fuer diese
         # Migrations sind ausschliesslich Objekte in public.
         '--schema', 'public',
-        # zap_baseline_reader hat auch innerhalb von public kein SELECT auf profiles (vermutlich
-        # bewusst, da dort Rollen-/Kontaktdaten liegen) -- pg_dump braucht dafuer aber selbst im
-        # --schema-only-Modus mindestens eine ACCESS-SHARE-Sperre, die ohne SELECT-Recht fehlschlaegt
-        # und den gesamten Dump abbricht. Keine der 19 anstehenden Migrationen aendert profiles,
-        # daher schwaecht der Ausschluss dieses einen Backups nicht, wovor es tatsaechlich schuetzt.
+        # Vorsichtsmassnahme aus der Zeit der alten Rolle zap_baseline_reader, die innerhalb von
+        # public bewusst kein SELECT auf profiles hatte (Rollen-/Kontaktdaten) -- pg_dump braucht
+        # dafuer selbst im --schema-only-Modus mindestens eine ACCESS-SHARE-Sperre, die ohne
+        # SELECT-Recht fehlschlaegt und den gesamten Dump abbricht. Ob zap_baseline_reader_lernecke
+        # (grant select on ALL tables in schema public, siehe staging-backup-restore-runbook.md)
+        # dieselbe Einschraenkung hat, ist nicht verifiziert -- der Ausschluss bleibt konservativ
+        # bestehen, macht das Backup aber schwaecher als noetig, falls profiles inzwischen lesbar
+        # ist. Vor einer Aenderung erst gegen Live pruefen, nicht raten.
         '--exclude-table', 'public.profiles',
         '--file', $outputFile
     )

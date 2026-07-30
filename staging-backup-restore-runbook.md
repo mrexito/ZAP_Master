@@ -34,9 +34,13 @@ Passwort braucht, das laut CLAUDE.md nie vom Assistenten gehandhabt werden darf.
 
 - nutzt dieselbe bereits freigegebene, gepinnte `pg_dump`-Binary und dieselbe bereits freigegebene,
   read-only Verbindungskonfiguration (`scripts/approved-db-connection.ps1`,
-  `supabase/pg_service.conf`, Rolle `zap_baseline_reader.ybzdibifgqjsbohtztmy`,
-  `sslmode=verify-full`), die bereits für das Schritt-0-Baseline-Inventar verwendet wurde -- keine
-  neue Verbindungsroute, kein neues Vertrauen nötig;
+  `supabase/pg_service.conf`, Rolle `zap_baseline_reader_lernecke.notaqfguhhjpvmagvcic`,
+  `sslmode=verify-full` -- aktualisiert 30.07.2026 auf das seit dem Kontowechsel produktive
+  Projekt, siehe `docs/migration-evidence/2026-07-29-baseline-adoption-decision.md`), die bereits
+  für die Baseline-Adoption verwendet wurde -- keine neue Verbindungsroute, kein neues Vertrauen
+  nötig. Die Rolle braucht vor jedem Lauf ein frisch erteiltes
+  `grant select on all tables in schema public` und danach ein sofortiges `revoke` (Abschnitt 3.1
+  der Baseline-Adoption-Entscheidung) -- sie hat dieses Recht nicht dauerhaft;
 - fragt das Passwort interaktiv mit maskierter Eingabe ab (`Read-Host -MaskInput`), hält es nur für
   die Dauer des `pg_dump`-Aufrufs als Prozessvariable und entfernt sie danach in jedem Fall
   (`finally`-Block);
@@ -111,12 +115,31 @@ damit die Instanz danach im gewohnten kanonischen Zustand für die restliche Arb
 node scripts/verify-local-backup-restore.mjs
 ```
 
+## Tatsächlich durchgeführtes Live-Backup (30.07.2026)
+
+Der menschliche Betreiber hat `scripts/backup-live-database.ps1` nach der Korrektur der beiden
+oben genannten Lücken (stale Rollenreferenz, `--no-acl`) selbst gegen `notaqfguhhjpvmagvcic`
+ausgeführt (`grant select`/`revoke select` davor/danach über den Dashboard-SQL-Editor, wie in
+Abschnitt 3.1 der Baseline-Adoption-Entscheidung vorgesehen). Ergebnis
+(`docs/migration-evidence/private/backups/live-backup-schema-only-2026-07-30T21-22-10.sql`,
+gitignored, 238 KB), read-only vom Assistenten geprüft:
+
+```
+GRANT-Anweisungen:            374 (vorheriger Lauf vom 23.07.2026: 0)
+REVOKE-Anweisungen:            14 (vorheriger Lauf vom 23.07.2026: 0)
+school_holiday_weeks vorhanden: ja (aktueller Schema-Stand, nicht stale)
+public.profiles enthalten:     nein (Ausschluss wirkt wie vorgesehen)
+Geheimnismuster (JWT/Anthropic-Key/AWS-Key/Passwort-Literal): 0 Treffer
+
+BESTANDEN: Erster tatsächlich vollständiger Live-Struktur-Dump gegen das seit dem Kontowechsel
+produktive Projekt, mit Berechtigungen, aktuellem Schema-Stand und ohne erkennbare Geheimnisse.
+```
+
+Der frühere, unvollständige Lauf vom 23.07.2026 bleibt zu Vergleichszwecken lokal liegen
+(gitignored, keine personenbezogenen Daten in einem Struktur-only-Dump).
+
 ## Was bewusst NICHT abgedeckt ist
 
-- **Kein tatsächlich ausgeführtes Live-Backup:** `scripts/backup-live-database.ps1` ist geschrieben
-  und nutzt ausschliesslich bereits freigegebene Werkzeuge/Verbindungswege, wurde aber -- wie jede
-  Aktion, die das Live-DB-Passwort braucht -- nicht vom Assistenten ausgeführt. Das ist der eine
-  Schritt, den nur der menschliche Betreiber selbst gehen kann.
 - **Keine dokumentierte Aufbewahrungsfrist für Datenbackups:** Siehe Hinweis oben -- eine
   Richtlinienentscheidung, kein technisches Defizit.
 - **Kein automatisierter, wiederkehrender Backup-Zeitplan:** Wie beim Mail-Outbox-Cron
