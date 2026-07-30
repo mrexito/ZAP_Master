@@ -96,5 +96,10 @@ graphify-out/
 # Excel-Arbeitsdateien (Kursdaten/Kurspläne/Termine) -- bleiben lokal, nicht Teil des Repos
 *.xlsx
 
+# Word-/PDF-Arbeitsdokumente (Notizen, Planung, Dokumentationsentwürfe) -- bleiben lokal, nicht
+# Teil des Repos, unabhängig vom Inhalt.
+*.docx
+*.pdf
+
 # Office-Sperrdateien (temporäre Lock-Files bei geöffneten Word-/Excel-Dokumenten)
 ~$*
