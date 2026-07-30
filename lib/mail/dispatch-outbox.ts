@@ -2,6 +2,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server"
 import { getResendClient, getMailFromAddress } from "@/lib/mail/resend-client"
 import { renderBookingConfirmation } from "@/lib/mail/templates/booking-confirmation"
 import { renderAdminBookingNotification } from "@/lib/mail/templates/admin-booking-notification"
+import { logMailDispatchFailed, logMailDispatchPermanentlyFailed } from "@/lib/observability/logger"
 import type { Fach } from "@/types/kurs"
 
 // Abschnitt 10.4 (E-Mail-Outbox): "Bestätigungsmails laufen idempotent über Outbox/Retry ... und
@@ -14,6 +15,17 @@ import type { Fach } from "@/types/kurs"
 // deckt das gut zwei Stunden verteilter Versuche ab, bevor eine Zeile als "failed" im Admin
 // auftaucht.
 const BACKOFF_MINUTES = [1, 5, 25, 125, 625]
+
+// data-retention-runbook.md dokumentierte Lücke: Resend-/generische Fehler können die
+// Empfängeradresse im Fehlertext enthalten (z. B. bei einer ungültigen `to`-Adresse) und landeten
+// unredigiert in last_error -- Admin-only, aber ausserhalb der sonst durchgesetzten
+// "keine Formulardaten in Fehlerspalten"-Regel. Vor dem Schreiben wird deshalb jede E-Mail-Adresse
+// im Fehlertext redigiert.
+const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+
+function sanitizeErrorMessage(message: string): string {
+  return message.replace(EMAIL_PATTERN, "[redacted-email]")
+}
 
 export interface DispatchResult {
   processed: number
@@ -117,6 +129,12 @@ async function dispatchSingleRow(
         updated_at: new Date().toISOString(),
       })
       .eq("id", row.id)
+    logMailDispatchPermanentlyFailed({
+      anmeldungId: row.anmeldung_id,
+      templateKey: row.template_key,
+      attempts: row.max_attempts,
+      message: "Zugehörige Anmeldung nicht gefunden.",
+    })
     return "failed"
   }
 
@@ -168,19 +186,55 @@ async function dispatchSingleRow(
     const isFinal = attempts >= row.max_attempts
     const backoffMinutes = BACKOFF_MINUTES[Math.min(attempts - 1, BACKOFF_MINUTES.length - 1)]
     const nextAttemptAt = new Date(Date.now() + backoffMinutes * 60_000)
+    const sanitizedMessage = sanitizeErrorMessage(
+      err instanceof Error ? err.message : "Unbekannter Fehler beim Mailversand"
+    )
 
     await supabase
       .from("mail_outbox")
       .update({
         status: "failed",
         attempts,
-        last_error: err instanceof Error ? err.message : "Unbekannter Fehler beim Mailversand",
+        last_error: sanitizedMessage,
         next_attempt_at: nextAttemptAt.toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("id", row.id)
+
+    logMailDispatchOutcome(row, attempts, isFinal, sanitizedMessage)
+
     return isFinal ? "failed" : "pending"
   }
+}
+
+// Abschnitt 10.4 (Observability): "Mailfehler" gehören zu den in observability-runbook.md
+// namentlich genannten Signalen -- level-getrennt wie bei den Buchungsereignissen (warn fuer noch
+// nicht ausgeschoepfte Retries, error erst bei endgueltigem Fehlschlag), damit ein einzelner
+// vorübergehender Zustellfehler kein Alarm-Dashboard flutet. Eigene Funktion, damit
+// dispatchSingleRow() nicht durch eine weitere Verzweigung an der Cognitive-Complexity-Grenze
+// vorbeischrammt.
+function logMailDispatchOutcome(
+  row: OutboxRowWithContext,
+  attempts: number,
+  isFinal: boolean,
+  message: string
+) {
+  if (isFinal) {
+    logMailDispatchPermanentlyFailed({
+      anmeldungId: row.anmeldung_id,
+      templateKey: row.template_key,
+      attempts,
+      message,
+    })
+    return
+  }
+  logMailDispatchFailed({
+    anmeldungId: row.anmeldung_id,
+    templateKey: row.template_key,
+    attempts,
+    maxAttempts: row.max_attempts,
+    message,
+  })
 }
 
 async function loadAnmeldungContext(

@@ -42,3 +42,25 @@ export function logBookingUnexpectedError(
 ) {
   emit("error", "booking_unexpected_error", fields)
 }
+
+/**
+ * Ein einzelner Mailversand-Versuch ist fehlgeschlagen, aber Retries sind noch möglich
+ * (attempts < max_attempts) -- auffällig, aber durch Backoff/Retry noch kein endgültiger Vorfall.
+ * `message` ist bereits durch sanitizeErrorMessage() (lib/mail/dispatch-outbox.ts) von
+ * E-Mail-Adressen bereinigt, bevor sie hier ankommt.
+ */
+export function logMailDispatchFailed(
+  fields: LogFields & { anmeldungId: string; templateKey: string; attempts: number; maxAttempts: number; message: string }
+) {
+  emit("warn", "mail_dispatch_failed", fields)
+}
+
+/**
+ * Alle Retry-Versuche einer Outbox-Zeile sind ausgeschöpft (oder die zugehörige Anmeldung fehlt) --
+ * die Zeile bleibt dauerhaft `status='failed'` im Admin sichtbar und braucht menschliches Zutun.
+ */
+export function logMailDispatchPermanentlyFailed(
+  fields: LogFields & { anmeldungId: string; templateKey: string; attempts: number; message: string }
+) {
+  emit("error", "mail_dispatch_permanently_failed", fields)
+}

@@ -52,6 +52,15 @@ verändern. `dispatchOutboxForAnmeldung()` faengt jeden Fehler selbst ab und mar
 Outbox-Zeile als `failed` mit Backoff; ein fehlgeschlagener Versuch wird über Retry/Admin-Button
 nachgeholt, nie erneut gebucht.
 
+## Observability
+
+Jeder fehlgeschlagene Zustellversuch erzeugt ausserdem ein strukturiertes Log-Event
+(`mail_dispatch_failed` bei noch möglichem Retry, `mail_dispatch_permanently_failed` bei
+ausgeschöpften Versuchen oder fehlender Anmeldung) über `lib/observability/logger.ts` --
+level-getrennt wie die Buchungsereignisse. Details, Felder und empfohlene Alarmgrenze siehe
+`observability-runbook.md`. Dies schliesst die dort bis 30.07.2026 offen dokumentierte
+"Mailfehler"-Lücke.
+
 ## Admin-Sichtbarkeit
 
 `/dashboard/mail-outbox` (admin-only, `requireAdmin()` plus RLS-Policy `mail_outbox_admin_select`

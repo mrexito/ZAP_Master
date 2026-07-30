@@ -32,6 +32,18 @@ einzigen `console.error` für jeden Fall:
 Error-Dashboard mit Rauschen fluten und eine echte Störung (`booking_unexpected_error`) darin
 untergehen lassen. Nur echte, unbenannte RPC-Fehler sind `error`-Level.
 
+**Ergänzt (30.07.2026), seit die E-Mail-Outbox existiert:** Dasselbe Level-Prinzip gilt jetzt auch
+für Mailfehler, verdrahtet in `lib/mail/dispatch-outbox.ts` (siehe `mail-outbox-runbook.md`):
+
+| Event | Level | Wann | Felder |
+|---|---|---|---|
+| `mail_dispatch_failed` | `warn` | Ein einzelner Zustellversuch schlug fehl, Retries sind laut Backoff aber noch möglich (`attempts < max_attempts`) | `anmeldungId`, `templateKey`, `attempts`, `maxAttempts`, `message` (bereits durch `sanitizeErrorMessage()` von E-Mail-Adressen bereinigt) |
+| `mail_dispatch_permanently_failed` | `error` | Alle Retry-Versuche ausgeschöpft, oder die referenzierte Anmeldung existiert nicht mehr -- die Zeile bleibt `status='failed'` und braucht menschliches Zutun | `anmeldungId`, `templateKey`, `attempts`, `message` |
+
+`anmeldungId` ist dieselbe reine Referenz-ID, die `mail_outbox` selbst speichert (siehe
+`data-retention-runbook.md`) -- kein Name/E-Mail/Telefon wird hier gelogged, genau wie bei
+`kursId` oben.
+
 ## Empfohlene Alarmgrenzen (dokumentiert, nicht live verdrahtet)
 
 Es ist aktuell **kein** Alerting-Anbieter (Sentry, Datadog, o. Ä.) angebunden -- diese Grenzen sind
@@ -42,13 +54,17 @@ eine dokumentierte Empfehlung für den Moment, in dem eines eingerichtet wird, k
 | `booking_unexpected_error` | jedes Vorkommen | Sollte bei korrekter RPC nie auftreten; jedes Vorkommen ist eine echte Störung |
 | `rate_limit_rejected` | > 20 Ereignisse / 10 Min. auf demselben Kurs | Einzelne Ablehnungen sind normal (Formular-Doppelklicks); ein Anstieg deutet auf einen Scraping-/Abuse-Versuch hin |
 | `booking_rejected` mit `reason=voll` | > 80 % aller Anfragen für einen Kurs innerhalb einer Stunde | Deutet auf eine falsch beworbene/ausverkaufte Session hin (Marketing-/Kapazitätsproblem, kein technischer Vorfall) |
+| `mail_dispatch_permanently_failed` | jedes Vorkommen | Eine Buchungsbestätigung erreicht die Familie dauerhaft nicht -- braucht manuelles Nachfassen über `/dashboard/mail-outbox`, kein Rauschen wie bei einzelnen Retry-Versuchen |
+| `mail_dispatch_failed` | > 50 % aller Versandversuche innerhalb einer Stunde | Einzelne vorübergehende Fehler (z. B. kurzer Resend-Ausfall) sind normal; eine hohe Quote deutet auf ein systemisches Problem hin (z. B. `RESEND_API_KEY` ungültig, Domain-Verifizierung verloren) |
 
 ## Was bewusst NICHT abgedeckt ist (offene Lücken, nicht stillschweigend übersprungen)
 
-- **Mailfehler:** Es existiert noch kein Mail-Provider im Projekt (kein Resend/SMTP/Postmark
-  verdrahtet -- siehe fehlender E-Mail-Outbox-Punkt in Abschnitt 10.4). Ohne Versand gibt es keine
-  Mailfehler zu protokollieren; dieser Punkt wird erst mit der E-Mail-Outbox-Implementierung
-  relevant.
+- ~~**Mailfehler:** Es existiert noch kein Mail-Provider im Projekt...~~ **Behoben (30.07.2026):**
+  Die E-Mail-Outbox existiert inzwischen (`mail-outbox-runbook.md`); `mail_dispatch_failed`/
+  `mail_dispatch_permanently_failed` sind oben verdrahtet. Weiterhin offen: kein echter
+  Alerting-Anbieter, der die dokumentierte Grenze tatsächlich auswertet (siehe unten), und keine
+  Metrik für die *Quote* fehlgeschlagener Versuche über die Zeit -- nur einzelne Log-Events, aus
+  denen eine Quote erst durch ein externes Log-Aggregations-/Dashboard-Tool berechnet würde.
 - **Verfügbarkeitsdrift:** Erfordert einen periodischen Abgleich zwischen angezeigter/gecachter
   Verfügbarkeit und dem tatsächlichen DB-Stand -- das ist ein eigenständiges Feature (Scheduled
   Job/Cron plus Vergleichslogik), keine Logging-Erweiterung an einer bestehenden Fehlerbehandlung.

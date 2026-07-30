@@ -145,13 +145,18 @@ Postgres-Fehlerobjekt, nie aus Formulardaten. Das erfüllt "Logs maskieren E-Mai
 Tokens und Notizen" für den einen Aufrufer, der diesen Logger nutzt
 (`app/(public)/kurse/actions.ts`).
 
-**Eine Lücke dieser Zusicherung**, gefunden bei der Recherche zu diesem Dokument:
-`lib/mail/dispatch-outbox.ts` schreibt `last_error: err.message` direkt aus einer geworfenen
-Exception (Resend-SDK-Fehler oder ein generischer Catch) in `mail_outbox.last_error`. Ein
-Provider-Fehler kann die Empfängeradresse im Fehlertext enthalten (z. B. bei einer ungültigen
-`to`-Adresse). Diese Spalte ist zwar Admin-only (`mail_outbox_admin_select`), umgeht damit aber die
-sonst durchgesetzte "keine Formulardaten in Logs/Fehlerspalten"-Regel teilweise. Als offene Lücke
-dokumentiert, nicht stillschweigend als bereits erfüllt behauptet.
+**Eine Lücke dieser Zusicherung, gefunden bei der Recherche zu diesem Dokument und seither
+behoben (30.07.2026):** `lib/mail/dispatch-outbox.ts` schrieb `last_error: err.message` direkt aus
+einer geworfenen Exception (Resend-SDK-Fehler oder ein generischer Catch) in `mail_outbox.last_error`.
+Ein Provider-Fehler kann die Empfängeradresse im Fehlertext enthalten (z. B. bei einer ungültigen
+`to`-Adresse). Diese Spalte ist zwar Admin-only (`mail_outbox_admin_select`), umging damit aber die
+sonst durchgesetzte "keine Formulardaten in Logs/Fehlerspalten"-Regel teilweise. `dispatch-outbox.ts`
+redigiert jetzt jede E-Mail-Adresse im Fehlertext (`sanitizeErrorMessage()`, einfaches Regex-Ersetzen
+durch `[redacted-email]`) unmittelbar vor dem Schreiben nach `last_error`; der statische Fallback-Text
+für gelöschte Anmeldungen und der Erfolgsfall (`last_error: null`) waren nie betroffen. Diese
+strukturelle Garantie ist bewusst schwächer als `logger.ts` (kein kompilierzeitlicher Typzwang,
+nur ein Muster-Ersatz) — sie deckt E-Mail-Adressen ab, nicht jedes denkbare PII-Muster in einer
+Provider-Fehlermeldung.
 
 ## Was bewusst NICHT abgedeckt ist (offene Lücken)
 
@@ -174,8 +179,11 @@ dokumentiert, nicht stillschweigend als bereits erfüllt behauptet.
   vermerkt) — mit realem Nutzungsvolumen ein reines Wachstums-/Datensparsamkeits-Thema, kein akuter
   Sicherheitsbug, aber vor Live-Betrieb ein sinnvoller nächster additiver Schritt (z. B. ein
   periodisches `DELETE ... WHERE attempted_at < now() - interval '1 day'`).
-- **`mail_outbox.last_error` kann Empfängerdaten aus Provider-Fehlermeldungen enthalten** (siehe
-  oben) — Admin-only, aber nicht dieselbe strukturelle Garantie wie `logger.ts`.
+- ~~`mail_outbox.last_error` kann Empfängerdaten aus Provider-Fehlermeldungen enthalten~~
+  **Behoben (30.07.2026):** siehe oben — E-Mail-Adressen werden vor dem Schreiben redigiert.
+  Weiterhin nicht dieselbe strukturelle (kompilierzeitliche) Garantie wie `logger.ts`, nur ein
+  Muster-Ersatz für E-Mail-Adressen; andere PII-Formen (Namen, Telefonnummern) in einer
+  Provider-Fehlermeldung würden davon nicht erfasst.
 - **Exporte existieren noch gar nicht.** Abschnitt 10.4 verlangt, dass "Support- und Exportpfade
   Admin-only und auditiert" sind. Im aktuellen Code gibt es aber keine CSV-/Datenexport-Funktion
   irgendwo im Dashboard (Finanz-Cockpit, Zeiterfassung, Kurs-/Anmeldungsverwaltung sind reine
