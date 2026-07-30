@@ -84,6 +84,7 @@ docs/*
 docs/migration-evidence/*
 !docs/migration-evidence/2026-07-18-supabase-baseline-inventory.md
 !docs/migration-evidence/2026-07-29-baseline-adoption-decision.md
+!docs/migration-evidence/2026-07-30-schritt12-verifikationsgate.md
 docs/migration-evidence/private/
 
 # Temporäre Prüfdateien der versionierten Designreferenzen

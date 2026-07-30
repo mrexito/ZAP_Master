@@ -234,27 +234,45 @@ alte Projekt `ybzdibifgqjsbohtztmy`) und das Runbook für den menschlichen Opera
 `docs/migration-evidence/2026-07-29-baseline-adoption-decision.md`. Bis das dortige Runbook
 (Abschnitt 3) durchlaufen ist, bleibt Schritt 0 des Ausführungsplans für dieses Projekt offen.
 
-## 8. Security-Advisor — Kurzfassung (Detailprüfung auf Wunsch zurückgestellt)
+## 8. Security-Advisor — vertieft geprüft (30.07.2026)
 
 Read-only `get_advisors(type=security)` liefert zusätzlich zu den in Abschnitt 5 bereits als
 gewollt eingeordneten `anon`-aufrufbaren `SECURITY DEFINER`-RPCs (`book_intensivwoche_kurs` etc.):
 
-- 2× `rls_enabled_no_policy` (INFO): `profiles.profiles` (vermutlich ein Schema-Artefakt, zu
-  prüfen) und `public.intensivwoche_buchungsversuche` (laut Tabellenkommentar bewusst ohne
-  Policies, nur service-intern beschrieben/gelesen).
-- 6× `function_search_path_mutable` (WARN): u. a. `get_upcoming_courses`,
-  `set_essay_review_timestamp`, `update_updated_at_column` — kein fester `search_path` gesetzt.
-- `auth_leaked_password_protection` (WARN): HaveIBeenPwned-Check ist deaktiviert.
+- 2× `rls_enabled_no_policy` (INFO): `profiles.profiles` (leeres, unbenutztes Schema+Tabelle-
+  Artefakt, 0 Zeilen, kein Code-Bezug — Aufräumkandidat, keine Aktion ohne Fachentscheid) und
+  `public.intensivwoche_buchungsversuche` (laut Tabellenkommentar bewusst ohne Policies, nur
+  service-intern beschrieben/gelesen).
+- ~~6× `function_search_path_mutable`~~ **Behoben (30.07.2026):** `get_upcoming_courses`,
+  `set_essay_review_timestamp`, `update_correction_rubrics_updated_at`,
+  `update_mentorship_updated_at`, `update_student_essays_updated_at`, `update_updated_at_column`
+  hatten keinen festen `search_path`. Migration
+  `supabase/migrations/20260730120000_fix_function_search_path.sql` (reines
+  `ALTER FUNCTION ... SET search_path = ''`, keine Logikänderung), lokal verifiziert (203/203
+  pgTAP-Tests grün) und live per `db push --linked` angewendet; Advisor zeigt diese Kategorie
+  danach nicht mehr. Details: `docs/migration-evidence/2026-07-29-baseline-adoption-decision.md`,
+  Abschnitt 7.
+- `anon`/`authenticated`-SECURITY-DEFINER-Warnungen einzeln geprüft: `accept_mentorship_request`
+  bereits korrekt gehärtet (29.07.2026-Fix hält anonyme Aufrufe zuverlässig ab), `handle_new_user()`
+  ist ein reiner Trigger (`RETURNS trigger`) und per RPC gar nicht direkt aufrufbar (false
+  positive), alle übrigen sind bereits dokumentiert beabsichtigt (RLS-Hilfsfunktionen bzw.
+  anon-aufrufbare Buchungs-RPCs laut Architektur-Briefing).
+- `auth_leaked_password_protection` (WARN): HaveIBeenPwned-Check ist deaktiviert. Kein SQL-Fix
+  möglich, nur über Supabase-Dashboard (Auth-Settings) umschaltbar — weiterhin offen, menschlicher
+  Operator.
 
-Vertiefte Bewertung (welche `SECURITY DEFINER`-Freigaben tatsächlich gewollt sind, Umgang mit den
-`search_path`-Warnungen) ist auf Wunsch des Nutzers für eine separate Runde zurückgestellt.
+Nebenfund bei der Prüfung: `get_upcoming_courses()` referenziert live tatsächlich
+`public.courses`/`public.course_occurrences` — relevant für die in Abschnitt 9 weiterhin offene
+Löschbarkeits-Frage dieser beiden Tabellen.
 
 ## 9. Weiterhin offen / in dieser Runde nicht verifiziert
 
 - Vollständige RLS-Policy-Texte pro Tabelle (nur Tabellenkommentare und `rls_enabled`-Flag
   geprüft, nicht jede einzelne Policy-Definition).
-- Storage-Bucket-Policies (`avatars`, `lernmaterialien`, `student-essays`,
-  `correction-rubrics`).
+- ~~Storage-Bucket-Policies (`avatars`, `lernmaterialien`, `student-essays`,
+  `correction-rubrics`)~~ **Geklärt (30.07.2026):** `lernmaterialien` hat die einzige
+  `storage.objects`-Policy im Projekt; die drei übrigen Buckets haben bewusst keine — aller Zugriff
+  läuft über den Service-Role-Client, siehe Abschnitt 7 im Baseline-Adoption-Dokument.
 - Trigger-Vollständigkeit über die in Abschnitt 5 gefundenen hinaus.
 - Ob `courses`/`course_occurrences` weiterhin als „nicht ohne Fachprüfung löschbar" gilt oder
   inzwischen eine Entscheidung dazu getroffen wurde.
@@ -289,5 +307,12 @@ Vertiefte Bewertung (welche `SECURITY DEFINER`-Freigaben tatsächlich gewollt si
    Operator.
 4. `learning_materials`-Bestand (Abschnitt 4) klären — bewusst klein oder Datenverlust beim
    Kontowechsel?
-5. Bei Bedarf: Security-Advisor-Befunde aus Abschnitt 8 in einer eigenen, fokussierten Runde
-   vertiefen.
+5. ~~Bei Bedarf: Security-Advisor-Befunde aus Abschnitt 8 in einer eigenen, fokussierten Runde
+   vertiefen~~ **Erledigt (30.07.2026):** siehe Abschnitt 8 — search_path-Fix live, restliche
+   Warnungen einzeln geprüft und als beabsichtigt/false-positive eingeordnet, ausser dem weiterhin
+   offenen Dashboard-Toggle (`auth_leaked_password_protection`).
+6. `courses`/`course_occurrences` (4/8 Zeilen) — Löschbarkeits-Entscheidung weiterhin offen, jetzt
+   mit dem Zusatzfund, dass `get_upcoming_courses()` sie live tatsächlich nutzt (Abschnitt 8).
+7. `profiles.profiles` — leeres Schema+Tabelle-Artefakt (Abschnitt 8), Aufräumentscheidung offen.
+8. `auth_leaked_password_protection` (Abschnitt 8) im Supabase-Dashboard aktivieren — nur durch
+   menschlichen Operator möglich.

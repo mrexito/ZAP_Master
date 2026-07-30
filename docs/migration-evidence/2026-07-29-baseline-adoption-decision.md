@@ -391,3 +391,61 @@ Empfehlung für einen späteren, separaten Schritt: dieselbe Live-Prüfung wie o
 übrigen, nicht getesteten Storage-Buckets (`avatars`, `correction-rubrics`, `student-essays`)
 durchführen — deren Policies wurden hier bewusst nicht geraten, da kein pgTAP-Test sie prüft und
 keine Live-Bestätigung vorliegt.
+
+## 7. Nachtrag (30.07.2026): Storage-Policy-Lücke geklärt, Security-Advisor vertieft, ein Fix live
+
+**Storage-Buckets `avatars`/`correction-rubrics`/`student-essays` (Empfehlung aus Abschnitt 6
+oben) — geprüft, kein Bug.** Read-only Live-Abfrage bestätigt: `storage.objects` hat RLS aktiv
+(`relrowsecurity=true`) und genau eine Policy insgesamt (`lernmaterialien_read_access`, nur für
+`lernmaterialien`). Die drei übrigen Buckets haben also bewusst keine Policy — das ist korrekt,
+weil sämtlicher Zugriff (Lesen, Schreiben, Löschen) für diese drei ausschliesslich über
+`createAdminSupabaseClient()` (Service-Role, umgeht RLS) läuft: bestätigt in
+`app/(dashboard)/profil/actions.ts` (Avatar-Upload/-Löschung), `app/(dashboard)/aufsaetze/actions.ts`
+und `lib/storage/signed-upload.ts` (`student-essays` signierte Upload-/Download-URLs, ausschliesslich
+Admin-Client), `app/(dashboard)/dashboard/aufsaetze/rubriken/actions.ts` (`correction-rubrics`
+Löschung, Admin-Client). `avatars` ist zusätzlich `public:true`, Reads laufen über die öffentliche
+Storage-URL (umgeht Objekt-RLS als Supabase-Plattformverhalten). `anon`/`authenticated` haben damit
+für alle drei schlicht keinen direkten Zugriff — kein offener Punkt mehr.
+
+**Security-Advisor vertieft geprüft (war laut `datenmodell-review.md` §8 als „auf Wunsch
+zurückgestellt" offen):**
+
+- 6× `function_search_path_mutable` (`get_upcoming_courses`, `set_essay_review_timestamp`,
+  `update_correction_rubrics_updated_at`, `update_mentorship_updated_at`,
+  `update_student_essays_updated_at`, `update_updated_at_column`) — reine, nicht-SECURITY-DEFINER
+  Trigger-/Lesefunktionen, die von der früheren Härtung
+  (`legacy-migrations/20260719145330_harden_definer_search_path_and_realtime.sql`, deckte nur
+  SECURITY DEFINER ab) nicht erfasst wurden. Alle sechs referenzieren Tabellen entweder gar nicht
+  (nur `NEW`/`OLD`) oder bereits vollständig schemaqualifiziert
+  (`get_upcoming_courses`: `public.courses`/`public.course_occurrences`); reines
+  `ALTER FUNCTION ... SET search_path = ''`, keine Logikänderung. Migration
+  `supabase/migrations/20260730120000_fix_function_search_path.sql`, lokal verifiziert (`db reset
+  --local`, `db lint`, `test db --local` → 203/203 Tests in 25 Dateien grün), am 30.07.2026 vom
+  menschlichen Operator per `db push --linked` live angewendet. Read-only Nachverifikation: Advisor
+  zeigt diese Kategorie danach nicht mehr; `pg_proc.proconfig` bestätigt `search_path=""` auf allen
+  sechs Funktionen live.
+- `accept_mentorship_request` als anon-aufrufbar geflaggt (WARN) — geprüft: bereits korrekt
+  gehärtet durch den Fix vom 29.07. (`IS DISTINCT FROM`), ein anonymer Aufruf scheitert zuverlässig
+  an der Zielprüfung. Kein weiterer Handlungsbedarf.
+- `handle_new_user()` als anon-aufrufbar geflaggt (WARN) — false positive: `RETURNS trigger`,
+  kann per PostgREST-RPC gar nicht direkt aufgerufen werden (Postgres verweigert das ausserhalb
+  eines Trigger-Kontexts).
+- Übrige `anon`/`authenticated`-SECURITY-DEFINER-Warnungen (`book_intensivwoche_kurs`,
+  `count_active_anmeldungen`, `enqueue_booking_confirmation_mail`,
+  `increment_material_view_count`, `is_admin`, `is_content_manager`, `is_kurs_aktiv`,
+  `is_kurs_owner`, `is_owner`, `link_anmeldung_beneficiary`, `sync_anmeldung_financial_events`,
+  `sync_expense_financial_event`, `sync_financial_adjustment_event`) — bereits als beabsichtigt
+  dokumentiert (RLS-Hilfsfunktionen bzw. die im Architektur-Briefing genannten anon-aufrufbaren
+  Buchungs-RPCs). Keine Änderung.
+- `auth_leaked_password_protection` (WARN) — kein SQL-Fix möglich, nur über Supabase-Dashboard
+  (Auth-Settings) umschaltbar. Offen, menschlicher Operator.
+- **Neuer Fund, kein Sicherheitsrisiko:** leeres, unbenutztes Schema+Tabelle `profiles.profiles`
+  (0 Zeilen, kein Code-Bezug) — Aufräumkandidat, keine Aktion ohne Fachentscheid.
+- **Nebenfund:** `get_upcoming_courses()` referenziert live tatsächlich `public.courses`/
+  `public.course_occurrences` — die beiden namenlosen Tabellen aus Abschnitt 2.1 des
+  Architektur-Briefings haben also doch einen (DB-seitigen, code-losen) Verwendungszweck. Relevant
+  für die dort weiterhin offene Löschbarkeits-Frage, hier nicht entschieden.
+
+Damit ist die in `datenmodell-review.md` §9/§10 als offen geführte Storage-Policy-Prüfung und die
+zurückgestellte Security-Advisor-Vertiefung abgeschlossen, bis auf die zwei oben als weiterhin
+offen markierten Punkte (Leaked-Password-Toggle, `profiles.profiles`-Aufräumentscheidung).

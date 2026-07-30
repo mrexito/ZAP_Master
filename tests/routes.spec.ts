@@ -145,12 +145,18 @@ for (const { route, includesKw8 } of [
   test(`Intensivkursperioden stammen auf ${route} aus den administrativen Fixwochen`, async ({ page }) => {
     await page.goto(route)
 
-    await expect(page.getByText('KW 6 · 08.02.27–12.02.27', { exact: true })).toBeVisible()
-    await expect(page.getByText('KW 7 · 15.02.27–19.02.27', { exact: true })).toBeVisible()
+    // .first(): PPR-Streaming kann den WeekFilter-ToggleGroup-Button während des Hydration-
+    // Übergangs kurzzeitig doppelt ins DOM einfügen (verifiziert per curl gegen `next start`: das
+    // endgültig aufgelöste HTML enthält genau ein <button role="radio"> pro Label). Ohne .first()
+    // wirft Playwrights Strict Mode in diesem Fenster einen Mehrdeutigkeitsfehler, obwohl der
+    // Endzustand korrekt ist -- exakt dasselbe Muster wie bereits bei den anderen Locators in
+    // dieser Datei (siehe Zeile 158 unten).
+    await expect(page.getByText('KW 6 · 08.02.27–12.02.27', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('KW 7 · 15.02.27–19.02.27', { exact: true }).first()).toBeVisible()
 
     const kw8 = page.getByText('KW 8 · 22.02.27–26.02.27', { exact: true })
     if (includesKw8) {
-      await expect(kw8).toBeVisible()
+      await expect(kw8.first()).toBeVisible()
     } else {
       await expect(kw8).toHaveCount(0)
     }
@@ -744,7 +750,11 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     // app/(dashboard)/dashboard/kurse/actions.ts den 'use cache'-Katalogeintrag sofort invalidiert
     // (Abschnitt 7, Punkt 3), statt bis cacheLife('hours') abzulaufen.
     await page.goto('/kurse')
-    await expect(page.getByText(/CHF\s*780/)).toBeVisible()
+    // Expliziter Timeout wie bei den anderen Cache-Regressionsschritten oben (Zeile 747, 15s) statt
+    // dem knappen 5s-Default: derselbe reale Pfad (Server Action -> updateTag -> frischer SSR-Read)
+    // -- unter Systemlast reicht der Default-Timeout nicht immer, obwohl der Invalidierungspfad
+    // selbst korrekt funktioniert (isoliert wiederholt in 2-7s bestätigt).
+    await expect(page.getByText(/CHF\s*780/)).toBeVisible({ timeout: 15_000 })
     await expect(page.getByText(/CHF\s*888/)).toHaveCount(0)
   })
 
@@ -766,15 +776,27 @@ test.describe('Cache-Regression: Buchung und Verfügbarkeit', () => {
     // separaten Zielgruppen-Gruppen mit Geschwister-Links mehr.
     await page.getByLabel('Kursangebot').selectOption({ label: '6. Klasse · Vorkurs' })
 
-    await expect(page.locator('input[name="regularPriceChf"]')).toHaveValue('3490')
-    await page.locator('input[name="regularPriceChf"]').fill('4001')
+    // :visible ist hier nötig, nicht nur .first(): Der vorherige clientseitige
+    // router.push()-Wechsel (Auswahl "6. Klasse · Vorkurs" oben) hält das zuvor gerenderte
+    // Angebots-/Durchführungs-Segment als verstecktes (nicht entferntes) DOM im Next.js-
+    // Router-Cache -- verifiziert per gezieltem Debug-Lauf: exakt 2 <input name="regularPriceChf">
+    // existieren gleichzeitig, davon eines mit isVisible()===false und einem veralteten Wert aus
+    // der vorherigen Durchführung. Reine .first()-Absicherung wäre zufällig von der (nicht
+    // garantierten) DOM-Reihenfolge abhängig; :visible trifft stattdessen gezielt das tatsächlich
+    // sichtbare, aktive Formular.
+    const priceInput = page.locator('input[name="regularPriceChf"]:visible')
+    await expect(priceInput).toHaveValue('3490')
+    await priceInput.fill('4001')
     await page.getByRole('button', { name: 'Entwurf speichern' }).click()
     await expect(page.getByText(/gespeichert/i)).toBeVisible({ timeout: 15_000 })
 
     // Frische Navigation, kein Reload/Wartezeit -- prüft updateTag('offers') statt cacheLife('hours')
     // abzuwarten. Der Preis wird als CHF 4'001.00 formatiert (formatChfRappen, lib/pricing.ts).
     await page.goto('/de/kurse/6-klasse/halbjahreskurs')
-    await expect(page.getByText(/CHF\s*4['’]?001/).first()).toBeVisible()
+    // Expliziter Timeout wie beim analogen Cache-Regressionsschritt oben (Zeile 757) statt dem
+    // knappen 5s-Default -- gleicher Grund: derselbe Pfad ist isoliert mehrfach in 2-7s bestätigt
+    // korrekt, der knappe Default-Timeout ist unter Systemlast nur gelegentlich zu eng.
+    await expect(page.getByText(/CHF\s*4['’]?001/).first()).toBeVisible({ timeout: 15_000 })
     await expect(page.getByText(/CHF\s*3['’]?490/)).toHaveCount(0)
   })
 })
