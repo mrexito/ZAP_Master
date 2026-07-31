@@ -19,6 +19,7 @@ import type {
   SessionDefinition,
   Subject,
 } from '@/types/marketing'
+import { audiences } from '@/app/data/marketing-site'
 
 const FACH_TO_SUBJECT: Record<KursDB['fach'], Exclude<Subject, 'mixed'>> = {
   mathematik: 'ma',
@@ -40,6 +41,22 @@ const KLASSENSTUFE_TO_AUDIENCE: Record<string, AudienceId> = {
   '4. Klasse': '4',
   '5. Klasse': '5',
   '6. Klasse': '6',
+}
+
+export type SchulKategorie = 'primar' | 'sek' | 'weiterfuehrend'
+
+const KLASSENSTUFE_TO_KATEGORIE = new Map(audiences.map((a) => [a.displayLabel, a.kategorie]))
+
+/** Ordnet eine Kursverwaltungs-Zeile einer der drei Filterkategorien der Kursübersicht zu
+ *  (Primarschule/Sekundarschule/BMS und Matura) -- dieselbe `Audience.kategorie`-Quelle wie
+ *  Navigation und KlassenPicker, keine zweite Kategorisierung. `null`, wenn keine Klassenstufe der
+ *  Zeile einer bekannten Audience entspricht. */
+export function getSchulKategorie(klassenstufen: string[]): SchulKategorie | null {
+  for (const stufe of klassenstufen) {
+    const kategorie = KLASSENSTUFE_TO_KATEGORIE.get(stufe)
+    if (kategorie) return kategorie
+  }
+  return null
 }
 
 const KNOWN_LOCATIONS: readonly CourseLocation[] = ['Zürich HB', 'Winterthur']
@@ -74,6 +91,67 @@ export function mapAvailability(row: {
     remainingPlaces: Math.max(row.max_teilnehmer - row.aktuelle_teilnehmer, 0),
     updatedAt: row.updatedAt ?? new Date().toISOString(),
   }
+}
+
+/** Extrahiert den Kurstyp-Anteil eines Kursnamens für die Gruppierung in der Kursverwaltung, z.B.
+ *  "Vorkurs – Kurs A" -> "Vorkurs". Trennt nur an einem von Leerzeichen umgebenen
+ *  Gedankenstrich/Bindestrich, damit interne Bindestriche wie in "Intensivkurs-Sportferien"
+ *  erhalten bleiben. Ohne erkennbaren Trenner gilt der ganze Name als eigene Kurstyp-Gruppe. */
+export function getKurstypGruppe(name: string): string {
+  const [prefix] = name.split(/\s[–-]\s/)
+  return prefix.trim() || 'Sonstige'
+}
+
+export type KurstypGruppe<T> = { label: string; kurse: T[] }
+export type KlasseGruppe<T> = { label: string; kurstypGruppen: KurstypGruppe<T>[] }
+
+const KLASSEN_REIHENFOLGE = audiences.map((audience) => audience.displayLabel)
+
+/** Gruppiert Kursverwaltungs-Zeilen zweistufig: zuerst nach Klassenstufe(n) (Reihenfolge wie in
+ *  der Zielgruppen-Navigation, unbekannte/fehlende Klassenstufen zuletzt als "Ohne Klasse"),
+ *  danach innerhalb jeder Klasse nach Kurstyp (getKurstypGruppe, alphabetisch). Die Reihenfolge
+ *  innerhalb einer Kurstyp-Gruppe bleibt die der Eingabe (bereits nach start_datum sortiert). */
+export function groupKurseNachKlasseUndKurstyp<T extends Pick<KursDB, 'name' | 'klassenstufen'>>(
+  kurse: T[]
+): KlasseGruppe<T>[] {
+  const klasseMap = new Map<string, T[]>()
+  for (const kurs of kurse) {
+    const key = kurs.klassenstufen.length > 0 ? kurs.klassenstufen.join(', ') : 'Ohne Klasse'
+    const bucket = klasseMap.get(key)
+    if (bucket) {
+      bucket.push(kurs)
+    } else {
+      klasseMap.set(key, [kurs])
+    }
+  }
+
+  const klasseLabels = Array.from(klasseMap.keys()).sort((a, b) => {
+    if (a === 'Ohne Klasse') return 1
+    if (b === 'Ohne Klasse') return -1
+    const ai = KLASSEN_REIHENFOLGE.indexOf(a)
+    const bi = KLASSEN_REIHENFOLGE.indexOf(b)
+    if (ai !== -1 && bi !== -1) return ai - bi
+    if (ai !== -1) return -1
+    if (bi !== -1) return 1
+    return a.localeCompare(b, 'de')
+  })
+
+  return klasseLabels.map((klasseLabel) => {
+    const kurstypMap = new Map<string, T[]>()
+    for (const kurs of klasseMap.get(klasseLabel)!) {
+      const key = getKurstypGruppe(kurs.name)
+      const bucket = kurstypMap.get(key)
+      if (bucket) {
+        bucket.push(kurs)
+      } else {
+        kurstypMap.set(key, [kurs])
+      }
+    }
+    const kurstypGruppen = Array.from(kurstypMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b, 'de'))
+      .map(([label, kurse]) => ({ label, kurse }))
+    return { label: klasseLabel, kurstypGruppen }
+  })
 }
 
 /** `null`, wenn der Ort nicht einem der zwei freigegebenen Standorte entspricht (needs_review). */

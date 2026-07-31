@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import Link from 'next/link'
-import { 
-  Calendar, 
-  Users, 
+import {
+  Calendar,
+  Users,
   Clock,
+  MapPin,
   MoreVertical,
   Pencil,
   Trash2,
@@ -13,23 +14,58 @@ import {
   EyeOff,
   ExternalLink
 } from 'lucide-react'
-import { FACH_LABELS, FACH_FARBEN } from '@/types/kurs'
 import { type KursDBMitAnmeldungen } from '@/types/kurs-form'
+import { groupKurseNachKlasseUndKurstyp, getSchulKategorie, type SchulKategorie } from '@/lib/kurse/mapper'
 import { deleteKurs, toggleKursStatus } from './actions'
 import { DropdownMenuComplex, DropdownMenuSeparator } from '@/app/components/ui/dropdown-menu'
+
+const SPALTEN_ANZAHL = 8
+
+const KATEGORIE_FILTER: { value: SchulKategorie | 'alle'; label: string }[] = [
+  { value: 'alle', label: 'Alle' },
+  { value: 'primar', label: 'Primarschule' },
+  { value: 'sek', label: 'Sekundarschule' },
+  { value: 'weiterfuehrend', label: 'BMS und Matura' },
+]
 
 interface KurseTabelleProps {
   kurse: KursDBMitAnmeldungen[]
 }
 
 export function KurseTabelle({ kurse }: KurseTabelleProps) {
+  const [kategorieFilter, setKategorieFilter] = useState<SchulKategorie | 'alle'>('alle')
+
+  const gefilterteKurse =
+    kategorieFilter === 'alle'
+      ? kurse
+      : kurse.filter((kurs) => getSchulKategorie(kurs.klassenstufen) === kategorieFilter)
+
+  const klasseGruppen = groupKurseNachKlasseUndKurstyp(gefilterteKurse)
+
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="flex flex-wrap gap-2 p-4 border-b border-border">
+        {KATEGORIE_FILTER.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => setKategorieFilter(option.value)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+              kategorieFilter === option.value
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/70'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-muted/30 border-b border-border">
             <tr>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Kurs</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Standort</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Klasse</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Datum</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Teilnehmer</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Preis</th>
@@ -38,8 +74,32 @@ export function KurseTabelle({ kurse }: KurseTabelleProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {kurse.map((kurs) => (
-              <KursZeile key={kurs.id} kurs={kurs} />
+            {klasseGruppen.map((klasseGruppe) => (
+              <Fragment key={klasseGruppe.label}>
+                <tr className="bg-muted/50">
+                  <td
+                    colSpan={SPALTEN_ANZAHL}
+                    className="px-4 py-2 text-sm font-semibold text-foreground"
+                  >
+                    {klasseGruppe.label}
+                  </td>
+                </tr>
+                {klasseGruppe.kurstypGruppen.map((kurstypGruppe) => (
+                  <Fragment key={`${klasseGruppe.label}-${kurstypGruppe.label}`}>
+                    <tr>
+                      <td
+                        colSpan={SPALTEN_ANZAHL}
+                        className="px-4 py-1.5 pl-6 font-mono text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                      >
+                        {kurstypGruppe.label}
+                      </td>
+                    </tr>
+                    {kurstypGruppe.kurse.map((kurs) => (
+                      <KursZeile key={kurs.id} kurs={kurs} />
+                    ))}
+                  </Fragment>
+                ))}
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -52,8 +112,6 @@ function KursZeile({ kurs }: { kurs: KursDBMitAnmeldungen }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isToggling, setIsToggling] = useState(false)
-
-  const farben = FACH_FARBEN[kurs.fach]
 
   const formatDatum = (datum: string) => {
     return new Date(datum).toLocaleDateString('de-CH', {
@@ -118,18 +176,34 @@ function KursZeile({ kurs }: { kurs: KursDBMitAnmeldungen }) {
 
   return (
     <tr className={`hover:bg-muted/30 transition-colors ${!kurs.ist_aktiv ? 'opacity-60' : ''}`}>
-      {/* Kurs-Name & Fach */}
+      {/* Kurs-Name */}
       <td className="px-4 py-3">
-        <div className="flex items-start gap-3">
-          <span className={`mt-1 px-2 py-0.5 text-xs font-medium rounded ${farben.bg} ${farben.text}`}>
-            {FACH_LABELS[kurs.fach]}
-          </span>
-          <div>
-            <p className="font-medium text-foreground">{kurs.name}</p>
-            <p className="text-sm text-muted-foreground truncate max-w-[250px]">
-              {kurs.ort}
-            </p>
-          </div>
+        <p className="font-medium text-foreground truncate max-w-62.5">{kurs.name}</p>
+      </td>
+
+      {/* Standort */}
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
+          <MapPin className="h-4 w-4" />
+          {kurs.ort}
+        </div>
+      </td>
+
+      {/* Klasse */}
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-1">
+          {kurs.klassenstufen.length > 0 ? (
+            kurs.klassenstufen.map((stufe) => (
+              <span
+                key={stufe}
+                className="px-2 py-0.5 text-xs font-medium rounded bg-muted text-muted-foreground whitespace-nowrap"
+              >
+                {stufe}
+              </span>
+            ))
+          ) : (
+            <span className="text-sm text-muted-foreground">–</span>
+          )}
         </div>
       </td>
 

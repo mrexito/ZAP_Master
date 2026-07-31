@@ -19,10 +19,7 @@ export default async function KurseAdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Kursverwaltung</h1>
-          <p className="text-muted-foreground mt-1">
-            Erstelle und verwalte Intensivwoche-Kurse
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">Kursüberblick</h1>
         </div>
         <div className="flex gap-2">
           <Link href="/dashboard/kurse/angebote">
@@ -33,12 +30,6 @@ export default async function KurseAdminPage() {
           <Link href="/dashboard/kurse/auffrischungskurse">
             <Button variant="outline" className="rounded-xl">
               Auffrischungs-/Intensivkurse verwalten
-            </Button>
-          </Link>
-          <Link href="/dashboard/kurse/neu">
-            <Button className="rounded-xl">
-              <Plus className="mr-2 h-4 w-4" />
-              Neuer Kurs
             </Button>
           </Link>
         </div>

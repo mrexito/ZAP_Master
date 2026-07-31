@@ -45,15 +45,15 @@ const lernenNavigation = [
 
 // Admin-Kursübersichten auf Basis des zentralen Angebotskatalogs
 const adminKurseNavigation = [
-  { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar, exact: true },
+  { name: 'Kursüberblick', href: '/dashboard/kurse', icon: Calendar, exact: true },
   { name: 'Intensivkurse', href: '/dashboard/kurse/intensivkurse', icon: Calendar },
   { name: 'Vorkurse', href: '/dashboard/kurse/vorkurse', icon: GraduationCap },
 ]
 
-// Lehrpersonen erhalten nur die Kursverwaltung. Die Angebotsübersichten für
+// Lehrpersonen erhalten nur den Kursüberblick. Die Angebotsübersichten für
 // Intensivkurse und Vorkurse sind ausschließlich für Administratoren sichtbar.
 const lehrpersonKurseNavigation = [
-  { name: 'Kursverwaltung', href: '/dashboard/kurse', icon: Calendar, exact: true },
+  { name: 'Kursüberblick', href: '/dashboard/kurse', icon: Calendar, exact: true },
 ]
 
 // Mentoring-System (Mentorship)

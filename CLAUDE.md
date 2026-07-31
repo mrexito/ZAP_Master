@@ -61,9 +61,15 @@ The canonical process is documented in `step0Baseline.revision2.md` and
   psql/pg_dump (`scripts/approved-postgres-tools.ps1`) are used against the live project — never
   ad hoc installs.
 - Any real write against the live database (`db push`, `migration repair`) needs a separate,
-  explicit approval and is run by the human operator directly in their own terminal — the DB
-  password/service keys are never typed into or handled by the assistant/conversation. This
-  project has been burned by a secret leaking into chat before; treat that boundary as firm.
+  explicit, per-migration approval from the user in the conversation, and must already have passed
+  the local verification loop above plus a `supabase db push --linked --dry-run` check showing only
+  the intended migration(s). **Relaxed 2026-07-31 (explicit user approval):** with that approval,
+  the assistant may run the push itself via the already-linked, already-authenticated Supabase CLI
+  on the operator's machine — approval given once in chat does not carry over to future migrations,
+  each one needs its own. What stays firm regardless: the DB password/service role key is never
+  typed into or handled by the assistant/conversation — the CLI's own stored session is used, not a
+  credential pasted in chat. This project has been burned by a secret leaking into chat before;
+  that specific boundary (no raw credentials in chat) does not relax.
 - The Supabase MCP connector (`mcp__claude_ai_Supabase__*` tools) gives direct **read-only**
   access to the live project's schema, table stats, and advisors without needing any password —
   prefer it for live inspection. Note `list_tables`'s `rows` field is Postgres's estimated
