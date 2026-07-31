@@ -1,25 +1,16 @@
 'use client'
 
 import { Fragment, useState } from 'react'
-import Link from 'next/link'
 import {
   Calendar,
   Users,
   Clock,
-  MapPin,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Eye,
-  EyeOff,
-  ExternalLink
+  MapPin
 } from 'lucide-react'
 import { type KursDBMitAnmeldungen } from '@/types/kurs-form'
 import { groupKurseNachKlasseUndKurstyp, getSchulKategorie, type SchulKategorie } from '@/lib/kurse/mapper'
-import { deleteKurs, toggleKursStatus } from './actions'
-import { DropdownMenuComplex, DropdownMenuSeparator } from '@/app/components/ui/dropdown-menu'
 
-const SPALTEN_ANZAHL = 8
+const SPALTEN_ANZAHL = 7
 
 const KATEGORIE_FILTER: { value: SchulKategorie | 'alle'; label: string }[] = [
   { value: 'alle', label: 'Alle' },
@@ -70,7 +61,6 @@ export function KurseTabelle({ kurse }: KurseTabelleProps) {
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Teilnehmer</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Preis</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
-              <th className="text-right px-4 py-3 text-sm font-medium text-muted-foreground">Aktionen</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -109,39 +99,11 @@ export function KurseTabelle({ kurse }: KurseTabelleProps) {
 }
 
 function KursZeile({ kurs }: { kurs: KursDBMitAnmeldungen }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isToggling, setIsToggling] = useState(false)
-
   const formatDatum = (datum: string) => {
     return new Date(datum).toLocaleDateString('de-CH', {
       day: 'numeric',
       month: 'short',
     })
-  }
-
-  const handleDelete = async () => {
-    if (!confirm(`Möchtest du den Kurs "${kurs.name}" wirklich löschen?`)) return
-    
-    setIsDeleting(true)
-    const result = await deleteKurs(kurs.id)
-    setIsDeleting(false)
-    
-    if (!result.success) {
-      alert(result.error)
-    }
-    setIsMenuOpen(false)
-  }
-
-  const handleToggleStatus = async () => {
-    setIsToggling(true)
-    const result = await toggleKursStatus(kurs.id, !kurs.ist_aktiv)
-    setIsToggling(false)
-    
-    if (!result.success) {
-      alert(result.error)
-    }
-    setIsMenuOpen(false)
   }
 
   const statusBadge = () => {
@@ -242,65 +204,6 @@ function KursZeile({ kurs }: { kurs: KursDBMitAnmeldungen }) {
       {/* Status */}
       <td className="px-4 py-3">
         {statusBadge()}
-      </td>
-
-      {/* Aktionen */}
-      <td className="px-4 py-3 text-right">
-        <DropdownMenuComplex
-          trigger={<MoreVertical className="h-4 w-4 text-muted-foreground" />}
-          isOpen={isMenuOpen}
-          onOpenChange={setIsMenuOpen}
-        >
-          <div className="py-1">
-            <Link
-              href={`/dashboard/kurse/${kurs.id}`}
-              className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Pencil className="h-4 w-4" />
-              Bearbeiten
-            </Link>
-            
-            <button
-              onClick={handleToggleStatus}
-              disabled={isToggling}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors disabled:opacity-50"
-            >
-              {kurs.ist_aktiv ? (
-                <>
-                  <EyeOff className="h-4 w-4" />
-                  Deaktivieren
-                </>
-              ) : (
-                <>
-                  <Eye className="h-4 w-4" />
-                  Aktivieren
-                </>
-              )}
-            </button>
-
-            <Link
-              href="/kurse"
-              target="_blank"
-              className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <ExternalLink className="h-4 w-4" />
-              Vorschau
-            </Link>
-
-            <DropdownMenuSeparator />
-            
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              {isDeleting ? 'Wird gelöscht...' : 'Löschen'}
-            </button>
-          </div>
-        </DropdownMenuComplex>
       </td>
     </tr>
   )
