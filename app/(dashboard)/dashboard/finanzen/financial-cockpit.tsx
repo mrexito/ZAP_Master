@@ -26,6 +26,7 @@ import {
   saveExpenseEntryAction,
   saveFinancialAdjustmentAction,
   advanceFinancialPeriodAction,
+  reopenFinancialPeriodAction,
   type MonthlyPoint,
   type CostBreakdown,
   type AudienceProfit,
@@ -76,6 +77,14 @@ export function FinancialCockpit({ year, kpis, period }: { year: number; kpis: Y
   const handleAdvancePeriod = async () => {
     setPeriodState('busy')
     const result = await advanceFinancialPeriodAction(year)
+    setPeriodState('idle')
+    setMessage(result.success ? result.message : result.error)
+    if (result.success) router.refresh()
+  }
+
+  const handleReopenPeriod = async () => {
+    setPeriodState('busy')
+    const result = await reopenFinancialPeriodAction(year)
     setPeriodState('idle')
     setMessage(result.success ? result.message : result.error)
     if (result.success) router.refresh()
@@ -135,10 +144,18 @@ export function FinancialCockpit({ year, kpis, period }: { year: number; kpis: Y
             Geschäftsjahr {year} · {PERIOD_STATUS_LABELS[periodStatus]}
           </Badge>
         </div>
-        <Button type="button" onClick={handleAdvancePeriod} disabled={periodState === 'busy' || periodStatus === 'locked'}>
-          {periodState === 'busy' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {PERIOD_ACTION_LABELS[periodStatus]}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button type="button" onClick={handleAdvancePeriod} disabled={periodState === 'busy' || periodStatus === 'locked'}>
+            {periodState === 'busy' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {PERIOD_ACTION_LABELS[periodStatus]}
+          </Button>
+          {periodStatus === 'locked' && (
+            <Button type="button" variant="outline" onClick={handleReopenPeriod} disabled={periodState === 'busy'}>
+              {periodState === 'busy' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Wieder öffnen
+            </Button>
+          )}
+        </div>
       </section>
 
       <div className="rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs text-foreground">

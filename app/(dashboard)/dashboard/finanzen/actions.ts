@@ -91,6 +91,8 @@ export async function getYearKpis(year: number): Promise<FinanzenActionResult<Ye
     .from('intensivwoche_anmeldungen')
     .select('id', { count: 'exact', head: true })
     .neq('status', 'storniert')
+    .gte('created_at', start)
+    .lt('created_at', end)
 
   return {
     success: true,
@@ -350,6 +352,33 @@ export async function advanceFinancialPeriodAction(year: number): Promise<Finanz
 
   revalidatePath('/dashboard/finanzen')
   return { success: true, data: updated as FinancialPeriodDB, message: nextStatus === 'locked' ? 'Periode abgeschlossen.' : 'Periodenprüfung gestartet.' }
+}
+
+export async function reopenFinancialPeriodAction(year: number): Promise<FinanzenActionResult<FinancialPeriodDB>> {
+  const authCheck = await requireAdminAuth()
+  if (!authCheck.authorized) return authCheck.error
+
+  const supabase = createAuthenticatedSupabaseClient(authCheck.supabaseAccessToken)
+  const { data: existing } = await supabase.from('financial_periods').select('*').eq('year', year).maybeSingle()
+
+  if (!existing || existing.status !== 'locked') {
+    return { success: false, error: 'Nur eine abgeschlossene Periode kann wieder geöffnet werden.' }
+  }
+
+  const { data: updated, error } = await supabase
+    .from('financial_periods')
+    .update({ status: 'review', locked_at: null, locked_by: null })
+    .eq('id', existing.id)
+    .eq('version', existing.version)
+    .select()
+    .single()
+
+  if (error || !updated) {
+    return { success: false, error: 'Periode wurde zwischenzeitlich geändert. Bitte lade die Seite neu.' }
+  }
+
+  revalidatePath('/dashboard/finanzen')
+  return { success: true, data: updated as FinancialPeriodDB, message: 'Periode wieder geöffnet · Status: in Prüfung.' }
 }
 
 export async function saveExpenseEntryAction(input: ExpenseEntryFormInput): Promise<FinanzenActionResult<ExpenseEntryDB>> {

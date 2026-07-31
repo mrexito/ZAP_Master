@@ -26,6 +26,8 @@ import {
   Mail,
   BarChart3,
   CalendarCheck2,
+  Clock,
+  Timer,
 } from 'lucide-react'
 
 // Haupt-Navigation (immer sichtbar)
@@ -74,6 +76,8 @@ const lehrpersonNavigation = [
 // Navigation nur für System-Admins
 const adminNavigation = [
   { name: 'Kursangebote', href: '/dashboard/kurse/angebote', icon: BookOpen },
+  { name: 'Arbeitszeiten', href: '/dashboard/arbeitszeiten', icon: Clock },
+  { name: 'Eigene Arbeitszeiten', href: '/arbeitszeiten', icon: Timer },
   { name: 'Finanz-Cockpit', href: '/dashboard/finanzen', icon: BarChart3 },
   { name: 'Benutzer', href: '/dashboard/admin/benutzer', icon: Users },
   { name: 'Mail-Warteschlange', href: '/dashboard/mail-outbox', icon: Mail },
